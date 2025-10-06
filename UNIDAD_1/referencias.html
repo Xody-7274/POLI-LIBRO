@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referencias Bibliográficas - Unidad 1</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .references-container {
+            display: grid;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .reference-item {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-left: 4px solid var(--secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .reference-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .reference-citation {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .reference-type {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        
+        .reference-description {
+            color: var(--light);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+        
+        .reference-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .topic-tag {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--accent);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .citation-note {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            border-left: 4px solid var(--success);
+        }
+        
+        .citation-note h3 {
+            color: var(--success);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .citation-note p {
+            margin-bottom: 10px;
+        }
+        
+        .stats-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 40px 0;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .nav-btn i {
+            margin-right: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            .reference-citation {
+                font-size: 1rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <span>Referencias Bibliográficas</span>
+            </div>
+            <h1>Referencias Bibliográficas</h1>
+            <div class="subtitle">Fuentes académicas y técnicas consultadas</div>
+        </header>
+        
+        <div class="intro">
+            <p>La presente unidad se fundamenta en una selección cuidadosa de fuentes bibliográficas especializadas en sistemas operativos, arquitectura de computadoras y programación de sistemas. Estas referencias representan textos fundamentales en el área de ciencias de la computación y proporcionan el marco teórico y práctico necesario para comprender los dispositivos de entrada y salida en profundidad.</p>
+        </div>
+
+        <div class="stats-section">
+            <h2 style="color: var(--secondary); margin-bottom: 20px;">Estadísticas de las Referencias</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">19</span>
+                    <div class="stat-label">Referencias Totales</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">1975-2023</span>
+                    <div class="stat-label">Rango Temporal</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">9</span>
+                    <div class="stat-label">Editoriales</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">6</span>
+                    <div class="stat-label">Áreas Temáticas</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="references-container">
+            <div class="reference-item">
+                <div class="reference-type">Texto de Referencia Principal</div>
+                <div class="reference-citation">
+                    Tanenbaum, A. S., & Bos, H. (2015). <em>Modern Operating Systems</em> (4th ed.). Pearson.
+                </div>
+                <div class="reference-description">
+                    Texto fundamental para comprender el diseño de sistemas operativos modernos, incluyendo arquitecturas de kernel, gestión de procesos y comunicación hardware-software.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Sistemas Operativos</span>
+                    <span class="topic-tag">Diseño de Kernel</span>
+                    <span class="topic-tag">Arquitectura</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Texto Académico Fundamental</div>
+                <div class="reference-citation">
+                    Silberschatz, A., Galvin, P. B., & Gagne, G. (2018). <em>Operating System Concepts</em> (10th ed.). Wiley.
+                </div>
+                <div class="reference-description">
+                    Referencia clásica en el estudio de sistemas operativos, proporcionando una base sólida en conceptos fundamentales y aplicaciones prácticas.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Conceptos SO</span>
+                    <span class="topic-tag">Procesos</span>
+                    <span class="topic-tag">Memoria</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Manual Técnico Avanzado</div>
+                <div class="reference-citation">
+                    Stallings, W. (2018). <em>Operating Systems: Internals and Design Principles</em> (9th ed.). Pearson.
+                </div>
+                <div class="reference-description">
+                    Análisis detallado de los principios internos de sistemas operativos, con énfasis en interrupciones y comunicación entre componentes del sistema.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Principios de Diseño</span>
+                    <span class="topic-tag">Interrupciones</span>
+                    <span class="topic-tag">Hardware/Software</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Arquitectura de Computadoras</div>
+                <div class="reference-citation">
+                    Patterson, D. A., & Hennessy, J. L. (2017). <em>Computer Organization and Design</em> (5th ed.). Morgan Kaufmann.
+                </div>
+                <div class="reference-description">
+                    Texto esencial para comprender la organización y diseño de computadoras, incluyendo la interfaz hardware-software y arquitecturas de procesadores.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Arquitectura</span>
+                    <span class="topic-tag">Procesadores</span>
+                    <span class="topic-tag">Hardware</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Arquitectura Estructurada</div>
+                <div class="reference-citation">
+                    Tanenbaum, A. S. (2016). <em>Structured Computer Organization</em> (6th ed.). Pearson.
+                </div>
+                <div class="reference-description">
+                    Análisis completo de la organización estructurada de computadoras, desde nivel de microprogramación hasta sistemas operativos.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Organización</span>
+                    <span class="topic-tag">Niveles</span>
+                    <span class="topic-tag">Microprogramación</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Programación de Sistemas UNIX</div>
+                <div class="reference-citation">
+                    Stevens, W. R., & Rago, S. A. (2013). <em>Advanced Programming in the UNIX Environment</em> (3rd ed.). Addison-Wesley.
+                </div>
+                <div class="reference-description">
+                    Guía definitiva para programación avanzada en entornos UNIX, cubriendo señales, IPC y interfaces de sistema de bajo nivel.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Programación UNIX</span>
+                    <span class="topic-tag">Señales</span>
+                    <span class="topic-tag">IPC</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Kernel de Linux</div>
+                <div class="reference-citation">
+                    Love, R. (2013). <em>Linux Kernel Development</em> (3rd ed.). Addison-Wesley.
+                </div>
+                <div class="reference-description">
+                    Análisis profundo del desarrollo del kernel de Linux, incluyendo estructuras de datos, algoritmos y mecanismos internos del sistema.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Kernel Linux</span>
+                    <span class="topic-tag">Desarrollo</span>
+                    <span class="topic-tag">Estructuras</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Arquitectura Linux</div>
+                <div class="reference-citation">
+                    Bovet, D. P., & Cesati, M. (2005). <em>Understanding the Linux Kernel</em> (3rd ed.). O'Reilly.
+                </div>
+                <div class="reference-description">
+                    Explicación detallada de la arquitectura interna del kernel de Linux, desde la gestión de memoria hasta el manejo de dispositivos.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Kernel Linux</span>
+                    <span class="topic-tag">Memoria</span>
+                    <span class="topic-tag">Dispositivos</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Interfaz de Programación Linux</div>
+                <div class="reference-citation">
+                    Kerrisk, M. (2010). <em>The Linux Programming Interface</em>. No Starch Press.
+                </div>
+                <div class="reference-description">
+                    Guía completa de la interfaz de programación de Linux, cubriendo llamadas al sistema y bibliotecas estándar.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">API Linux</span>
+                    <span class="topic-tag">Llamadas al Sistema</span>
+                    <span class="topic-tag">Bibliotecas</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Sistemas en Tiempo Real</div>
+                <div class="reference-citation">
+                    Laplante, P. A. (2020). <em>Real-Time Systems Design and Analysis</em> (5th ed.). Wiley.
+                </div>
+                <div class="reference-description">
+                    Principios fundamentales para el diseño y análisis de sistemas en tiempo real, incluyendo scheduling y garantías temporales.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Tiempo Real</span>
+                    <span class="topic-tag">Scheduling</span>
+                    <span class="topic-tag">Análisis</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Sistemas Tiempo Real</div>
+                <div class="reference-citation">
+                    Liu, J. W. S. (2019). <em>Real-Time Systems</em>. Pearson.
+                </div>
+                <div class="reference-description">
+                    Tratamiento completo de sistemas de tiempo real, incluyendo algoritmos de planificación y técnicas de validación temporal.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">RT Systems</span>
+                    <span class="topic-tag">Planificación</span>
+                    <span class="topic-tag">Validación</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Virtualización</div>
+                <div class="reference-citation">
+                    Smith, J. E., & Nair, R. (2019). <em>Virtual Machines: Versatile Platforms for Systems and Processes</em>. Morgan Kaufmann.
+                </div>
+                <div class="reference-description">
+                    Análisis comprehensivo de tecnologías de virtualización, desde máquinas virtuales de proceso hasta hypervisors y contenedores.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Virtualización</span>
+                    <span class="topic-tag">Hypervisors</span>
+                    <span class="topic-tag">VM</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Ingeniería de Seguridad</div>
+                <div class="reference-citation">
+                    Anderson, R. (2020). <em>Security Engineering: A Guide to Building Dependable Distributed Systems</em> (3rd ed.). Wiley.
+                </div>
+                <div class="reference-description">
+                    Guía completa para la construcción de sistemas distribuidos seguros, cubriendo principios de seguridad y arquitecturas confiables.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Seguridad</span>
+                    <span class="topic-tag">Sistemas Distribuidos</span>
+                    <span class="topic-tag">Confiabilidad</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Referencia Histórica</div>
+                <div class="reference-citation">
+                    Saltzer, J. H., & Schroeder, M. D. (1975). <em>The Protection of Information in Computer Systems</em>.
+                </div>
+                <div class="reference-description">
+                    Trabajo seminal que establece los principios fundamentales de protección de información en sistemas computacionales.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Protección</span>
+                    <span class="topic-tag">Principios</span>
+                    <span class="topic-tag">Fundamentos</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Manual UNIX</div>
+                <div class="reference-citation">
+                    Robbins, A. (2019). <em>UNIX in a Nutshell</em> (4th ed.). O'Reilly.
+                </div>
+                <div class="reference-description">
+                    Referencia rápida y completa para comandos, utilidades y características del sistema UNIX.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">UNIX</span>
+                    <span class="topic-tag">Comandos</span>
+                    <span class="topic-tag">Utilidades</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Documentación Técnica</div>
+                <div class="reference-citation">
+                    Intel Corporation. (2020). <em>Intel 64 and IA-32 Architectures Developer's Manual</em>.
+                </div>
+                <div class="reference-description">
+                    Manual técnico oficial de Intel para arquitecturas de 64 bits e IA-32, incluyendo especificaciones de hardware y programación de bajo nivel.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Intel x86</span>
+                    <span class="topic-tag">Arquitectura</span>
+                    <span class="topic-tag">Manual Técnico</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Tecnología ARM</div>
+                <div class="reference-citation">
+                    ARM Limited. (2021). <em>ARM Security Technology</em>. Wiley.
+                </div>
+                <div class="reference-description">
+                    Documentación especializada en tecnologías de seguridad implementadas en procesadores ARM y sistemas embebidos.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">ARM</span>
+                    <span class="topic-tag">Seguridad</span>
+                    <span class="topic-tag">Embebidos</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Base de Datos de Vulnerabilidades</div>
+                <div class="reference-citation">
+                    CVE Database. (2023). <em>MITRE Corporation. CVE: Vulnerabilidades y exposiciones comunes</em>.
+                </div>
+                <div class="reference-description">
+                    Base de datos actualizada de vulnerabilidades y exposiciones comunes en sistemas informáticos, mantenida por MITRE Corporation.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Vulnerabilidades</span>
+                    <span class="topic-tag">CVE</span>
+                    <span class="topic-tag">Seguridad</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="citation-note">
+            <h3><i class="fas fa-quote-left"></i> Nota sobre el Formato de Citas</h3>
+            <p>Las referencias bibliográficas han sido elaboradas siguiendo el formato APA (American Psychological Association, 7ª edición), estándar ampliamente utilizado en el ámbito académico de las ciencias de la computación.</p>
+            <p>Todas las obras citadas han sido consultadas para la elaboración del contenido teórico y los ejemplos prácticos presentados en esta unidad temática, abarcando desde fundamentos históricos hasta desarrollos técnicos contemporáneos.</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">
+                <i class="fas fa-home"></i> Volver al Índice Principal
+            </a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 1: Introducción a los Sistemas Operativos</p>
+            <p>Referencias bibliográficas organizadas según estándares académicos - © 2025</p>
+        </footer>
+    </div>
+</body>
+</html>

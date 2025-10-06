@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actividad 2.4: Batalla de la Sincronización</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --accent: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #1a2a3a;
+            --gray: #95a5a6;
+            --monster-color: #9b59b6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #2c1810, #1a2a3a, #2c3e50);
+            color: var(--light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(155, 89, 182, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(231, 76, 60, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundShift 12s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes victoryGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.05) hue-rotate(8deg); }
+        }
+
+        @keyframes defeatPulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(0.95) contrast(1.05); }
+        }
+
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+        
+        .floating-home-btn.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1rem;
+        }
+
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: rgba(52, 152, 219, 0.15);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .instructions h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .instructions ul {
+            padding-left: 25px;
+            color: var(--light);
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .battle-arena {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(155, 89, 182, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .battle-arena::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(155, 89, 182, 0.05) 0%, transparent 70%);
+            z-index: -1;
+            animation: arenaGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes arenaGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        .monster-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(155, 89, 182, 0.15);
+            border-radius: 15px;
+            border: 2px solid rgba(155, 89, 182, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .monster-section::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(155, 89, 182, 0.1) 0%, transparent 70%);
+            animation: monsterAura 3s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes monsterAura {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .monster-avatar {
+            font-size: 5rem;
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .monster-name {
+            font-size: 1.8rem;
+            color: var(--monster-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .health-bar-container {
+            width: 300px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            overflow: hidden;
+            border: 2px solid rgba(155, 89, 182, 0.5);
+        }
+
+        .health-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--warning));
+            transition: width 0.5s ease;
+            border-radius: 8px;
+        }
+
+        .health-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--light);
+        }
+
+        .player-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .error-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .error-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .error-dot.filled {
+            background: var(--accent);
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+
+        .questions-section {
+            margin-top: 30px;
+        }
+
+        .questions-section h3 {
+            color: var(--warning);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            text-align: center;
+            border-bottom: 2px solid var(--warning);
+            padding-bottom: 10px;
+        }
+
+        .question {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--warning);
+            transition: all 0.3s ease;
+        }
+
+        .question:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(5px);
+        }
+
+        .question-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--warning);
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--secondary);
+            transform: translateX(3px);
+        }
+
+        .option.selected {
+            background: rgba(52, 152, 219, 0.2);
+            border-color: var(--secondary);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .option.correct {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: var(--success);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+            animation: correctPulse 0.6s ease;
+        }
+
+        .option.incorrect {
+            background: rgba(231, 76, 60, 0.2);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
+            animation: incorrectShake 0.6s ease;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+
+        .option-letter {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--secondary);
+            min-width: 25px;
+        }
+
+        .option.correct .option-letter {
+            color: var(--success);
+        }
+
+        .option.incorrect .option-letter {
+            color: var(--accent);
+        }
+
+        .option-text {
+            flex: 1;
+            font-size: 1rem;
+        }
+
+        .battle-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+
+        .btn-attack {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            font-size: 1.2rem;
+            padding: 18px 35px;
+        }
+
+        .btn-attack:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-attack:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+            transform: translateY(-3px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+        }
+
+        .game-status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: none;
+        }
+
+        .game-status.victory {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        .game-status.defeat {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .game-status.continue {
+            background: rgba(243, 156, 18, 0.2);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .battle-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .player-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .navigation {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-center {
+                order: 2;
+            }
+
+            .navigation .btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .question {
+                padding: 20px;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .container {
+                margin-left: 20px;
+                margin-right: 20px;
+                padding: 10px;
+            }
+
+            .health-bar-container {
+                width: 250px;
+            }
+
+            .monster-avatar {
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="readingProgressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">Batalla Sincronización</div>
+            <div class="sidebar-subtitle">Administración de procesos</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    Menú principal
+                </a>
+                <a href="2.4.html" class="nav-item">
+                    <i class="fas fa-book-open"></i>
+                    Volver al material
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Otras Actividades</div>
+                <a href="actividad_2_1.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 2.1
+                </a>
+                <a href="actividad_2_2.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 2.2
+                </a>
+                <a href="actividad_2_3.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 2.3
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="2.4.html">2.4 Sincronización entre procesos/hilos</a>
+                <span>/</span>
+                <span>Batalla de la Sincronización</span>
+            </div>
+            <h1>⚔️ Batalla de la Sincronización</h1>
+            <div class="subtitle">¡Derrota al Guardián del Caos con tus conocimientos de sincronización!</div>
+        </div>
+
+        <div class="instructions">
+            <h3><i class="fas fa-gamepad"></i> Instrucciones de Batalla</h3>
+            <ul>
+                <li><strong>Misión:</strong> Derrota al Guardián del Caos respondiendo correctamente las preguntas sobre sincronización de procesos e hilos.</li>
+                <li><strong>Mecánica:</strong> Cada respuesta correcta inflige 1 punto de daño. Cada respuesta incorrecta cuenta como un error.</li>
+                <li><strong>Victoria:</strong> Reduce la vida del guardián a 0 HP respondiendo las 8 preguntas correctamente.</li>
+                <li><strong>Derrota:</strong> Cometes más de 3 errores antes de derrotar al guardián.</li>
+                <li><strong>Estrategia:</strong> Piensa cuidadosamente en cada concepto de sincronización. ¡Un error puede significar el caos total!</li>
+            </ul>
+        </div>
+
+        <div class="battle-arena">
+            <div class="monster-section">
+                <div class="monster-avatar" id="monsterAvatar">🌀</div>
+                <div class="monster-name">Guardián del Caos</div>
+                <div class="health-bar-container">
+                    <div class="health-bar" id="healthBar" style="width: 100%;"></div>
+                </div>
+                <div class="health-text" id="healthText">8 / 8 HP</div>
+            </div>
+
+            <div class="player-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="timerValue">0s</div>
+                    <div class="stat-label"><i class="fas fa-clock"></i> Tiempo</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="attemptsValue">0</div>
+                    <div class="stat-label"><i class="fas fa-sword"></i> Ataques</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="errorsValue">0 / 3</div>
+                    <div class="stat-label"><i class="fas fa-skull"></i> Errores</div>
+                    <div class="error-indicators" id="errorIndicators">
+                        <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="questions-section">
+                <h3><i class="fas fa-scroll"></i> Desafíos de la Sincronización</h3>
+                <div id="questionsContainer"></div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="battle-controls">
+                <button class="btn btn-attack" onclick="attack()" id="attackBtn">
+                    <i class="fas fa-bolt"></i> ¡ATACAR!
+                </button>
+                <button class="btn btn-secondary" onclick="resetBattle()">
+                    <i class="fas fa-redo"></i> Nueva Batalla
+                </button>
+                <button class="btn btn-secondary" onclick="showSolutions()">
+                    <i class="fas fa-lightbulb"></i> Ver Respuestas
+                </button>
+            </div>
+
+            <div class="game-status" id="gameStatus"></div>
+        </div>
+
+        <div class="navigation">
+            <a href="2.4.html" class="btn btn-success">
+                <i class="fas fa-arrow-left"></i> Volver al Material
+            </a>
+            <div class="nav-center">
+                <a href="index.html" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Menú Principal
+                </a>
+            </div>
+            <a href="2.5.html" class="btn btn-success">
+                Siguiente Tema <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales del juego
+        let time = 0;
+        let attempts = 0;
+        let errors = 0;
+        let monsterHP = 8;
+        let maxHP = 8;
+        let maxErrors = 3;
+        let gameOver = false;
+        let timerInterval;
+        let sidebarOpen = false;
+        let selectedAnswers = {};
+        let completed = 0;
+
+        // Preguntas sobre sincronización entre procesos/hilos
+        const questions = [
+            {
+                question: "¿Qué ocurre cuando varios procesos acceden y manipulan datos compartidos, y el resultado final depende del orden específico en el que se ejecutan?",
+                options: [
+                    "Exclusión mutua",
+                    "Abrazo mortal (deadlock)",
+                    "Atomicidad",
+                    "Condición de carrera (race condition)"
+                ],
+                correct: 3
+            },
+            {
+                question: "¿Cómo se denomina a la región de código donde un proceso o hilo accede a un recurso compartido que debe ser ejecutada por un solo proceso a la vez?",
+                options: [
+                    "Región crítica",
+                    "Zona de exclusión",
+                    "Área protegida",
+                    "Sección crítica"
+                ],
+                correct: 3
+            },
+            {
+                question: "El principio que garantiza que únicamente un proceso o hilo pueda acceder a una sección crítica en un momento dado se conoce como:",
+                options: [
+                    "Sincronización temporal",
+                    "Control de acceso",
+                    "Protección de recursos",
+                    "Exclusión mutua"
+                ],
+                correct: 3
+            },
+            {
+                question: "¿Qué propiedad garantiza que una operación se ejecute como una unidad indivisible e interrumpible?",
+                options: [
+                    "Consistencia",
+                    "Durabilidad",
+                    "Aislamiento",
+                    "Atomicidad"
+                ],
+                correct: 3
+            },
+            {
+                question: "Una situación donde dos o más procesos quedan bloqueados indefinidamente, esperando cada uno por un recurso que está en posesión de otro proceso del mismo conjunto, se denomina:",
+                options: [
+                    "Inanición (starvation)",
+                    "Condición de carrera",
+                    "Bloqueo circular",
+                    "Abrazo mortal (deadlock)"
+                ],
+                correct: 3
+            },
+            {
+                question: "¿Qué mecanismo de sincronización es una variable entera que controla el acceso a un recurso con un número limitado de instancias mediante operaciones wait() y signal()?",
+                options: [
+                    "Monitor",
+                    "Mutex",
+                    "Variable de condición",
+                    "Semáforo"
+                ],
+                correct: 3
+            },
+            {
+                question: "Un objeto de sincronización que garantiza exclusión mutua y que tiene un 'propietario' (el hilo que lo bloqueó debe ser el que lo desbloquee) se conoce como:",
+                options: [
+                    "Semáforo binario",
+                    "Monitor",
+                    "Barrera",
+                    "Mutex (exclusión mutua)"
+                ],
+                correct: 3
+            },
+            {
+                question: "¿Cuál es la principal ventaja de los monitores como herramienta de sincronización?",
+                options: [
+                    "Permiten el acceso concurrente ilimitado",
+                    "Eliminan completamente la necesidad de sincronización",
+                    "Son más rápidos que cualquier otro mecanismo",
+                    "Encapsulan la lógica de sincronización, haciendo el código más seguro y legible"
+                ],
+                correct: 3
+            }
+        ];
+
+        // Elementos del DOM para el menú lateral
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                container.style.marginLeft = '370px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else if (window.innerWidth > 1024) {
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                container.style.marginLeft = '70px';
+                container.style.marginRight = '70px';
+                container.style.padding = '20px';
+            }
+        }
+
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = Math.min((winScroll / height) * 100, 100);
+            document.getElementById('readingProgressBar').style.width = scrolled + '%';
+        }
+
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        const floatingHomeBtn = document.querySelector('.floating-home-btn');
+
+        function toggleFloatingButtons() {
+            const scrollPosition = window.pageYOffset;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            
+            if (scrollPosition > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+            
+            const nearBottom = scrollPosition + windowHeight >= documentHeight - 100;
+            if (nearBottom) {
+                floatingHomeBtn.classList.add('hidden');
+            } else {
+                floatingHomeBtn.classList.remove('hidden');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        function initGame() {
+            const container = document.getElementById('questionsContainer');
+            
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.innerHTML = `
+                    <div class="question-number">Desafío ${index + 1}</div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options">
+                        ${q.options.map((option, optIndex) => `
+                            <div class="option" onclick="selectOption(${index}, ${optIndex})" id="q${index}opt${optIndex}">
+                                <div class="option-letter">${String.fromCharCode(97 + optIndex)})</div>
+                                <div class="option-text">${option}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(questionDiv);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                time++;
+                document.getElementById('timerValue').textContent = `${time}s`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function updateProgress() {
+            completed = Object.keys(selectedAnswers).length;
+            
+            const percentage = (completed / questions.length) * 100;
+            document.getElementById('progressFill').style.width = `${percentage}%`;
+        }
+
+        function updateMonsterAvatar() {
+            const avatar = document.getElementById('monsterAvatar');
+            const healthPercentage = (monsterHP / maxHP) * 100;
+            
+            if (healthPercentage > 70) {
+                avatar.textContent = '🌀';
+            } else if (healthPercentage > 40) {
+                avatar.textContent = '⚡';
+            } else if (healthPercentage > 0) {
+                avatar.textContent = '💀';
+            } else {
+                avatar.textContent = '✨';
+            }
+        }
+
+        function updateUI() {
+            const healthPercentage = (monsterHP / maxHP) * 100;
+            document.getElementById('healthBar').style.width = `${healthPercentage}%`;
+            document.getElementById('healthText').textContent = `${monsterHP} / ${maxHP} HP`;
+            
+            const errorDots = document.querySelectorAll('.error-dot');
+            errorDots.forEach((dot, index) => {
+                if (index < errors) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+            
+            document.getElementById('attemptsValue').textContent = attempts;
+            document.getElementById('errorsValue').textContent = `${errors} / ${maxErrors}`;
+            
+            updateMonsterAvatar();
+        }
+
+        function selectOption(questionIndex, optionIndex) {
+            for (let i = 0; i < questions[questionIndex].options.length; i++) {
+                const option = document.getElementById(`q${questionIndex}opt${i}`);
+                option.classList.remove('selected');
+            }
+            
+            const selectedOptionElement = document.getElementById(`q${questionIndex}opt${optionIndex}`);
+            selectedOptionElement.classList.add('selected');
+            
+            selectedAnswers[questionIndex] = optionIndex;
+            
+            updateProgress();
+        }
+
+        function attack() {
+            if (gameOver) return;
+            
+            if (completed < questions.length) {
+                showGameStatus("⚠️ ¡Responde todas las preguntas antes de atacar al guardián!", "continue");
+                return;
+            }
+
+            attempts++;
+            let correctCount = 0;
+            
+            questions.forEach((q, qIndex) => {
+                const userAnswerIndex = selectedAnswers[qIndex];
+                const correctAnswerIndex = q.correct;
+                
+                for (let i = 0; i < q.options.length; i++) {
+                    const optionElement = document.getElementById(`q${qIndex}opt${i}`);
+                    optionElement.classList.remove('selected', 'correct', 'incorrect');
+                    
+                    if (i === correctAnswerIndex) {
+                        optionElement.classList.add('correct');
+                    } else if (i === userAnswerIndex && i !== correctAnswerIndex) {
+                        optionElement.classList.add('incorrect');
+                    }
+                }
+                
+                if (userAnswerIndex === correctAnswerIndex) {
+                    correctCount++;
+                }
+            });
+            
+            const damage = correctCount;
+            const currentErrorsInAttack = questions.length - correctCount; 
+            
+            monsterHP = Math.max(0, monsterHP - damage);
+            errors = Math.min(maxErrors, currentErrorsInAttack);
+
+            updateUI();
+            checkGameEnd();
+        }
+
+        function checkGameEnd() {
+            const attackBtn = document.getElementById('attackBtn');
+            
+            if (monsterHP <= 0) {
+                stopTimer();
+                gameOver = true;
+                showGameStatus(`
+                    <i class="fas fa-trophy"></i> 
+                    ¡VICTORIA ÉPICA! Has derrotado al Guardián del Caos<br>
+                    <small>Tiempo: ${time}s | Ataques: ${attempts} | Errores: ${errors}/${maxErrors}</small>
+                `, 'victory');
+                attackBtn.disabled = true;
+                
+                document.body.style.background = 'linear-gradient(135deg, #2c1810, #1a2a3a, #154025, #1f4a30)';
+                document.body.style.animation = 'victoryGlow 2s ease-in-out infinite';
+                document.getElementById('monsterAvatar').textContent = '✨';
+                
+            } else if (errors >= maxErrors) {
+                stopTimer();
+                gameOver = true;
+                showGameStatus(`
+                    <i class="fas fa-skull-crossbones"></i> 
+                    ¡EL GUARDIÁN TE HA VENCIDO!<br>
+                    <small>Demasiados errores. El caos reina en la sincronización...</small>
+                `, 'defeat');
+                attackBtn.disabled = true;
+                
+                document.body.style.background = 'linear-gradient(135deg, #2c1810, #4a2530, #5a3035)';
+                document.body.style.animation = 'defeatPulse 1s ease-in-out infinite';
+                
+            } else {
+                showGameStatus(`
+                    <i class="fas fa-sword"></i> ¡Batalla épica! Daño infligido: ${maxHP - monsterHP}<br>
+                    El guardián resiste con ${monsterHP} HP restantes.
+                `, 'continue');
+            }
+        }
+
+        function showGameStatus(message, type) {
+            const statusDiv = document.getElementById('gameStatus');
+            statusDiv.innerHTML = message;
+            statusDiv.className = `game-status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'continue') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        function resetBattle() {
+            time = 0;
+            attempts = 0;
+            errors = 0;
+            monsterHP = maxHP;
+            gameOver = false;
+            selectedAnswers = {};
+            completed = 0;
+            
+            document.getElementById('timerValue').textContent = '0s';
+            document.getElementById('attemptsValue').textContent = '0';
+            document.getElementById('errorsValue').textContent = `0 / ${maxErrors}`;
+            document.getElementById('gameStatus').style.display = 'none';
+            document.getElementById('attackBtn').disabled = false;
+            document.getElementById('progressFill').style.width = '0%';
+            document.body.style.background = 'linear-gradient(135deg, #2c1810, #1a2a3a, #2c3e50)';
+            document.body.style.animation = 'none';
+            
+            questions.forEach((q, qIndex) => {
+                for (let i = 0; i < q.options.length; i++) {
+                    const optionElement = document.getElementById(`q${qIndex}opt${i}`);
+                    optionElement.classList.remove('selected', 'correct', 'incorrect');
+                }
+            });
+            
+            updateUI();
+            
+            stopTimer();
+            startTimer();
+        }
+
+        function showSolutions() {
+            const correctAnswersText = questions.map((q, i) => {
+                const correctLetter = String.fromCharCode(97 + q.correct);
+                return `${i + 1}. ${correctLetter}) ${q.options[q.correct]}`;
+            }).join('\n\n');
+            
+            alert(`💡 Respuestas Correctas:\n\n${correctAnswersText}\n\n¡Usa esta información sabiamente para dominar la sincronización!`);
+        }
+
+        // Event listeners globales
+        window.addEventListener('scroll', () => {
+            updateReadingProgress();
+            toggleFloatingButtons();
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) {
+                    toggleSidebar();
+                }
+            }
+            
+            if (e.key === 'Enter' && !gameOver) {
+                attack();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initGame();
+            updateContainerSpacing();
+            updateReadingProgress();
+            
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

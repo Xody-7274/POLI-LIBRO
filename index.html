@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recurso Didáctico Digital - ESCOM | Sistemas Operativos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables de color */
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* --- ESTILOS DEL MENÚ DE NAVEGACIÓN --- */
+        header.main-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            width: 100%;
+            border-bottom: 1px solid var(--border-color);
+            background-color: rgba(44, 62, 80, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        .header-container {
+            display: flex;
+            height: 4rem;
+            align-items: center;
+            padding: 0 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon-wrapper {
+            display: flex;
+            height: 2.5rem;
+            width: 2.5rem;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            background: var(--secondary);
+        }
+
+        .logo-icon-wrapper i {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .logo-text-wrapper {
+            display: none;
+        }
+
+        @media (min-width: 640px) {
+            .logo-text-wrapper {
+                display: block;
+            }
+        }
+
+        .logo-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: var(--light);
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: #bdc3c7;
+        }
+
+        .desktop-nav {
+            display: none;
+            margin-left: auto;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        @media (min-width: 768px) {
+            .desktop-nav {
+                display: flex;
+            }
+        }
+
+        .nav-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--light);
+            background-color: transparent;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            text-decoration: none;
+        }
+
+        .nav-button:hover {
+            background-color: var(--card-bg);
+            color: white;
+        }
+
+        .nav-button.active {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .nav-button i {
+            font-size: 1rem;
+        }
+
+        .mobile-nav-trigger {
+            margin-left: auto;
+            display: block;
+        }
+
+        @media (min-width: 768px) {
+            .mobile-nav-trigger {
+                display: none;
+            }
+        }
+        
+        #mobile-menu-button {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .sheet {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 256px;
+            height: 100%;
+            background-color: var(--primary);
+            border-left: 1px solid var(--border-color);
+            z-index: 100;
+            transition: right 0.3s ease-in-out;
+            padding: 1.5rem;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+        }
+
+        .sheet.open {
+            right: 0;
+        }
+        
+        .sheet-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .sheet-header .logo-icon-wrapper {
+            height: 2rem;
+            width: 2rem;
+        }
+        .sheet-header .logo-icon-wrapper i {
+            font-size: 1rem;
+        }
+
+        .sheet-header .logo-title {
+            font-size: 0.875rem;
+        }
+        
+        .sheet-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding-top: 1.5rem;
+        }
+
+        .sheet-content .nav-button {
+            justify-content: flex-start;
+            width: 100%;
+        }
+        
+        #close-menu-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* --- ESTILOS DEL CONTENIDO DE LA PÁGINA --- */
+        .hero-section {
+            text-align: center;
+            padding: 40px 20px;
+            margin: 20px 0 30px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .hero-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-content img {
+            height: 6rem;
+            margin: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .hero-content img {
+                height: 8rem;
+                margin: 0 2rem;
+            }
+        }
+
+        .hero-title h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .hero-title h1 {
+                font-size: 3rem;
+            }
+        }
+        
+        .hero-title h1 .highlight {
+             background: linear-gradient(to right, white, #a0cff1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-title .subtitle {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .hero-description {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        
+        @media (min-width: 1024px) {
+            .card-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            transition: all 0.4s;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .card .card-header {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .card-icon {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover .card-icon {
+            transform: scale(1.1);
+        }
+
+        .card-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .card .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #FFF;
+        }
+
+        .card-content {
+            padding: 0 20px 20px;
+            text-align: center;
+        }
+        
+        .card-description {
+            font-size: 0.875rem;
+            color: #bdc3c7;
+            line-height: 1.5;
+        }
+
+        .gradient-1 { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .gradient-2 { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .gradient-3 { background: linear-gradient(135deg, #f39c12, #f1c40f); }
+        .gradient-4 { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .gradient-5 { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .gradient-6 { background: linear-gradient(135deg, #1abc9c, #16a085); }
+        .gradient-7 { background: linear-gradient(135deg, #e67e22, #d35400); }
+        .gradient-8 { background: linear-gradient(135deg, #34495e, #2c3e50); }
+
+        /* --- ESTILOS MODAL --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease-out;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            color: #333;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            max-width: 90vw;
+            width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .modal-close-btn:hover {
+            color: var(--accent);
+            transform: rotate(90deg);
+        }
+
+        .modal-body .modal-section {
+            display: none;
+        }
+
+        .modal-body .modal-section.active {
+            display: block;
+        }
+        
+        .prose {
+            line-height: 1.7;
+            font-size: 1rem;
+            color: #555;
+        }
+        .prose h3 {
+            font-size: 1.75rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .prose h4 {
+            font-size: 1.25rem;
+            color: var(--primary);
+            margin-top: 1.5rem;
+        }
+        .prose p, .prose ul, .prose ol {
+            margin-bottom: 1rem;
+        }
+        .prose strong {
+            color: var(--primary);
+        }
+        .prose a {
+            color: var(--secondary);
+        }
+        .prose hr {
+            border: 0;
+            height: 1px;
+            background: #ddd;
+            margin: 2rem 0;
+        }
+        
+        .creator-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .creator-block {
+                flex-direction: row;
+                text-align: left;
+                align-items: flex-start;
+            }
+        }
+        
+        .creator-block img {
+            width: 8rem;
+            height: 8rem;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--secondary);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        
+        .creator-info h4 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .creator-info .email {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .creator-info p {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .collaborator-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        @media (min-width: 768px) {
+            .collaborator-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .collaborator-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .collaborator-card img {
+            width: 7rem;
+            height: 7rem;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--secondary);
+            background-color: #e0e0e0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        
+        .collaborator-info h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .collaborator-info .email {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: #95a5a6;
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* --- ESTILOS BOTÓN CTA --- */
+        .cta-section {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, var(--secondary), #27ae60);
+            border: none;
+            border-radius: 50px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .cta-button i {
+            transition: transform 0.3s ease;
+        }
+
+        .cta-button:hover i {
+            transform: translateX(5px);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-container">
+                <div class="logo-icon-wrapper"><i class="fas fa-graduation-cap"></i></div>
+                <div class="logo-text-wrapper">
+                    <h1 class="logo-title">Recurso Didáctico Digital</h1>
+                    <p class="logo-subtitle">ESCOM - Sistemas Operativos</p>
+                </div>
+            </div>
+            <nav class="desktop-nav">
+                <a href="#" class="nav-button active" onclick="setActive(this)">
+                    <i class="fas fa-book-open"></i><span>Encuadre</span>
+                </a>
+                <a href="#" class="nav-button" onclick="setActive(this)">
+                    <i class="fas fa-graduation-cap"></i><span>Introducción</span>
+                </a>
+                <a href="UNIDADES.html" class="nav-button" onclick="setActive(this)">
+                    <i class="fas fa-bars"></i><span>Unidades</span>
+                </a>
+            </nav>
+            <div class="mobile-nav-trigger">
+                <button id="mobile-menu-button"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+    
+    <div id="mobile-menu" class="sheet">
+        <button id="close-menu-button"><i class="fas fa-times"></i></button>
+        <div class="sheet-header">
+            <div class="logo-icon-wrapper"><i class="fas fa-graduation-cap"></i></div>
+            <div>
+                <h2 class="logo-title">Recurso Didáctico</h2>
+                <p class="logo-subtitle">ESCOM</p>
+            </div>
+        </div>
+        <div class="sheet-content">
+            <a href="#" class="nav-button active" onclick="setActive(this)"><i class="fas fa-book-open"></i><span>Encuadre</span></a>
+            <a href="#" class="nav-button" onclick="setActive(this)"><i class="fas fa-graduation-cap"></i><span>Introducción</span></a>
+            <a href="UNIDADES.html" class="nav-button" onclick="setActive(this)"><i class="fas fa-bars"></i><span>Unidades</span></a>
+        </div>
+    </div>
+
+    <main class="container">
+        <section class="hero-section">
+            <div class="hero-content">
+                <img src="IMAGENES/IPNb.png" alt="IPN Logo">
+                <div class="hero-title">
+                    <h1><span class="highlight">Recurso Didáctico Digital</span><br><span class="subtitle">(Libro Interactivo)</span></h1>
+                    <p class="hero-description">Unidad de Aprendizaje de <strong>Sistemas Operativos</strong></p>
+                </div>
+                <img src="IMAGENES/ESCOMB.png" alt="ESCOM Logo">
+            </div>
+        </section>
+
+        <div class="card-container">
+            <div class="card" data-modal="bienvenida">
+                <div class="card-header"><div class="card-icon gradient-1"><i class="fas fa-hand-sparkles"></i></div><h3 class="card-title">Bienvenida</h3></div>
+                <div class="card-content"><p class="card-description">Mensaje de bienvenida a estudiantes.</p></div>
+            </div>
+            <div class="card" data-modal="prefacio">
+                <div class="card-header"><div class="card-icon gradient-2"><i class="fas fa-book"></i></div><h3 class="card-title">Prefacio</h3></div>
+                <div class="card-content"><p class="card-description">El porqué y para quién de este recurso.</p></div>
+            </div>
+             <div class="card" data-modal="introduccion">
+                <div class="card-header"><div class="card-icon gradient-3"><i class="fas fa-lightbulb"></i></div><h3 class="card-title">Introducción</h3></div>
+                <div class="card-content"><p class="card-description">Contexto y relevancia de los sistemas operativos.</p></div>
+            </div>
+             <div class="card" data-modal="programa">
+                <div class="card-header"><div class="card-icon gradient-4"><i class="fas fa-file-alt"></i></div><h3 class="card-title">Programa</h3></div>
+                <div class="card-content"><p class="card-description">Programa sintético de la unidad de aprendizaje.</p></div>
+            </div>
+
+            <div class="card" data-modal="encuadre">
+                <div class="card-header"><div class="card-icon gradient-5"><i class="fas fa-compass"></i></div><h3 class="card-title">Encuadre</h3></div>
+                <div class="card-content"><p class="card-description">Propósito y estructura de la unidad.</p></div>
+            </div>
+            <div class="card" data-modal="creadores">
+                <div class="card-header"><div class="card-icon gradient-6"><i class="fas fa-users"></i></div><h3 class="card-title">Creadores</h3></div>
+                <div class="card-content"><p class="card-description">Información sobre los autores.</p></div>
+            </div>
+            <div class="card" data-modal="colaboradores">
+                <div class="card-header"><div class="card-icon gradient-7"><i class="fas fa-hands-helping"></i></div><h3 class="card-title">Colaboradores</h3></div>
+                <div class="card-content"><p class="card-description">Equipo de desarrollo y agradecimientos.</p></div>
+            </div>
+             <div class="card" data-modal="metodologia">
+                <div class="card-header"><div class="card-icon gradient-8"><i class="fas fa-sitemap"></i></div><h3 class="card-title">Metodología</h3></div>
+                <div class="card-content"><p class="card-description">Estrategia y métodos de aprendizaje.</p></div>
+            </div>
+
+            </div> <section class="cta-section">
+            <a href="Unidades.html" class="cta-button">
+                <span>Explorar Unidades de Aprendizaje</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </section>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Recurso Didáctico Digital</p>
+            <p>Desarrollado para fines educativos - © 2025</p>
+        </footer>
+    </main>
+
+    <div id="modal-container" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="modal-close-button"><i class="fas fa-times"></i></button>
+            <div class="modal-body prose">
+
+                <div id="modal-bienvenida" class="modal-section">
+                    <div class="text-center" style="margin-bottom: 1.5rem;">
+                        <div style="width: 8rem; height: 8rem; background: linear-gradient(135deg, #3498db, #2980b9); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                            <i class="fas fa-hand-sparkles" style="font-size: 4rem; color: white;"></i>
+                        </div>
+                        <h3 style="font-size: 1.75rem; font-weight: bold; color: var(--primary); margin-bottom: 1rem;">
+                            Prefacio
+                        </h3>
+                    </div>
+                    
+                    <div class="prose">
+                        <p>
+                        En la actualidad, los <strong>sistemas operativos</strong> constituyen la base de la vida digital, pues permiten que computadoras, dispositivos móviles y servidores funcionen de manera eficiente y coordinada. Sin ellos, la interacción entre hardware y software sería imposible, lo que evidencia su papel esencial en la educación, la investigación, la industria y la vida cotidiana.
+                        </p>
+
+                        <p>
+                        Este poli-libro se ha diseñado como una <strong>guía integral</strong> que combina teoría y práctica, organizada en <strong>seis unidades temáticas</strong>: introducción y evolución de los sistemas operativos, administración de procesos, gestión de memoria, sistemas de archivos, dispositivos de entrada y salida, y los retos de seguridad y virtualización. La estructura busca que el aprendizaje sea progresivo y accesible, facilitando la comprensión de conceptos complejos mediante explicaciones claras y ejemplos aplicables.
+                        </p>
+
+                        <p>
+                        El material está pensado para servir como <strong>texto principal en asignaturas universitarias</strong> o como recurso de <strong>autoaprendizaje</strong>. No exige conocimientos avanzados, aunque contar con bases en programación y arquitectura de computadoras resultará útil para un mayor aprovechamiento.
+                        </p>
+
+                        <p>
+                        Más allá de responder a cómo funcionan los sistemas operativos, este texto invita a cuestionar <strong>por qué se diseñan de esa manera</strong> y qué impacto tienen esas decisiones en el rendimiento, la seguridad y la experiencia del usuario. Así, se busca fomentar una formación crítica y reflexiva que permita al lector comprender, analizar e innovar en un campo esencial de la tecnología moderna.
+                        </p>
+                    </div>
+                </div>
+                
+                <div id="modal-prefacio" class="modal-section">
+                    <h3>Prefacio</h3>
+                    <p>Este poli-libro se ha diseñado como una <strong>guía integral</strong> que combina teoría y práctica, organizada en <strong>seis unidades temáticas</strong>: introducción y evolución de los sistemas operativos, administración de procesos, gestión de memoria, sistemas de archivos, dispositivos de entrada y salida, y los retos de seguridad y virtualización.</p>
+                    <p>El material está pensado para servir como <strong>texto principal en asignaturas universitarias</strong> o como recurso de <strong>autoaprendizaje</strong>. No exige conocimientos avanzados, aunque contar con bases en programación y arquitectura de computadoras resultará útil para un mayor aprovechamiento.</p>
+                </div>
+
+                <div id="modal-introduccion" class="modal-section">
+                    <h3>Introducción</h3>
+                     <p>La estructura de este recurso busca que el aprendizaje sea progresivo y accesible, facilitando la comprensión de conceptos complejos mediante explicaciones claras y ejemplos aplicables.</p>
+                    <p>Más allá de responder a cómo funcionan los sistemas operativos, este texto invita a cuestionar <strong>por qué se diseñan de esa manera</strong> y qué impacto tienen esas decisiones en el rendimiento, la seguridad y la experiencia del usuario. Así, se busca fomentar una formación crítica y reflexiva que permita al lector comprender, analizar e innovar en un campo esencial de la tecnología moderna.</p>
+                </div>
+                
+                <div id="modal-programa" class="modal-section">
+                    <style>
+                        /* Estilos específicos para este modal */
+                        .program-card {
+                            background-color: #f3e8ff; /* Tono morado claro */
+                            border: 1px solid #d8b4fe;
+                            border-radius: 0.75rem;
+                            padding: 1.5rem;
+                            margin-bottom: 1.5rem;
+                        }
+                        .program-card-ipn {
+                            font-weight: 600;
+                            color: #6b21a8;
+                            background-color: #e9d5ff;
+                            padding: 0.25rem 0.75rem;
+                            border-radius: 9999px;
+                            display: inline-block;
+                            margin-right: 0.75rem;
+                        }
+                        .program-details-grid {
+                            display: grid;
+                            grid-template-columns: 1fr;
+                            gap: 1rem;
+                        }
+                        @media (min-width: 768px) {
+                            .program-details-grid {
+                                grid-template-columns: 1fr 1fr;
+                            }
+                        }
+                        .program-details-card {
+                            border: 1px solid #e5e7eb;
+                            border-radius: 0.75rem;
+                            padding: 1rem;
+                        }
+                        .program-details-card div {
+                            margin-bottom: 0.5rem;
+                        }
+                        .program-cta {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            color: #6b21a8;
+                            font-weight: 500;
+                        }
+                    </style>
+
+                    <div class="text-center" style="margin-bottom: 2rem;">
+                        <div style="width: 8rem; height: 8rem; background: linear-gradient(135deg, #9b59b6, #8e44ad); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                            <i class="fas fa-file-alt" style="font-size: 4rem; color: white;"></i>
+                        </div>
+                        <h3>Programa de la Unidad de Aprendizaje</h3>
+                    </div>
+
+                    <div class="prose">
+                        <div class="program-card">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                <span class="program-card-ipn">IPN</span>
+                                <span style="font-weight: 600; color: #581c87;">Instituto Politécnico Nacional</span>
+                            </div>
+                            <div style="color: #581c87;">
+                                <p style="margin: 0;"><strong>Secretaría Académica</strong></p>
+                                <p style="margin: 0;"><strong>Dirección de Educación Superior</strong></p>
+                                <p style="margin-top: 0.5rem; font-size: 1.25rem; font-weight: 600;">PROGRAMA SINTÉTICO</p>
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="program-details-grid">
+                            <div class="program-details-card">
+                                <div><strong>Unidad Académica:</strong> Escuela Superior de Cómputo</div>
+                                <div><strong>Programa Académico:</strong> Ingeniería en Sistemas Computacionales</div>
+                                <div><strong>Unidad de Aprendizaje:</strong> Sistemas Operativos</div>
+                                <div><strong>Semestre:</strong> IV</div>
+                            </div>
+                            
+                            <div class="program-details-card">
+                                <div><strong>Modalidad:</strong> Escolarizada</div>
+                                <div><strong>Tipo:</strong> Teórica-Práctica / Obligatoria</div>
+                                <div><strong>Vigencia:</strong> Agosto 2021</div>
+                                <div><strong>Créditos SATCA:</strong> 6.3</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem; padding: 1.5rem; border: 1px solid #d8b4fe; border-radius: 0.75rem;">
+                            <h4 style="color: #6b21a8; margin-bottom: 0.75rem;">
+                                Propósito de la Unidad de Aprendizaje
+                            </h4>
+                            <p>
+                            El propósito de la Unidad de Aprendizaje (UA) <strong>Sistemas Operativos</strong> es: 
+                            Propone soluciones a las necesidades de sistemas computacionales actuales a partir del funcionamiento del sistema operativo.
+                            </p>
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem; padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e5e7eb;">
+                            <h4>Orientación Didáctica</h4>
+                            <p>
+                            Con el fin de obtener mejores resultados en cuanto a tu autoaprendizaje, te 
+                            recomendamos estudiar cada una de las unidades temáticas en la secuencia en 
+                            que aparecen en este Recurso didáctico digital.
+                            </p>
+                            <div class="program-cta">
+                                <i class="fas fa-arrow-right"></i>
+                                <span>Ver programa completo en el documento oficial</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modal-encuadre" class="modal-section">
+                    <h3>Encuadre</h3>
+                    <p>El propósito de la Unidad de Aprendizaje (UA) <strong>Sistemas Operativos</strong> es proponer soluciones a las necesidades de sistemas computacionales actuales a partir del funcionamiento del sistema operativo. A lo largo de este recurso, se explorarán los componentes fundamentales que permiten esta gestión.</p>
+                </div>
+
+                <div id="modal-creadores" class="modal-section">
+                    <h3>Autores del Recurso Didáctico</h3>
+                    <div class="creator-block">
+                        <img src="IMAGENES/isr.png" alt="Israel Salas Ramírez">
+                        <div class="creator-info">
+                            <h4>Israel Salas Ramírez</h4>
+                            <p class="email">isalasr@ipn.mx</p>
+                            <p><strong>Semblanza:</strong> Docente en la Escuela Superior de Cómputo del Instituto Politécnico Nacional, es doctor y maestro en ciencias de la educación, ingeniero en comunicaciones y electrónica de la ESIME Zacatenco, ha trabajado como responsable de unidades de Informática y generación de proyectos de Inversión Tecnológica.</p>
+                            <p><strong>Áreas de interés:</strong> Sistemas Operativos, Administración de Redes, Neurociencia en la Educación, Redes Neuronales, Generación de Simuladores Médicos y Plataformas Virtuales Aplicados a la Educación.</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="creator-block">
+                        <img src="IMAGENES/hermelinda_patricia_leyva_lopez.png" alt="Hermelinda Patricia Leyva López">
+                        <div class="creator-info">
+                            <h4>Hermelinda Patricia Leyva López</h4>
+                            <p class="email">hleyval@ipn.mx</p>
+                            <p><strong>Semblanza:</strong> Docente de la unidad de aprendizaje TIC aplicadas para el Turismo en la Escuela Superior de Turismo del Instituto Politécnico Nacional, Doctor en Educación, Maestría en Administración de Tecnologías de la Información, Maestría en Docencia y Desarrollo de Competencias, Maestría en Educación, Contador Público egresada de ESCA-IPN.</p>
+                            <p><strong>Áreas de interés:</strong> Neurociencia de la Educación y Redes Neuronales, Metodología de la Investigación, Educación en línea con plataformas virtuales.</p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="creator-block">
+                        <img src="IMAGENES/benjamin_cruz_torres.png" alt="Benjamín Cruz Torres">
+                        <div class="creator-info">
+                            <h4>Benjamín Cruz Torres</h4>
+                            <p class="email">bcruzt@ipn.mx</p>
+                            <p><strong>Semblanza:</strong> Benjamín Cruz Torres (El profe Benji). Actualmente funge como presidente de la academia de sistemas distribuidos y docente en la Escuela Superior de Cómputo del Instituto Politécnico Nacional. Es Doctor en Ciencias de la Computación y Maestro en Ciencias de la Computación por parte del Centro de Investigación en Computación del Instituto Politécnico Nacional.</p>
+                            <p><strong>Áreas de interés:</strong> los sistemas distribuidos, el cómputo en la nube, la inteligencia artificial, la administración de redes y las tecnologías web.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="modal-colaboradores" class="modal-section">
+                    <h3>Equipo de Desarrollo</h3>
+                    <p style="text-align:center; margin-bottom: 2rem;">Estudiantes que contribuyeron a la creación de este recurso digital.</p>
+                    <div class="collaborator-grid">
+                        <div class="collaborator-card">
+                            <img src="IMAGENES/CASIMIRO_HERNÁNDEZ.jpg" alt="Foto">
+                            <div class="collaborator-info">
+                                <h4>CASIMIRO HERNÁNDEZ GAEL NOEL</h4>
+                                <p class="email">gcasimiroh2100@alumno.ipn.mx</p>
+                            </div>
+                        </div>
+                        <div class="collaborator-card">
+                            <img src="IMAGENES/CONDE_GALVÁN.jpg" alt="Foto">
+                            <div class="collaborator-info">
+                                <h4>CONDE GALVÁN LESLIE MONSERRAT</h4>
+                                <p class="email">lcondeg1500@alumno.ipn.mx</p>
+                            </div>
+                        </div>
+                        <div class="collaborator-card">
+                            <img src="IMAGENES/MÁRQUEZ_HERNÁNDEZ.jpg" alt="Foto">
+                            <div class="collaborator-info">
+                                <h4>MÁRQUEZ HERNÁNDEZ SARAH MICHELLE</h4>
+                                <p class="email">smarquezh1900@alumno.ipn.mx</p>
+                            </div>
+                        </div>
+                        <div class="collaborator-card">
+                            <img src="IMAGENES/MARTÍNEZ_LEÓN.jpg" alt="Foto">
+                            <div class="collaborator-info">
+                                <h4>MARTÍNEZ LEÓN JOSUÉ DAVID</h4>
+                                <p class="email">jmartinezl2103@alumno.ipn.mx</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="modal-metodologia" class="modal-section">
+                   <h3>Metodología</h3>
+                   <p>Para lograr el propósito planteado, la presente UA se abordará a partir de la estrategia de aprendizaje orientada a proyectos así como del método heurístico.</p>
+                   <h4>Unidades Temáticas</h4>
+                    <ul>
+                        <li>I. Estructura de un Sistema Operativo <a href="UNIDAD_1index.html#intencion">Intención educativa</a></li>
+                        <li>II. Administración de procesos</li>
+                        <li>III. Administración de memoria</li>
+                        <li>IV. Sistema de archivos</li>
+                        <li>V. Dispositivos de entrada y salida</li>
+                        <li>VI. Seguridad y Virtualización</li>
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Script para menú móvil
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const closeMenuButton = document.getElementById('close-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => mobileMenu.classList.add('open'));
+        closeMenuButton.addEventListener('click', () => mobileMenu.classList.remove('open'));
+
+        function setActive(button) {
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            if (mobileMenu.classList.contains('open')) mobileMenu.classList.remove('open');
+        }
+        
+        // Script para modales
+        const modalContainer = document.getElementById('modal-container');
+        const modalCloseButton = document.getElementById('modal-close-button');
+        const cards = document.querySelectorAll('.card[data-modal]');
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const modalId = card.getAttribute('data-modal');
+                openModal(modalId);
+            });
+        });
+
+        function openModal(modalId) {
+            document.querySelectorAll('.modal-section').forEach(section => section.classList.remove('active'));
+            const activeSection = document.getElementById(`modal-${modalId}`);
+            if (activeSection) {
+                activeSection.classList.add('active');
+                modalContainer.classList.add('show');
+            }
+        }
+
+        function closeModal() {
+            modalContainer.classList.remove('show');
+        }
+
+        modalCloseButton.addEventListener('click', closeModal);
+        modalContainer.addEventListener('click', e => (e.target === modalContainer) && closeModal());
+    </script>
+</body>
+</html>

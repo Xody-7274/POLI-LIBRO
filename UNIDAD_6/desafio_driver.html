@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío de Lógica de Driver</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --light: #ecf0f1;
+            --dark: #1a2a3a;
+            --success: #2ecc71;
+            --accent: #e74c3c;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark), var(--primary));
+            color: var(--light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .challenge-header {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+        }
+
+        .challenge-header h1 {
+            color: var(--secondary);
+            font-size: 2.5rem;
+        }
+
+        .challenge-area {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        .objective {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .code-editor {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            color: #dcdcdc;
+        }
+        
+        .code-editor pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .code-blank {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px dashed var(--secondary);
+            color: var(--light);
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: 250px; /* Ancho ajustado */
+            transition: all 0.3s ease;
+        }
+
+        .code-blank:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-style: solid;
+        }
+
+        .code-blank.correct {
+            border: 1px solid var(--success);
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+
+        .code-blank.incorrect {
+            border: 1px solid var(--accent);
+            background-color: rgba(231, 76, 60, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            text-decoration: none;
+        }
+
+        .btn-verify {
+            background: var(--success);
+        }
+        .btn-verify:hover {
+            background: #27ae60;
+        }
+
+        .btn-back {
+            background: var(--primary);
+        }
+        .btn-back:hover {
+            background: #34495e;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        
+        #feedback.correct {
+            background-color: rgba(46, 204, 113, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+        
+        #feedback.incorrect {
+            background-color: rgba(231, 76, 60, 0.2);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        #feedback a {
+            color: var(--secondary);
+            text-decoration: underline;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="challenge-header">
+            <h1><i class="fas fa-cogs"></i> Desafío de Lógica de Driver</h1>
+            <p>Completa el pseudocódigo de una función genérica de un controlador.</p>
+        </div>
+        
+        <div class="challenge-area">
+            <div class="objective">
+                <strong>Objetivo:</strong> Completa los pasos lógicos fundamentales dentro de la función de un driver, incluyendo la gestión de peticiones y la comunicación con el hardware.
+            </div>
+
+            <div class="code-editor">
+                <pre><code>int dispositivo_driver_funcion(struct peticion *req) {
+    // 1. Verificar parámetros...
+    if (!parametros_validos(req)) return ERROR;
+
+    // 2. Traducir de abstracto a concreto
+    struct comando_hw cmd = <input type="text" class="code-blank" id="blank1" placeholder="traducir petición...">;
+
+    // 3. Verificar si el dispositivo está ocupado
+    if (dispositivo_ocupado()) {
+        <input type="text" class="code-blank" id="blank2" placeholder="acción si está ocupado...">;
+        return EN_ESPERA;
+    }
+    
+    // 4. Emitir comandos al controlador del dispositivo
+    for (int i = 0; i < cmd.num_comandos; i++) {
+        <input type="text" class="code-blank" id="blank3" placeholder="escribir en hardware...">;
+    }
+    
+    // 5. Esperar a que termine la operación (si es asíncrona)
+    if (operacion_requiere_espera()) {
+        <input type="text" class="code-blank" id="blank4" placeholder="esperar interrupción...">;
+        return EN_PROCESO;
+    }
+    
+    return EXITO;
+}</code></pre>
+            </div>
+
+            <div id="feedback"></div>
+
+            <div class="controls">
+                <a href="laboratorio_codigo.html" class="btn btn-back"><i class="fas fa-arrow-left"></i> Volver al Laboratorio</a>
+                <button id="verifyBtn" class="btn btn-verify">Verificar Código <i class="fas fa-check"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('verifyBtn').addEventListener('click', function() {
+            const feedbackEl = document.getElementById('feedback');
+            const reviewLink = '<a href="5.3.html#seccion-5-3-2" target="_blank">material de la sección 5.3.2</a>';
+
+            const correctAnswers = {
+                blank1: 'traducir_peticion(req)',
+                blank2: 'encolar_peticion(req)',
+                blank3: 'escribir_registro_dispositivo(cmd.registros[i], cmd.valores[i])',
+                blank4: 'bloquear_controlador()'
+            };
+
+            const blank1El = document.getElementById('blank1');
+            const blank2El = document.getElementById('blank2');
+            const blank3El = document.getElementById('blank3');
+            const blank4El = document.getElementById('blank4');
+
+            // Normalizar: quitar espacios y símbolos opcionales como ();
+            const normalize = (str) => str.replace(/[\s;()]/g, '');
+
+            // Normalización especial para el blank3, ya que es largo
+            const normalizeLong = (str) => str.replace(/[\s;(),]/g, '');
+
+
+            const isBlank1Correct = normalize(blank1El.value) === normalize(correctAnswers.blank1);
+            const isBlank2Correct = normalize(blank2El.value) === normalize(correctAnswers.blank2);
+            const isBlank3Correct = normalizeLong(blank3El.value) === normalizeLong(correctAnswers.blank3);
+            const isBlank4Correct = normalize(blank4El.value) === normalize(correctAnswers.blank4);
+
+            blank1El.classList.toggle('correct', isBlank1Correct);
+            blank1El.classList.toggle('incorrect', !isBlank1Correct);
+            
+            blank2El.classList.toggle('correct', isBlank2Correct);
+            blank2El.classList.toggle('incorrect', !isBlank2Correct);
+
+            blank3El.classList.toggle('correct', isBlank3Correct);
+            blank3El.classList.toggle('incorrect', !isBlank3Correct);
+
+            blank4El.classList.toggle('correct', isBlank4Correct);
+            blank4El.classList.toggle('incorrect', !isBlank4Correct);
+
+            if (isBlank1Correct && isBlank2Correct && isBlank3Correct && isBlank4Correct) {
+                feedbackEl.innerHTML = '¡Felicidades! Has estructurado correctamente la lógica del driver.';
+                feedbackEl.className = 'correct';
+            } else {
+                feedbackEl.innerHTML = `Revisa los pasos. La secuencia es clave: traducir, verificar, escribir y bloquear si es necesario. Consulta el pseudocódigo en el ${reviewLink}.`;
+                feedbackEl.className = 'incorrect';
+            }
+            
+            feedbackEl.style.display = 'block';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2.2 Modelo multi-hilo</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .content ul, .content ol {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+        
+        .quote-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+            font-style: italic;
+            color: var(--light);
+        }
+
+        .quote-box .citation {
+            border-left: none;
+            margin: 10px 0 0 0;
+            padding-left: 0;
+        }
+        
+        .table-container {
+            max-width: 800px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-caption {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: var(--gray);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+
+        .activity-card {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 4px solid var(--success);
+            text-align: center;
+        }
+
+        .activity-title {
+            font-size: 1.8rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .activity-btn {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+
+        .activity-btn:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-number {
+                min-width: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al índice de unidades">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">2.2 Modelo multi-hilo</div>
+            <div class="sidebar-subtitle">Administración de procesos</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item">
+                    <i class="fas fa-rocket"></i> Inicio del Tema
+                </a>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i> Menú de Unidad 2
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#seccion-2-2-1" class="nav-item" data-section="2-2-1">
+                    <i class="fas fa-book"></i> 2.2.1 Bibliotecas
+                </a>
+                <a href="#seccion-2-2-2" class="nav-item" data-section="2-2-2">
+                    <i class="fas fa-cogs"></i> 2.2.2 Implementación
+                </a>
+                <a href="#seccion-2-2-3" class="nav-item" data-section="2-2-3">
+                    <i class="fas fa-layer-group"></i> 2.2.3 Hilos en modo usuario y kernel
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="actividad_2.2.html" class="nav-item">
+                    <i class="fas fa-tasks"></i> Actividad de aprendizaje
+                </a>
+                <a href="2.3.html" class="nav-item">
+                    <i class="fas fa-arrow-right"></i> Siguiente: Comunicación entre procesos
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 2</a>
+                <span>/</span>
+                <span>2.2 Modelo multi-hilo</span>
+            </div>
+            <h1>2.2 Modelo multi-hilo</h1>
+            <div class="subtitle">Administración de procesos</div>
+        </header>
+        
+        <div class="intro">
+            <p>En los sistemas operativos actuales, el modelo multihilo constituye una mejora respecto al enfoque tradicional basado únicamente en procesos. A diferencia de un proceso, que posee su propio espacio de direcciones y recursos, un hilo es una unidad de ejecución más ligera que comparte el entorno del proceso al que pertenece, permitiendo la ejecución concurrente con otros hilos del mismo proceso. Esta arquitectura facilita la creación de aplicaciones más eficientes y capaces de ejecutar múltiples tareas de manera paralela, lo cual es fundamental en sistemas que demandan alto rendimiento, como servidores, navegadores web o programas de edición multimedia.</p>
+            <div class="citation">(Silberschatz, Galvin & Gagne, 2018).</div>
+
+            <h4>Aplicación a los procesos:</h4>
+            <ul>
+                <li>Cada <strong>hilo</strong> dentro de un proceso se considera una <strong>subunidad de ejecución</strong>.</li>
+                <li>Todos los hilos colaborar <strong>el espacio de memoria del proceso</strong>, pero mantienen registros, es por ello que el contador del programa administra todo lo relacionado al proceso.</li>
+                <li>Uso de múltiples hilos permite que un proceso realice varias tareas al mismo tiempo (como leer datos, procesarlos y escribirlos simultáneamente).</li>
+            </ul>
+
+            <br>
+            <h4>Ventajas del modelo multi-hilo:</h4>
+            <ul>
+                <li><strong>Mayor rendimiento:</strong> Permite aprovechar CPUs multinúcleo.</li>
+                <li><strong>Mejor respuesta:</strong> Ideal para aplicaciones con interfaces gráficas y servicios en segundo plano.</li>
+                <li><strong>Menor consumo de recursos:</strong> Crear hilos es más barato que crear procesos completos.</li>
+            </ul>
+
+            <br>
+            <h4>Desafíos:</h4>
+            <ul>
+                <li><strong>Sincronización:</strong> Como los hilos comparten memoria, pueden surgir condiciones de carrera si no se gestionan correctamente.</li>
+                <li><strong>Depuración compleja:</strong> Los errores en sistemas multi-hilo suelen ser difíciles de rastrear.</li>
+                <li><strong>Planificación justa:</strong> El sistema operativo debe asignar CPU de forma equitativa a los hilos activos.</li>
+            </ul>
+
+            <div class="quote-box">
+                "Los modelos multi-hilo son fundamentales en los sistemas operativos actuales, ya que permiten el desarrollo de aplicaciones más eficientes, rápidas y capaces de ejecutar múltiples tareas de forma concurrente. Comprender la estructura y el comportamiento de los hilos facilita el diseño de software más robusto y permite un uso más efectivo de los recursos del sistema, mejorando el rendimiento general de las aplicaciones"
+                <div class="citation">(Silberschatz, Galvin & Gagne, 2018).</div>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-2-2-1">
+            <div class="section-header">
+                <div class="section-number">2.2.1</div>
+                <div class="section-title">Bibliotecas</div>
+            </div>
+            <div class="content">
+                <p>Las <strong>bibliotecas</strong> desempeñan un papel fundamental en los modelos multi-hilo de los sistemas operativos, ya que proporcionan las herramientas, funciones y abstracciones necesarias para la creación, gestión y sincronización de hilos de ejecución. Esto facilita el desarrollo de aplicaciones concurrentes, permitiendo a los programadores implementar paralelismo de forma más segura y eficiente.</p>
+                
+                <div class="citation">(Silberschatz, Galvin & Gagne, 2018).</div>
+
+                <h3>Funcionalidades Clave</h3>
+                <p>Las <strong>bibliotecas multihilo</strong>, comúnmente implementadas como API (<em>Application Programming Interface</em>), proporcionan elementos estandarizados con funciones que permiten a los programadores gestionar hilos dentro de un proceso. Estas bibliotecas facilitan la programación concurrente al ofrecer mecanismos robustos para:</p>
+
+                <ul>
+                    <li><strong>Crear y terminar hilos</strong>, permitiendo iniciar nuevas ejecuciones dentro de un proceso existente y finalizar su ciclo de vida.</li>
+                    <li><strong>Sincronizar hilos</strong>, mediante mecanismos como:
+                        <ul>
+                            <li><strong>Mutex (Mutual Exclusion)</strong>: Valida que solo un hilo ingrese a una sección crítica del código a la vez.</li>
+                            <li><strong>Semáforos</strong>: Controlan el acceso a recursos limitados o permiten la señalización entre hilos.</li>
+                            <li><strong>Variables de condición</strong>: Los hilos esperar una condición específica antes de continuar, siendo notificados por otros hilos cuando dicha condición se cumple.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Gestión de datos específicos del hilo (Thread-Local Storage - TLS)</strong>, lo cual permite que cada hilo mantenga su propia copia de ciertos datos, evitando interferencias y reduciendo la necesidad de sincronización.</li>
+                    <li><strong>Planificación y prioridades</strong>, donde algunas bibliotecas ofrecen funciones para establecer prioridades o sugerencias de planificación, aunque la decisión final corresponde al planificador del sistema operativo.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El uso pertinente de cada una de las funciones es necesario para el desarrollo de aplicaciones concurrentes, robustas y eficientes"
+                    <div class="citation">(Silberschatz, Galvin & Gagne, 2018).</div>
+                </div>
+
+                <h3>Ejemplos de Bibliotecas de Hilos</h3>
+                <p>Dos de las bibliotecas de hilos más importantes y ampliamente utilizadas son:</p>
+
+                <ul>
+                    <li><strong>Pthreads (POSIX Threads)</strong>: Es un estándar IEEE (Portable Operating System Interface) para la creación y gestión de hilos. Es multiplataforma y se utiliza comúnmente en sistemas tipo Unix (Linux, macOS) y también está disponible en Windows. Pthreads define un conjunto de funciones C para la manipulación de hilos.</li>
+                    <li><strong>Threads de Windows (WinAPI)</strong>: La API nativa de Windows proporciona sus propias funciones para trabajar con hilos, como CreateThread, WaitForSingleObject y EnterCriticalSection.</li>
+                </ul>
+
+                <h3>Importancia en Modelos Multihilos</h3>
+                <p>La importancia de las <strong>bibliotecas multihilo</strong> radica en diversos factores clave que facilitan el desarrollo eficiente de aplicaciones concurrentes. Estas bibliotecas proporcionan:</p>
+
+                <ul>
+                    <li><strong>Abstracción de la concurrencia</strong>, al simplificar la programación concurrente mediante una capa sobre las primitivas del kernel. Esto evita que los desarrolladores deban interactuar directamente con el núcleo del sistema operativo.</li>
+                    <li><strong>Portabilidad</strong>, ya que bibliotecas como <strong>Pthreads</strong> siguen estándares que permiten que el código multihilo funcione en distintos sistemas operativos compatibles.</li>
+                    <li><strong>Rendimiento y eficiencia</strong>, al permitir la ejecución concurrente en procesadores multinúcleo, mejorando la funcionalidad con su capacidad de respuesta de las aplicaciones. Por ejemplo, en la edición de video en donde distintos hilos pueden encargarse del renderizado, establecer la interfaz de usuario y el guardarlo en archivos respectivamente.</li>
+                    <li><strong>Reutilización de código</strong>, ya que estas bibliotecas contienen funciones optimizadas y bien probadas, lo que reduce el tiempo de desarrollo y los errores.</li>
+                    <li><strong>Un modelo de programación estandarizado</strong>, que facilita la colaboración entre desarrolladores y el mantenimiento del código.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Sin estas bibliotecas, los programadores tendrían que interactuar directamente con las complejas interfaces del kernel para gestionar hilos, lo que aumentaría la dificultad, el riesgo de errores y la falta de portabilidad. Por ello, las bibliotecas multihilo son un componente esencial que actúa como puente entre el hardware o kernel y las aplicaciones concurrentes"
+                    <div class="citation">(Silberschatz, Galvin & Gagne, 2018).</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-2-2-2">
+            <div class="section-header">
+                <div class="section-number">2.2.2</div>
+                <div class="section-title">Implementación</div>
+            </div>
+            <div class="content">
+                <p>La implementación de los <strong>modelos multihilo</strong> en los sistemas operativos comprende el diseño y desarrollo de mecanismos que permiten a los programas ejecutar múltiples secuencias de instrucciones concurrentemente dentro de un mismo proceso. Este enfoque puede analizarse desde dos perspectivas principales: la implementación se establece desde el punto de vista de usuario y de núcleo (<em>kernel</em>), así como una combinación de ambas, conocida como implementación híbrida. Estas variantes definen cómo se crean, gestionan y planifican los hilos en el sistema para maximizar eficiencia y concurrencia.</p>
+                
+                <div class="citation">(Silberschatz, Galvin & Gagne, 2018).</div>
+
+                <h3>1. Hilos a Nivel de Usuario (User-Level Threads - ULTs)</h3>
+
+                <h4>Proceso de Implementación</h4>
+                <p>La biblioteca de hilos del usuario maneja la creación, planificación y gestión de los hilos sin la intervención directa del kernel. El kernel solo es consciente de un único proceso y no de los hilos individuales dentro de él.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+
+                <ol>
+                    <li><strong>Biblioteca de Hilos</strong>: Es la que se encarga de los hilos en el espacio de usuario, por lo que está contiene el código para la creación, destrucción, planificación y sincronización de hilos. Ejemplos incluyen GNU Portable Threads (GPT) o una implementación básica de Pthreads sin soporte directo del kernel.</li>
+                    <li><strong>Creación de Hilos</strong>: Cuando una aplicación llama a una función para crear un nuevo hilo (ej., pthread_create() en Pthreads), la biblioteca de hilos asigna un bloque de control de hilo, conocida como (TCB - Thread Control Block), es por ello que se genera una pila para el nuevo hilo, y lo añade a una lista de hilos listos para ser llamados o ejecutados.</li>
+                    <li><strong>Planificación de Hilos</strong>: La biblioteca de hilos implementa su propio planificador (scheduler) para decidir qué hilo debe ejecutarse. Esto a menudo se basa en algoritmos de planificación simples como round-robin o prioridad. Cuando un hilo necesita ceder el control (ej., por una llamada a pthread_yield()), el planificador de la biblioteca elige el siguiente hilo que se encuentra en la lista de espera y le cambia el estado a listo para ser ejecutado.</li>
+                    <li><strong>Cambio de Contexto</strong>: Es cuando existe un cambio en el estado del hilo dentro del mismo proceso y es manejado completamente por la biblioteca de hilos. Esto implica guardar el contexto del hilo que sale (registros de CPU, contador de programa) en su TCB y cargar sus elementos del proceso. No se requiere una llamada al sistema ni un cambio de modo de usuario a kernel.</li>
+                    <li><strong>Sincronización</strong>: Los mecanismos de sincronización (mutex, semáforos) también son implementados por la biblioteca de hilos en el espacio de usuario.</li>
+                    <li><strong>Llamadas Bloqueantes</strong>: Un problema fundamental en los modelos de hilos a nivel de usuario es que, si uno de los hilos ejecuta una llamada al sistema que genera bloqueo (por ejemplo, una lectura de disco), el sistema operativo bloquea todo el proceso. Esto ocurre porque el núcleo no tiene visibilidad sobre los hilos individuales dentro del proceso.</li>
+                </ol>
+
+                <div class="citation">(Silberschatz, Galvin & Gagne, 2018).</div>
+
+                <h4>Ventajas</h4>
+                <ul>
+                    <li><strong>Eficiencia</strong>: La creación, gestión y cambio de contexto de los hilos son muy rápidos, ya que no implican cambios de modo de usuario a kernel.</li>
+                    <li><strong>Flexibilidad</strong>: Los programadores pueden implementar algoritmos de planificación personalizados sin modificar el kernel.</li>
+                    <li><strong>Portabilidad</strong>: Más fáciles de implementar en sistemas operativos que no soportan hilos a nivel de kernel.</li>
+                </ul>
+
+                <h4>Desventajas</h4>
+                <ul>
+                    <li><strong>Bloqueo de Proceso</strong>: Una llamada al sistema bloqueante por un hilo bloquea todo el proceso.</li>
+                    <li><strong>Sin Paralelismo Verdadero</strong>: No pueden aprovechar múltiples núcleos de CPU, ya que el kernel solo ve un proceso ejecutándose.</li>
+                </ul>
+
+                <h3>2. Hilos a Nivel de Núcleo (Kernel-Level Threads - KLTs)</h3>
+
+                <h4>Proceso de Implementación</h4>
+                <p>En este modelo, el kernel del sistema operativo es directamente consciente de todos los hilos y los gestiona. Cada hilo es una entidad de planificación separada para el kernel.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+
+                <ol>
+                    <li><strong>Soporte del Kernel</strong>: El kernel del sistema operativo tiene mecanismos internos para la creación, gestión y planificación de hilos. Por ejemplo, en Linux, los hilos se implementan como "tareas ligeras" o "procesos con hilos" que el planificador del kernel puede manejar directamente.</li>
+                    <li><strong>Creación de Hilos</strong>: Cuando una aplicación solicita la creación de un hilo, se realiza una <strong>llamada al sistema (syscall)</strong> al kernel. El kernel crea un nuevo hilo, asigna un TCB a nivel de kernel y lo añade a las colas de planificación del kernel.</li>
+                    <li><strong>Planificación de Hilos</strong>: El planificador del kernel es responsable de decidir qué hilo (independientemente del proceso al que pertenezca) se ejecutará en qué CPU. Esto permite un verdadero paralelismo en sistemas con múltiples núcleos.</li>
+                    <li><strong>Cambio de Contexto</strong>: Los cambios de contexto entre hilos son realizados por el kernel. Esto implica un cambio de modo de usuario a kernel, lo que es más costoso que un cambio de contexto de hilo a nivel de usuario.</li>
+                    <li><strong>Sincronización</strong>: Los mecanismos de sincronización son implementados a nivel de kernel, o las bibliotecas de usuario (como Pthreads) utilizan primitivas del kernel para su implementación (ej., mutex basados en llamadas al sistema).</li>
+                    <li><strong>Llamadas Bloqueantes</strong>: Si un hilo realiza una llamada al sistema y esté lo bloquea, entonces lo deja sin funcionar, pero los demás siguen en su proceso de ejecución</li>
+                </ol>
+
+                <h4>Ventajas</h4>
+                <ul>
+                    <li><strong>Paralelismo Verdadero</strong>: Los hilos se pueden ejecutarse en diferentes núcleos de CPU simultáneamente.</li>
+                    <li><strong>Robustez</strong>: Un hilo que realiza una llamada bloqueante no bloquea todo el proceso.</li>
+                    <li><strong>Mejor Uso de Recursos</strong>: El kernel puede asignar recursos de manera más eficiente a los hilos individuales.</li>
+                </ul>
+
+                <h4>Desventajas</h4>
+                <ul>
+                    <li><strong>Menor Eficiencia</strong>: Mayor sobrecarga debido a las llamadas al sistema y los cambios de contexto que involucran al kernel.</li>
+                    <li><strong>Menos Flexibilidad</strong>: La planificación de hilos es controlada por el kernel, lo que limita la capacidad del programador para personalizarla.</li>
+                </ul>
+
+                <h3>3. Implementación Híbrida (Many-to-Many Model)</h3>
+
+                <h4>Proceso de Implementación</h4>
+                <p>Este modelo híbrido integra las ventajas de los hilos a nivel de usuario y de núcleo, al permitir que varios hilos de usuario se asignen a uno o más hilos del kernel. La biblioteca de hilos de usuario se encarga de distribuir o multiplexar estos hilos sobre los hilos disponibles en el núcleo.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+
+                <p>Los pasos a establecerse en estos procesos son:</p>
+
+                <ol>
+                    <li><strong>Hilos de usuario y del kernel:</strong> En este modelo, la aplicación genera hilos a nivel de usuario, los cuales son gestionados por una biblioteca que se encarga de asignarlos a uno o más hilos del kernel para su ejecución.</li>
+                    <li><strong>Gestión Combinada</strong>: La biblioteca de hilos de usuario gestiona la planificación de los hilos de usuario sobre los hilos de kernel. Cuando un hilo de usuario realiza una llamada bloqueante, la biblioteca puede cambiar a otro hilo de usuario que esté mapeado al mismo hilo de kernel, manteniendo la capacidad de respuesta.</li>
+                    <li><strong>Flexibilidad y Paralelismo</strong>: Permite que las aplicaciones tengan un gran número de hilos de usuario (eficientes) mientras aprovechan el paralelismo verdadero de los hilos de kernel.</li>
+                </ol>
+
+                <h4>Ventajas</h4>
+                <ul>
+                    <li><strong>Equilibrio:</strong> Combina la rapidez de los hilos de usuario con la capacidad de ejecución paralela que ofrecen los hilos del kernel, logrando así un rendimiento eficiente y balanceado.</li>
+                    <li><strong>Superación de Bloqueos</strong>: Una llamada bloqueante de un hilo de usuario no necesariamente bloquea todo el proceso.</li>
+                </ul>
+
+                <h4>Desventajas</h4>
+                <ul>
+                    <li><strong>Mayor Complejidad</strong>: El diseño y la implementación son más complejos que los otros dos modelos.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "La mayoría de los sistemas operativos modernos como Linux y Windows utilizan principalmente un modelo de hilos a nivel de kernel o un modelo híbrido con un fuerte enfoque en los hilos a nivel de kernel, donde las bibliotecas de hilos de usuario (como Pthreads o la WinAPI) actúan como una interfaz conveniente para interactuar con las primitivas de hilos que el kernel proporciona"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-2-2-3">
+            <div class="section-header">
+                <div class="section-number">2.2.3</div>
+                <div class="section-title">Hilos en modo usuario y kernel</div>
+            </div>
+            <div class="content">
+                <p>Silberschatz, Galvin y Gagne (2018) explican que la diferencia clave entre hilos en modo usuario y modo kernel radica en quién gestiona los hilos: la biblioteca de usuario o el núcleo del sistema operativo.</p>
+
+                <h3>Hilos en Modo Usuario (User-Level Threads - ULTs)</h3>
+                <p>Los hilos en modo usuario son gestionados completamente por una biblioteca de hilos en el espacio de usuario, sin intervención directa del kernel.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+
+                <h4>Proceso:</h4>
+                <ol>
+                    <li><strong>Creación</strong>: Se realiza mediante funciones como pthread_create(), asignando un TCB y una pila para el nuevo hilo.</li>
+                    <li><strong>Planificación</strong>: La biblioteca del usuario decide qué hilo ejecutar mediante su propio planificador.</li>
+                    <li><strong>Cambio de contexto</strong>: Se hace sin intervención del kernel, lo que lo hace muy eficiente.</li>
+                    <li><strong>Sincronización</strong>: También gestionada por la biblioteca de usuario.</li>
+                    <li><strong>Llamadas bloqueantes</strong>: Si un hilo se bloquea, todo el proceso puede quedar detenido, ya que el kernel no puede diferenciar sus estados de los hilos.</li>
+                </ol>
+
+                <h4>Ventajas:</h4>
+                <ul>
+                    <li><strong>Eficiencia</strong>: La gestión de hilos es muy rápida y de bajo costo, ya que no hay transiciones al modo kernel.</li>
+                    <li><strong>Flexibilidad</strong>: La aplicación puede implementar sus propios algoritmos de planificación de hilos.</li>
+                    <li><strong>Portabilidad</strong>: Pueden implementarse en sistemas operativos que no ofrecen soporte nativo para hilos a nivel de kernel.</li>
+                </ul>
+
+                <h4>Desventajas:</h4>
+                <ul>
+                    <li><strong>Bloqueo de Proceso</strong>: Sí se produce una llamada al sistema bloqueante de un hilo, esto en automático detiene a todo el proceso.</li>
+                    <li><strong>Sin Paralelismo Verdadero</strong>: No pueden aprovechar múltiples núcleos de CPU, ya que el kernel solo ve un proceso y lo planifica en un solo núcleo.</li>
+                </ul>
+
+                <h3>Hilos en Modo Kernel (Kernel-Level Threads - KLTs)</h3>
+                <p>Según Silberschatz, Galvin y Gagne (2018), en el modelo de hilos en modo kernel, el sistema operativo se encarga directamente de su administración. Esto incluye la creación, planificación, cambio de contexto y sincronización de cada hilo de forma individual, lo que permite un paralelismo real al distribuirlos entre varios núcleos del procesador. Una de sus principales ventajas es que, si un hilo se bloquea, los demás pueden continuar ejecutándose. Sin embargo, esta gestión implica un mayor costo en rendimiento, debido a las transiciones entre el modo usuario y el modo kernel, y limita la capacidad de control de las aplicaciones sobre sus propios hilos.</p>
+
+                <h4>Proceso:</h4>
+                <ol>
+                    <li><strong>Soporte del Kernel</strong>: El kernel del sistema operativo incorpora las funcionalidades para crear, destruir, planificar y sincronizar hilos.</li>
+                    <li><strong>Creación</strong>: Cuando un programa crea un hilo (ej., usando la API de Pthreads o la API de Windows Threads), se realiza una <strong>llamada al sistema (syscall)</strong>. El kernel crea un nuevo hilo (con su propio TCB a nivel de kernel) y lo añade a las colas de planificación globales del sistema operativo.</li>
+                    <li><strong>Planificación:</strong> El kernel del sistema operativo se encarga de seleccionar qué hilo, sin importar a qué proceso pertenezca, será ejecutado en cada núcleo de la CPU. Gracias a esta planificación, hilos de un mismo proceso pueden correr simultáneamente en distintos núcleos, lo que permite un paralelismo real.</li>
+                    <li><strong>Cambio de contexto:</strong> La conmutación entre hilos, incluso si pertenecen al mismo proceso, es gestionada por el núcleo del sistema operativo. Este proceso requiere una transición entre el modo usuario y el modo kernel, lo que representa un costo adicional en términos de rendimiento.</li>
+                    <li><strong>Sincronización</strong>: Los mecanismos de sincronización son proporcionados o soportados por el kernel, garantizando una coordinación segura entre hilos que comparten recursos.</li>
+                    <li><strong>Llamadas al Sistema Bloqueantes</strong>: Si un hilo realiza una llamada al sistema que lo bloquea, <strong>solo ese hilo se bloquea</strong>. Los otros hilos del mismo proceso (gestionados por el kernel) pueden seguir ejecutándose.</li>
+                </ol>
+
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+
+                <h4>Ventajas:</h4>
+                <ul>
+                    <li><strong>Paralelismo Verdadero</strong>: Pueden ejecutarse en múltiples núcleos de CPU simultáneamente.</li>
+                    <li><strong>Robustez</strong>: Un hilo bloqueado no afecta la ejecución de otros hilos del mismo proceso.</li>
+                    <li><strong>Mejor Uso de Recursos</strong>: El kernel puede distribuir los hilos de manera más eficiente entre los recursos disponibles.</li>
+                </ul>
+
+                <h4>Desventajas:</h4>
+                <ul>
+                    <li><strong>Menor Eficiencia</strong>: El costo de las llamadas al sistema y los cambios de contexto al kernel es mayor.</li>
+                    <li><strong>Menos Flexibilidad</strong>: La planificación es controlada por el kernel, limitando la personalización por parte de la aplicación.</li>
+                </ul>
+
+                <h3>Modelo Híbrido (Many-to-Many)</h3>
+                <p>El modelo híbrido Many-to-Many en sistemas operativos permite asignar varios hilos de usuario a uno o más hilos del kernel, lo que combina la eficiencia de los hilos a nivel de usuario con la capacidad de ejecución paralela que ofrece el kernel. Este enfoque optimiza el rendimiento del sistema, mejora la capacidad de respuesta y facilita la programación concurrente.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+
+                <h4>Características del Modelo Híbrido:</h4>
+                <p>En este modelo, el sistema operativo se encarga directamente de su administración. Esto incluye la creación, planificación, cambio de contexto y sincronización de cada hilo de forma individual, lo que permite un paralelismo real al distribuirlos entre varios núcleos del procesador. Una de sus principales ventajas es que, si un hilo se bloquea, los demás pueden continuar ejecutándose. Sin embargo, esta gestión implica un mayor costo en rendimiento, debido a las transiciones entre el modo usuario y el modo kernel, y limita la capacidad de control de las aplicaciones sobre sus propios hilos.</p>
+
+                <h4>Ventajas:</h4>
+                <ul>
+                    <li>Permite tener muchos hilos de usuario sin sobrecargar al kernel.</li>
+                    <li>Soporta paralelismo verdadero en sistemas multinúcleo.</li>
+                    <li>La biblioteca de usuario puede reasignar hilos ante bloqueos.</li>
+                </ul>
+
+                <h4>Importancia del Manejo de Hilos</h4>
+                <div class="quote-box">
+                    "La diferencia clave entre los modelos radica en quién gestiona los hilos: si es la biblioteca en espacio de usuario o el kernel del sistema operativo. Esta decisión afecta directamente el rendimiento, la eficiencia y la capacidad de respuesta del sistema"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-card">
+            <div class="activity-title">Actividad de Aprendizaje: Modelo de Procesos</div>
+            <p>Evalúa tu comprensión sobre los fundamentos, operaciones, estados e implementación de procesos en sistemas operativos.</p>
+            <a href="actividad_2_1.html" class="activity-btn">
+                <i class="fas fa-pencil-alt"></i> Realizar Actividad
+            </a>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="2.1.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Anterior: 2.1 Modelo de procesos</a>
+            <a href="2.3.html" class="nav-btn">Continuar a 2.3: Comunicación entre procesos<i class="fas fa-arrow-right"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 2: Administración de procesos</p>
+            <p>Desarrollado para fines educativos - © 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        let sidebarOpen = false;
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                container.style.marginLeft = '370px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            }
+        }
+
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section');
+            const navItems = document.querySelectorAll('.nav-item[data-section]');
+            let currentSectionId = '';
+
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150 && rect.bottom >= 150) {
+                    currentSectionId = section.id;
+                }
+            });
+
+            navItems.forEach(item => {
+                const sectionId = 'seccion-' + item.dataset.section;
+                if (sectionId === currentSectionId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        }
+
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        function toggleScrollToTopBtn() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        window.addEventListener('scroll', () => {
+            updateActiveSection();
+            updateReadingProgress();
+            toggleScrollToTopBtn();
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 100;
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveSection();
+            updateReadingProgress();
+            updateContainerSpacing();
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) { 
+                    toggleSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

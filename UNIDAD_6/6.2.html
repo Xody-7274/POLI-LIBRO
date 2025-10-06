@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6.2 Virtualización</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /*
+        Aquí comienza un bloque de estilos CSS para definir la apariencia de la página.
+        Incluye:
+        - Variables de color (--primary, --secondary, etc.) para un diseño consistente.
+        - Estilos base para todos los elementos (*).
+        - Estilos para el cuerpo de la página (body), incluyendo un fondo degradado.
+        - Diseño de componentes específicos como botones flotantes, menú lateral, contenedor principal,
+          encabezados, secciones, tablas, bloques de código, tarjetas de actividad, pie de página, etc.
+        - Media Queries (@media) para adaptar el diseño a pantallas más pequeñas (diseño responsivo).
+        */
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* Botón flotante de inicio */
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        /* Menú de navegación lateral */
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Botón toggle del menú */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        /* Indicador de progreso de lectura */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        /* Overlay para cerrar el menú */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Contenedor principal con espaciado para botones flotantes */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .content ul, .content ol {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+        
+        .table-container {
+            max-width: 800px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-caption {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: var(--gray);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        .code-block {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .code-caption {
+            font-style: italic;
+            margin-top: 10px;
+            color: var(--gray);
+            text-align: center;
+        }
+        
+        .figure-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .figure-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin: 15px 0;
+            color: var(--gray);
+            font-style: italic;
+            flex-direction: column;
+
+        }
+        
+        .figure-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+        
+        .figure-caption {
+            font-style: italic;
+            color: var(--gray);
+            margin-top: 10px;
+        }
+        
+        .imagen-figura1 {
+            max-width: 300px;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .imagen-figura2 {
+            max-width: 500px;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .imagen-figura3 {
+            max-width: 600px;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .imagen-figura4 {
+            max-width: 700px;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .activity-card {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 4px solid var(--success);
+            text-align: center;
+        }
+        
+        .activity-title {
+            font-size: 1.8rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .activity-description {
+            margin-bottom: 20px;
+        }
+        
+        .activity-btn {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .activity-btn:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Botón de ir arriba */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-number {
+                min-width: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio de Unidades">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">6.2 Virtualización</div>
+            <div class="sidebar-subtitle">Conceptos y Tecnologías</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item">
+                    <i class="fas fa-play-circle"></i>
+                    Inicio de la unidad
+                </a>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    Menú principal
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#seccion-6-2-1" class="nav-item" data-section="6-2-1">
+                    <i class="fas fa-gamepad"></i>
+                    6.2.1 Emulación
+                </a>
+                <a href="#seccion-6-2-2" class="nav-item" data-section="6-2-2">
+                    <i class="fas fa-microchip"></i>
+                    6.2.2 Virtualización por Hardware
+                </a>
+                <a href="#seccion-6-2-3" class="nav-item" data-section="6-2-3">
+                    <i class="fas fa-handshake"></i>
+                    6.2.3 Paravirtualización
+                </a>
+                <a href="#seccion-6-2-4" class="nav-item" data-section="6-2-4">
+                    <i class="fas fa-box-open"></i>
+                    6.2.4 Contenedores
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="#actividad-aprendizaje" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad de aprendizaje
+                </a>
+                <a href="6.1.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    Anterior: El Ambiente de Seguridad
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 6</a>
+                <span>/</span>
+                <span>6.2 Virtualización</span>
+            </div>
+            <h1>6.2 Virtualización</h1>
+            <div class="subtitle">Creando mundos digitales dentro de un mismo sistema</div>
+        </header>
+        
+        <div class="intro">
+            <h3>INTRODUCCIÓN</h3>
+            <p>En el estudio de los sistemas operativos, la virtualización es uno de los conceptos clave que nos ayuda a entender cómo un sistema puede ofrecer eficiencia, seguridad y flexibilidad al manejar sus recursos. </p>
+            <p>Una de las formas más claras de aplicar la virtualización es en el uso de la memoria virtual, que permite que los programas se ejecuten como si tuvieran toda la memoria para sí mismos, cuando en realidad están compartiendo un recurso limitado con otros procesos. </p>
+            
+            <h4>¿QUÉ ES LA MEMORIA VIRTUAL?</h4>
+            <p>La memoria virtual les permite a los programas pensar que tienen acceso a un espacio de memoria exclusivo y continuo, incluso si la memoria física no es suficiente o está siendo compartida. </p>
+            <p>Sus principales objetivos son:</p>
+            <ul>
+                <li><b>Ejecutar programas grandes:</b> Aprovechar mejor la RAM cuando no es suficiente. </li>
+                <li><b>Aislar los procesos:</b> Evitar que los programas interfieran entre sí. </li>
+                <li><b>Mejorar la multiprogramación:</b> Hacer que los recursos se usen al máximo, cargando solo lo que realmente se necesite. </li>
+            </ul>
+
+            <h4>¿CÓMO FUNCIONA?</h4>
+            <p>El sistema operativo implementa la virtualización mediante varios componentes: </p>
+            <ul>
+                <li><b>Traducción de direcciones:</b> La MMU (Unidad de Gestión de Memoria) convierte las direcciones virtuales en físicas utilizando las tablas de páginas. </li>
+                <li><b>Paginación bajo demanda:</b> Solo se cargan en la RAM las páginas que se necesitan y las demás se guardan en el disco. </li>
+                <li><b>Espacio de intercambio (swap):</b> Un área en el disco que guarda las páginas que no están activas, es útil cuando la RAM se llena. </li>
+            </ul>
+
+            <h4>¿CÓMO FUNCIONA LA MMU Y LAS TABLAS DE PÁGINAS?</h4>
+            <p>La MMU utiliza las tablas jerárquicas para convertir direcciones. </p>
+            <p>Por ejemplo, en un sistema de 32 bits, la estructura de una entrada de la tabla de páginas sería como se muestra en el Código 2: </p>
+            <div class="code-block">
+<pre>// Estructura simplificada de una entrada de tabla de páginas
+struct page_table_entry {
+    uint32_t physical_frame : 20; // Marco físico 
+    uint32_t present : 1;         // Bit de presencia 
+    uint32_t writable : 1;        // Permiso de escritura 
+    // ... otros flags (acceso, modificado) 
+};</pre>
+                <div class="code-caption">Código 2. Estructura simplificada de una entrada de tabla de páginas en sistemas de 32 bits. </div>
+            </div>
+            <p>Cuando un proceso trata de acceder a una dirección no cargada en la RAM (bit de presencia=0), el sistema genera un "fallo de página" y comienza el proceso de carga desde el disco duro. </p>
+
+            <h4>EJEMPLO PRÁCTICO ¿QUÉ PASA CUANDO EJECUTAMOS VARIOS PROGRAMAS A LA VEZ?</h4>
+            <p>Imagina que tienes una computadora con 2 GB de memoria RAM.  Sin memoria virtual, si intentas ejecutar un programa que necesita 1.5 GB y otro que necesita 1 GB, simplemente no podrías correr ambos al mismo tiempo. </p>
+            <p>Pero con memoria virtual, el sistema operativo te permite hacerlo gracias a varios trucos inteligentes:</p>
+            <ul>
+                <li><b>Espacios de memoria virtual por proceso:</b> Cada programa que se ejecuta recibe su propio espacio de direcciones virtuales.  Por ejemplo, se les puede asignar 4 GB de espacio virtual, aunque físicamente no estén disponibles. </li>
+                <li><b>Traducción de direcciones:</b> Cuando un programa intenta acceder a una dirección de memoria, esa dirección no se refiere directamente a la RAM física.  El sistema operativo, con ayuda de la MMU, traduce esa dirección virtual a una dirección física mediante tablas de páginas. </li>
+                <li><b>El disco duro como memoria de apoyo:</b> Cuando ya no hay suficiente espacio en la RAM para todo lo que se está usando, el sistema operativo puede mover temporalmente partes de los programas al disco duro, en un archivo llamado swap o de intercambio. </li>
+            </ul>
+            <p>Este ejemplo de memoria virtual muestra perfectamente cómo funciona la virtualización en los sistemas operativos.  No solo permite que varios programas se ejecuten al mismo tiempo, sino que también protege los datos de cada uno y hace un uso más inteligente de la memoria. </p>
+        </div>
+        
+        <div class="section" id="seccion-6-2-1">
+            <div class="section-header">
+                <div class="section-number">6.2.1</div>
+                <div class="section-title">Emulación</div>
+            </div>
+            <div class="content">
+                <h3>INTRODUCCIÓN</h3>
+                <p>La emulación representa uno de los enfoques fundamentales en la virtualización de sistemas computacionales, permitiendo que un sistema (el anfitrión) ejecute software diseñado para una arquitectura completamente diferente (el huésped).  A diferencia de otras técnicas de virtualización que aprovechan similitudes de hardware, la emulación puede crear un entorno completamente artificial que simula el comportamiento de hardware inexistente en el sistema físico.  La emulación funciona mediante la creación de una capa de software que traduce cada instrucción del sistema huésped en una o más instrucciones equivalentes del sistema anfitrión.  Este proceso, aunque computacionalmente costoso, proporciona una compatibilidad total que permite ejecutar sistemas operativos y aplicaciones sin modificación alguna. </p>
+
+                <h3>CARACTERÍSTICAS FUNDAMENTALES</h3>
+                <p>Las principales características de la emulación se resumen en la Tabla 7: </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>CARACTERÍSTICA</th>
+                                <th>DESCRIPCIÓN</th>
+                                <th>VENTAJA</th>
+                                <th>DESVENTAJA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Compatibilidad total</td>
+                                <td>No requiere modificaciones del software huésped</td>
+                                <td>Ejecuta cualquier SO sin cambios</td>
+                                <td>Alto overhead computacional</td>
+                            </tr>
+                            <tr>
+                                <td>Independencia de arquitectura</td>
+                                <td>Puede emular hardware completamente diferente</td>
+                                <td>Máxima flexibilidad</td>
+                                <td>Rendimiento significativamente reducido</td>
+                            </tr>
+                            <tr>
+                                <td>Traducción de instrucciones</td>
+                                <td>Cada instrucción se traduce individualmente</td>
+                                <td>Precisión en la emulación</td>
+                                <td>Latencia en la ejecución</td>
+                            </tr>
+                            <tr>
+                                <td>Simulación completa</td>
+                                <td>Emula todos los componentes del sistema</td>
+                                <td>Funcionalidad completa</td>
+                                <td>Uso intensivo de recursos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 7. Características fundamentales de la emulación (basado en Tanenbaum & Bos, 2015). </div>
+                </div>
+
+                <h3>TIPOS DE EMULACIÓN</h3>
+                <p>Existen diferentes enfoques para implementar emulación, cada uno con sus propias ventajas y casos de uso específicos, como se presenta en la Tabla 8: </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TIPO DE EMULACIÓN</th>
+                                <th>DESCRIPCIÓN</th>
+                                <th>EJEMPLOS</th>
+                                <th>CASOS DE USO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Emulación de hardware</td>
+                                <td>Simula componentes físicos específicos</td>
+                                <td>"QEMU, VirtualBox"</td>
+                                <td>"Testing, desarrollo, legacy systems"</td>
+                            </tr>
+                            <tr>
+                                <td>Emulación de consolas</td>
+                                <td>Replica sistemas de videojuegos</td>
+                                <td>"MAME, Dolphin"</td>
+                                <td>"Preservación digital, gaming"</td>
+                            </tr>
+                            <tr>
+                                <td>Emulación de CPU</td>
+                                <td>Traduce instrucciones de procesador</td>
+                                <td>"Rosetta (Apple), Dynamic recompilation"</td>
+                                <td>Migración entre arquitecturas</td>
+                            </tr>
+                            <tr>
+                                <td>Emulación de sistema completo</td>
+                                <td>Simula todo el sistema computacional</td>
+                                <td>"VMware, Parallels"</td>
+                                <td>Múltiples SO en una máquina</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 8. Tipos de emulación y sus aplicaciones (adaptado de Stallings, 2018; Wolf et al., 2015). </div>
+                </div>
+
+                <h3>VENTAJAS Y LIMITACIONES</h3>
+                <p>La emulación ofrece beneficios únicos, pero también presenta desafíos significativos.  Sus principales ventajas incluyen la capacidad de ejecutar software legacy, realizar testing en múltiples plataformas sin hardware físico, y preservar sistemas históricos.  Sin embargo, el costo computacional puede ser de 10 a 100 veces mayor que la ejecución nativa, dependiendo de la complejidad de la traducción requerida. </p>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-6-2-2">
+            <div class="section-header">
+                <div class="section-number">6.2.2</div>
+                <div class="section-title">Virtualización Asistida por Hardware</div>
+            </div>
+            <div class="content">
+                <h3>INTRODUCCIÓN</h3>
+                <p>La virtualización asistida por hardware representa una evolución significativa en las tecnologías de virtualización, introduciendo capacidades específicas en los procesadores para facilitar y acelerar la creación y gestión de máquinas virtuales.  Esta aproximación busca resolver las limitaciones de rendimiento inherentes a la virtualización por software mediante la implementación de instrucciones especializadas y mecanismos de hardware dedicados.  Las tecnologías modernas como Intel VT-x (Virtualization Technology) y AMD-V (AMD Virtualization) han transformado el panorama de la virtualización al proporcionar soporte nativo en el procesador para la ejecución de múltiples sistemas operativos.  Estas extensiones permiten que el hypervisor opere con mayor eficiencia, reduciendo el overhead tradicionalmente asociado con la virtualización. </p>
+
+                <h3>COMPONENTES</h3>
+                <p>Los elementos clave que componen la virtualización asistida por hardware se detallan en la Tabla 9: </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>COMPONENTE</th>
+                                <th>FUNCIÓN</th>
+                                <th>TECNOLOGÍA INTEL</th>
+                                <th>TECNOLOGÍA AMD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Extensiones de CPU</td>
+                                <td>Soporte nativo para hypervisors</td>
+                                <td>VT-x</td>
+                                <td>AMD-V</td>
+                            </tr>
+                            <tr>
+                                <td>Gestión de memoria</td>
+                                <td>Traducción de direcciones virtualizadas</td>
+                                <td>EPT (Extended Page Tables)</td>
+                                <td>NPT (Nested Page Tables)</td>
+                            </tr>
+                            <tr>
+                                <td>Manejo de I/O</td>
+                                <td>Virtualización de dispositivos</td>
+                                <td>VT-d</td>
+                                <td>AMD-Vi</td>
+                            </tr>
+                            <tr>
+                                <td>Interrupciones</td>
+                                <td>Gestión eficiente de interrupciones</td>
+                                <td>VT-x with APIC</td>
+                                <td>AVIC (Advanced Virtual Interrupt Controller)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 9. Componentes de virtualización asistida por hardware (basado en Tanenbaum & Bos, 2015; Stallings, 2018). </div>
+                </div>
+
+                <h3>BENEFICIOS DE RENDIMIENTO</h3>
+                <p>La virtualización asistida por hardware ofrece mejoras sustanciales en rendimiento comparada con enfoques puramente software, como se muestra en la Tabla 10: </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>MÉTRICA</th>
+                                <th>VIRTUALIZACIÓN SOFTWARE</th>
+                                <th>HARDWARE-ASSISTED</th>
+                                <th>MEJORA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Overhead de CPU</td>
+                                <td>15-30%</td>
+                                <td>2-5%</td>
+                                <td>75-85%</td>
+                            </tr>
+                            <tr>
+                                <td>Gestión de memoria</td>
+                                <td>Alto costo de traducción</td>
+                                <td>Hardware nativo</td>
+                                <td>90-95%</td>
+                            </tr>
+                            <tr>
+                                <td>Cambios de contexto</td>
+                                <td>Emulación completa</td>
+                                <td>Instrucciones dedicadas</td>
+                                <td>80-90%</td>
+                            </tr>
+                            <tr>
+                                <td>Manejo de interrupciones</td>
+                                <td>Software trap and emulate</td>
+                                <td>Hardware virtualization</td>
+                                <td>70-80%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 10. Comparativa de rendimiento: software vs. hardware-assisted virtualization (adaptado de Silberschatz et al., 2018). </div>
+                </div>
+
+                <h3>ARQUITECTURA DE FUNCIONAMIENTO</h3>
+                <p>El funcionamiento de la virtualización asistida por hardware se basa en la creación de dos modos de operación distintos: el modo raíz (root mode) donde opera el hypervisor, y el modo no-raíz (non-root mode) donde ejecutan las máquinas virtuales.  Esta separación permite que el hardware gestione automáticamente las transiciones entre el hypervisor y las VMs, reduciendo significativamente el overhead de las operaciones de virtualización. </p>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-6-2-3">
+            <div class="section-header">
+                <div class="section-number">6.2.3</div>
+                <div class="section-title">Paravirtualización</div>
+            </div>
+            <div class="content">
+                <h3>INTRODUCCIÓN</h3>
+                <p>La paravirtualización representa una evolución significativa en las tecnologías de virtualización, emergiendo como una respuesta directa a las limitaciones inherentes de los métodos tradicionales de emulación y virtualización asistida por hardware.  A diferencia de estos enfoques, donde el sistema operativo huésped permanece inconsciente de su entorno virtualizado, la paravirtualización adopta un paradigma completamente diferente basado en la cooperación y el conocimiento mutuo entre el hipervisor y los sistemas operativos invitados. </p>
+                <p>La paravirtualización consiste en alojar sistemas operativos huésped que, a sabiendas de que están ejecutando en hardware virtualizado, no hacen llamadas directas a hardware, sino que las traducen a llamadas al sistema operativo anfitrión. </p>
+                <p>Este enfoque fundamental transforma la naturaleza misma de la virtualización, pasando de un modelo de engaño y emulación a uno de colaboración consciente.  Como establece Tanenbaum y Bos (2015), "un sistema operativo invitado para el que se han eliminado de manera intencional (algunas) instrucciones sensibles está paravirtualizado".  Esta definición aparentemente simple encapsula un cambio paradigmático fundamental en cómo conceptualizamos la virtualización. </p>
+
+                <h3>PRINCIPIOS FUNDAMENTALES DE LA PARAVIRTUALIZACIÓN</h3>
+                <h4>DEFINICIÓN Y ARQUITECTURA BÁSICA</h4>
+                <p>La paravirtualización se fundamenta en un principio revolucionario: eliminar la necesidad de emulación completa del hardware mediante la modificación consciente del sistema operativo huésped.  El hipervisor debe definir una interfaz que consiste en un conjunto de llamadas a procedimientos que los sistemas operativos invitados puedan utilizar, formando efectivamente una API (Interfaz de Programación de Aplicaciones) específicamente diseñada para sistemas operativos y no para aplicaciones convencionales. </p>
+                <p>La Tabla 11 presenta una comparación detallada entre la virtualización tradicional y la paravirtualización, destacando las diferencias arquitectónicas fundamentales. </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ASPECTO</th>
+                                <th>VIRTUALIZACIÓN TRADICIONAL</th>
+                                <th>PARAVIRTUALIZACIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Conocimiento del entorno</td>
+                                <td>SO desconoce la virtualización</td>
+                                <td>SO consciente de la virtualización</td>
+                            </tr>
+                            <tr>
+                                <td>Modificación del código</td>
+                                <td>No requiere cambios</td>
+                                <td>Requiere modificación del código fuente</td>
+                            </tr>
+                            <tr>
+                                <td>Tipo de llamadas al sistema</td>
+                                <td>Llamadas directas emuladas</td>
+                                <td>Llamadas específicas al hipervisor</td>
+                            </tr>
+                            <tr>
+                                <td>Overhead computacional</td>
+                                <td>Alto debido a la emulación</td>
+                                <td>Significativamente reducido</td>
+                            </tr>
+                             <tr>
+                                <td>Complejidad de implementación</td>
+                                <td>Menor para el SO huésped</td>
+                                <td>Mayor para el SO huésped</td>
+                            </tr>
+                             <tr>
+                                <td>Estabilidad del sistema</td>
+                                <td>Susceptible a fallos de emulación</td>
+                                <td>Mayor estabilidad por simplicidad</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 11. Comparación entre Virtualización Tradicional y Paravirtualización (elaboración propia basada en Wolf et al., 2015; Tanenbaum & Bos, 2015). </div>
+                </div>
+                <p>El proceso de transformación de un sistema operativo tradicional a uno paravirtualizado puede ser equivalente a adecuar al sistema operativo para que ejecute en una arquitectura nueva.  Esta analogía ilustra la magnitud del cambio requerido: no se trata simplemente de ajustes menores, sino de una reingeniería fundamental de cómo el sistema operativo interactúa con el hardware subyacente. </p>
+                
+                <h4>ARQUITECTURA DE COMUNICACIÓN</h4>
+                <p>La arquitectura de la paravirtualización se construye sobre una interfaz bien definida entre el hipervisor y los sistemas operativos invitados.  Los controladores de hardware tradicionales se convierten casi en simples pasarelas de llamadas al sistema, brindando además de una sobrecarga mínima, aún mayor estabilidad por simplicidad del código.  La Figura 1 ilustra la arquitectura de comunicación en entornos paravirtualizados, mostrando cómo se establece la comunicación directa entre el sistema operativo huésped y el hipervisor. </p>
+                <div class="figure-container">
+                    <img src="FIGURA1.jpg" alt="Arquitectura de Comunicación en Paravirtualización" class="imagen-figura1">
+                    <div class="figure-caption">Figura 1. Arquitectura de Comunicación en Paravirtualización. </div>
+                </div>
+
+                <h3>VENTAJAS Y BENEFICIOS OPERACIONALES</h3>
+                <h4>MEJORAS SIGNIFICATIVAS EN RENDIMIENTO</h4>
+                <p>La paravirtualización ofrece mejoras de rendimiento documentadas y significativas en comparación con las técnicas de virtualización tradicionales.  Según mediciones empíricas realizadas por Qumranet en 2007, las clases de dispositivos virtio y pv resultaron entre 5 y 10 veces más rápidas que la emulación de dispositivos reales.  La Tabla 12 presenta una comparativa detallada del rendimiento entre diferentes métodos de virtualización. </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>MÉTRICA</th>
+                                <th>VIRTUALIZACIÓN TRADICIONAL</th>
+                                <th>PARAVIRTUALIZACIÓN</th>
+                                <th>MEJORA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Operaciones de E/S por segundo</td>
+                                <td>Línea base (100%)</td>
+                                <td>500-1000%</td>
+                                <td>5-10x</td>
+                            </tr>
+                            <tr>
+                                <td>Latencia de red</td>
+                                <td>Alta (emulación completa)</td>
+                                <td>Baja (llamadas directas)</td>
+                                <td>70-80%</td>
+                            </tr>
+                            <tr>
+                                <td>Overhead de CPU</td>
+                                <td>15-25%</td>
+                                <td>3-5%</td>
+                                <td>75-85%</td>
+                            </tr>
+                            <tr>
+                                <td>Throughput de disco</td>
+                                <td>Limitado por emulación</td>
+                                <td>Cercano al nativo</td>
+                                <td>300-400%</td>
+                            </tr>
+                            <tr>
+                                <td>Uso de memoria</td>
+                                <td>Alto (buffers de emulación)</td>
+                                <td>Optimizado</td>
+                                <td>40-60%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 12. Comparativa de Rendimiento: Paravirtualización vs. Virtualización Tradicional (adaptado de Kivity et al., 2007; Russell, 2008; Rizzo et al., 2012). </div>
+                </div>
+
+                <h4>ESTABILIDAD Y CONFIABILIDAD MEJORADAS</h4>
+                <p>La eliminación de la capa de emulación no solo mejora el rendimiento, sino que también incrementa significativamente la estabilidad del sistema.  Al reducir la complejidad del código que maneja las operaciones críticas del sistema, la paravirtualización minimiza los puntos de fallo potenciales. </p>
+
+                <h3>PARAVIRTUALIZACIÓN Y SOFTWARE LIBRE</h3>
+                <h4>REQUISITOS DE ACCESO AL CÓDIGO FUENTE</h4>
+                <p>Una característica fundamental de la paravirtualización es su dependencia del acceso al código fuente del sistema operativo.  Para que los autores de un entorno que implemente paravirtualización logren que un sistema operativo nuevo pueda ser ejecutado en su arquitectura, deben poder manipular y modificar su código fuente.  La Tabla 13 muestra la viabilidad de paravirtualización según el tipo de sistema operativo y el acceso al código fuente. </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TIPO DE SISTEMA</th>
+                                <th>ACCESO AL CÓDIGO</th>
+                                <th>VIABILIDAD</th>
+                                <th>EJEMPLOS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Software Libre</td>
+                                <td>Completo</td>
+                                <td>Alta</td>
+                                <td>"Linux, FreeBSD, OpenSolaris"</td>
+                            </tr>
+                            <tr>
+                                <td>Software Propietario</td>
+                                <td>Limitado/Nulo</td>
+                                <td>Baja</td>
+                                <td>"Windows, macOS"</td>
+                            </tr>
+                             <tr>
+                                <td>Sistemas Académicos</td>
+                                <td>Bajo licencias especiales</td>
+                                <td>Media</td>
+                                <td>Windows XP (Academic Licensing)</td>
+                            </tr>
+                            <tr>
+                                <td>Sistemas Embebidos</td>
+                                <td>Variable</td>
+                                <td>Media-Alta</td>
+                                <td>"Sistemas IoT, RTOS"</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 13. Viabilidad de Paravirtualización por Tipo de Sistema Operativo (elaboración propia basada en Wolf et al., 2015). </div>
+                </div>
+
+                <h4>EL CASO PARADIGMÁTICO DE XEN</h4>
+                <p>El proyecto Xen, nacido como una iniciativa académica de la Universidad de Cambridge, ilustra perfectamente tanto las posibilidades como las limitaciones de la paravirtualización.  Según Barham et al. (2003), Xen sólo pudo ser empleado por muchos años como plataforma de paravirtualización de Linux, mientras que las versiones paravirtualizadas de sistemas propietarios permanecieron inaccesibles para el público general debido a restricciones de licenciamiento. </p>
+                
+                <h3>PARAVIRTUALIZACIÓN DE DISPOSITIVOS</h3>
+                <h4>IMPLEMENTACIÓN EN ENTORNOS HÍBRIDOS</h4>
+                <p>Una de las innovaciones más significativas en el campo de la paravirtualización es la posibilidad de implementar paravirtualización parcial de dispositivos dentro de entornos de virtualización completa.  Si el sistema operativo está estructurado de una forma modular, no hace falta modificar al sistema operativo completo para gozar de los beneficios de la paravirtualización en algunas áreas.  La Figura 2 ilustra la arquitectura de paravirtualización híbrida, donde ciertos componentes utilizan paravirtualización mientras otros mantienen emulación tradicional. </p>
+                <div class="figure-container">
+                    <img src="FIGURA2.jpg" alt="Arquitectura de Paravirtualización Híbrida" class="imagen-figura2">
+                    <div class="figure-caption">Figura 2. Arquitectura de Paravirtualización Híbrida. </div>
+                </div>
+                <p>Esta aproximación híbrida permite que varios aspectos que son parte del núcleo duro del sistema, como la administración de memoria o el manejo de interrupciones, tendrán que seguirse manejando mediante una emulación, aunque mucho más delgada, mientras que los dispositivos de alta actividad se benefician de la eficiencia de la paravirtualización. </p>
+
+                <h4>DISPOSITIVOS OBJETIVO PRIORITARIOS</h4>
+                <p>Los dispositivos que más se benefician de la paravirtualización son aquellos que típicamente generan más actividad de entrada y salida.  Estos incluyen: </p>
+                <ul>
+                    <li><b>Medios de almacenamiento:</b> Discos duros, SSDs, sistemas de archivos distribuidos</li>
+                    <li><b>Interfaces de red:</b> Tarjetas Ethernet, interfaces inalámbricas, conexiones de alta velocidad</li>
+                    <li><b>Salida de video:</b> Aceleración gráfica, renderizado 3D, procesamiento de video</li>
+                </ul>
+
+                <h3>INTERFAZ DE MÁQUINA VIRTUAL (VMI)</h3>
+                <h4>SOLUCIÓN AL PROBLEMA DE PORTABILIDAD</h4>
+                <p>La proliferación de diferentes hipervisores con APIs incompatibles creó un desafío significativo para la adopción generalizada de la paravirtualización.  ¿Qué pasa si hay varios hipervisores disponibles en el mercado como VMware, el Xen de código fuente abierto y Microsoft Viridian, todos ellos con APIs de hipervisor algo distintas?  La solución propuesta por Amsden y colaboradores introdujo el concepto de VMI (Virtual Machine Interface).  El kernel se modifica para llamar a ciertos procedimientos especiales cada vez que necesita hacer algo sensible, creando una capa de abstracción que permite la portabilidad entre diferentes plataformas de virtualización.  La Figura 3 muestra la arquitectura VMI para múltiples hipervisores, demonstrando cómo un mismo sistema operativo puede ejecutarse en diferentes plataformas. </p>
+                <div class="figure-container">
+                    <img src="FIGURA3.jpg" alt="Arquitectura VMI para Múltiples Hipervisores" class="imagen-figura3">
+                    <div class="figure-caption">Figura 3. Arquitectura VMI para Múltiples Hipervisores. </div>
+                </div>
+
+                <h4>IMPLEMENTACIONES ALTERNATIVAS</h4>
+                <p>Además del VMI, han surgido otras técnicas para abordar el problema de la interfaz de máquina virtual.  Una de las más populares es paravirt ops. Esta idea es similar en concepto a lo que hemos visto antes, pero difiere en algunos detalles. </p>
+                
+                <h3>EJEMPLO PRÁCTICO: IMPLEMENTACIÓN DE PARAVIRTUALIZACIÓN</h3>
+                <p>Para ilustrar cómo funciona la paravirtualización en la práctica, el Código 3 presenta un ejemplo simplificado de cómo un sistema operativo paravirtualizado podría manejar operaciones de E/S. </p>
+                <div class="code-block">
+<pre>// Código 3 - Ejemplo de operación paravirtualizada de E/S 
+#include &lt;paravirt_ops.h&gt;
+
+// Estructura para operaciones paravirtualizadas 
+struct paravirt_ops pv_ops = {
+    .read_disk = hypercall_read_disk,
+    .write_disk = hypercall_write_disk,
+    .alloc_memory = hypercall_alloc_memory,
+    .free_memory = hypercall_free_memory
+};
+
+// Función paravirtualizada para lectura de disco 
+int paravirt_disk_read(int device_id, void* buffer, size_t size, off_t offset) {
+    // En lugar de acceder directamente al hardware,
+    // realizamos una llamada al hipervisor
+    struct hypercall_params params = {
+        .device_id = device_id,
+        .buffer = buffer,
+        .size = size,
+        .offset = offset,
+        .operation = HYPERCALL_DISK_READ
+    };
+    // Llamada directa al hipervisor 
+    return pv_ops.read_disk(&params);
+} 
+
+// Función tradicional vs paravirtualizada 
+void comparison_example() {
+    // Método tradicional (emulado)
+    // outb(DISK_COMMAND_REG, READ_SECTOR); // Instrucción sensible 
+    // while(!(inb(DISK_STATUS_REG) & READY_BIT)); // Polling 
+    
+    // Método paravirtualizado
+    char buffer[512];
+    int result = paravirt_disk_read(0, buffer, 512, 1024); 
+    
+    if (result == HYPERCALL_SUCCESS) {
+        printf("Lectura exitosa mediante paravirtualización\n");
+    }
+} </pre>
+                <div class="code-caption">Código 3. Ejemplo de implementación de operaciones paravirtualizadas de E/S. </div>
+                </div>
+                <p>Este código ilustra la diferencia fundamental: donde un sistema tradicional utilizaría instrucciones de hardware directas (que requieren emulación), el sistema paravirtualizado utiliza llamadas específicas al hipervisor que son más eficientes y directas. </p>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-6-2-4">
+            <div class="section-header">
+                <div class="section-number">6.2.4</div>
+                <div class="section-title">Contenedores</div>
+            </div>
+            <div class="content">
+                <h3>INTRODUCCIÓN</h3>
+                <p>Los contenedores representan una revolución paradigmática en el mundo de la virtualización, ofreciendo una alternativa fundamentalmente diferente a los enfoques tradicionales de virtualización completa.  Una estrategia completamente distinta para la creación de máquinas virtuales es la de contenedores.  Esta tecnología ha transformado la manera en que desarrollamos, desplegamos y gestionamos aplicaciones, convirtiéndose en una piedra angular de la computación en la nube moderna y las arquitecturas de microservicios.  A diferencia de las tecnologías de virtualización previamente discutidas, que buscan crear la ilusión de hardware completamente separado, los contenedores adoptan un enfoque radicalmente diferente: al emplear contenedores sólo se ejecuta un sistema operativo, que es el mismo para los sistemas anfitrión y huésped. </p>
+                
+                <h3>FUNDAMENTOS CONCEPTUALES Y EVOLUCIÓN HISTÓRICA</h3>
+                <h4>RAÍCES CONCEPTUALES: LA LLAMADA CHROOT()</h4>
+                <p>Los contenedores modernos tienen sus raíces conceptuales en una función aparentemente simple pero revolucionaria en su momento: la llamada al sistema chroot(). Esta función restringe la visión del sistema de archivos de un proceso a sólo el directorio hacia el cual ésta fue invocada.  Aunque puede parecer una funcionalidad básica, chroot() estableció el principio fundamental de aislamiento que eventualmente evolucionaría hacia los sistemas de contenedores sofisticados que conocemos hoy.  La Tabla 14 presenta la evolución histórica de las tecnologías de contenedores, desde sus orígenes hasta las implementaciones modernas. </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>AÑO</th>
+                                <th>TECNOLOGÍA</th>
+                                <th>SISTEMA</th>
+                                <th>INNOVACIÓN PRINCIPAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1982</td>
+                                <td>chroot()</td>
+                                <td>Unix 4.2BSD</td>
+                                <td>Aislamiento básico del sistema de archivos</td>
+                            </tr>
+                            <tr>
+                                <td>2000</td>
+                                <td>FreeBSD Jails</td>
+                                <td>FreeBSD 4.0</td>
+                                <td>Primer sistema completo de contenedores</td>
+                            </tr>
+                            <tr>
+                                <td>2001</td>
+                                <td>Linux VServer</td>
+                                <td>Linux</td>
+                                <td>Virtualización a nivel de SO en Linux</td>
+                            </tr>
+                            <tr>
+                                <td>2004</td>
+                                <td>Solaris Containers</td>
+                                <td>Solaris 10</td>
+                                <td>Zones con gestión avanzada de recursos</td>
+                            </tr>
+                            <tr>
+                                <td>2006</td>
+                                <td>Process Containers</td>
+                                <td>Linux</td>
+                                <td>Precursor de cgroups</td>
+                            </tr>
+                            <tr>
+                                <td>2008</td>
+                                <td>LXC</td>
+                                <td>Linux</td>
+                                <td>Contenedores nativos de Linux</td>
+                            </tr>
+                            <tr>
+                                <td>2013</td>
+                                <td>Docker</td>
+                                <td>Linux</td>
+                                <td>Popularización y estandarización</td>
+                            </tr>
+                            <tr>
+                                <td>2014</td>
+                                <td>Kubernetes</td>
+                                <td>Multiplataforma</td>
+                                <td>Orquestación de contenedores</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 14. Evolución Histórica de las Tecnologías de Contenedores. </div>
+                </div>
+                <p>La historia de chroot() es particularmente interesante porque inicialmente se pensaba que había sido creada por Bill Joy en 1982 para ayudarse en el desarrollo del sistema Unix 4.2BSD.  Sin embargo, investigaciones posteriores realizadas por Losh (2020) han demostrado que chroot() fue introducida en la 7ª Edición de Unix de Bell Labs en 1979, dos años antes de lo que se creía originalmente.  Este descubrimiento surgió al examinar cuidadosamente los registros históricos del sistema SCCS (Source Code Control System). </p>
+
+                <h4>LA PRIMERA IMPLEMENTACIÓN COMPLETA: FREEBSD JAILS</h4>
+                <p>El salto conceptual de chroot() a un sistema completo de contenedores ocurrió cuando FreeBSD creó el subsistema Jails a partir de su versión 4.0, del año 2000.  Esta implementación fue desarrollada por Poul-Henning Kamp en respuesta a una solicitud específica de Derrick T. Woolworth, quien necesitaba ejecutar múltiples versiones de Apache y MySQL en el mismo servidor para su empresa de hosting R&D Associates Inc.  Esta implementación representó la primera realización completa de la visión de contenedores como la conocemos hoy, proporcionando no solo aislamiento del sistema de archivos, sino un entorno completamente aislado para la ejecución de aplicaciones. </p>
+                
+                <h3>ARQUITECTURA Y DIFERENCIAS FUNDAMENTALES</h3>
+                <h4>COMPARACIÓN ARQUITECTÓNICA FUNDAMENTAL</h4>
+                <p>Mientras que las tecnologías antes descritas de virtualización implementan hardware virtual para cada sistema operativo, los contenedores más bien presentan un sistema operativo virtual para el conjunto de procesos que definen el comportamiento de cada máquina virtual.  Mientras que los métodos tradicionales operan mediante una multiplexación de máquinas virtuales sobre hardware real, los contenedores operan mediante restricciones adicionales sobre los procesos de usuario.  La Tabla 15 presenta una comparación arquitectónica detallada entre contenedores y otros métodos de virtualización. </p>
+                 <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ASPECTO</th>
+                                <th>VIRTUALIZACIÓN COMPLETA</th>
+                                <th>PARAVIRTUALIZACIÓN</th>
+                                <th>CONTENEDORES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Sistemas operativos</td>
+                                <td>Múltiples SO completos</td>
+                                <td>Múltiples SO modificados</td>
+                                <td>Un SO compartido</td>
+                            </tr>
+                            <tr>
+                                <td>Hipervisor</td>
+                                <td>Requerido</td>
+                                <td>Requerido (microkernel)</td>
+                                <td>No requerido</td>
+                            </tr>
+                            <tr>
+                                <td>Overhead de memoria</td>
+                                <td>Alto (múltiples kernels)</td>
+                                <td>Medio (kernels optimizados)</td>
+                                <td>Bajo (kernel compartido)</td>
+                            </tr>
+                            <tr>
+                                <td>Tiempo de inicio</td>
+                                <td>Minutos</td>
+                                <td>Minutos</td>
+                                <td>Segundos</td>
+                            </tr>
+                            <tr>
+                                <td>Aislamiento</td>
+                                <td>Hardware virtual</td>
+                                <td>API del hipervisor</td>
+                                <td>Namespaces y cgroups</td>
+                            </tr>
+                            <tr>
+                                <td>Flexibilidad de SO</td>
+                                <td>Máxima</td>
+                                <td>Alta</td>
+                                <td>Limitada al SO anfitrión</td>
+                            </tr>
+                            <tr>
+                                <td>Eficiencia de recursos</td>
+                                <td>Baja</td>
+                                <td>Media</td>
+                                <td>Alta</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 15. Comparación Arquitectónica: Contenedores vs. Otros Métodos de Virtualización (elaboración propia basada en Wolf et al., 2015; Merkel, 2014). </div>
+                </div>
+                <p>Esta diferencia arquitectónica fundamental tiene implicaciones profundas. Mientras que los métodos tradicionales operan mediante una multiplexación de máquinas virtuales sobre hardware real, los contenedores operan mediante restricciones adicionales sobre los procesos de usuario. </p>
+                
+                <h3>MECANISMOS DE AISLAMIENTO EN CONTENEDORES</h3>
+                <h4>ARQUITECTURA DE AISLAMIENTO</h4>
+                <p>El aislamiento en contenedores se logra a través de múltiples mecanismos coordinados que trabajan en conjunto para crear la ilusión de sistemas separados.  El núcleo del sistema crea un grupo para cada contenedor (también conocido como contexto de seguridad), aislándolos entre sí en varias áreas críticas.  La Figura 4 ilustra la arquitectura de aislamiento en contenedores, mostrando los diferentes mecanismos que trabajan en conjunto. </p>
+                <div class="figure-container">
+                    <img src="FIGURA4.jpg" alt="Arquitectura de Aislamiento en Contenedores" class="imagen-figura4">
+                    <div class="figure-caption">Figura 4. Arquitectura de Aislamiento en Contenedores. </div>
+                </div>
+
+                <h4>COMPONENTES ESPECÍFICOS DE AISLAMIENTO</h4>
+                <p><b>AISLAMIENTO DE TABLAS DE PROCESOS</b></p>
+                <p>Uno de los aspectos más fundamentales del aislamiento de contenedores es la gestión de procesos. Cada contenedor inicia su existencia ejecutando un init propio y enmascarando su identificador de proceso real por el número 1.  Este mecanismo crea la ilusión, para los procesos dentro del contenedor, de que están ejecutándose en un sistema completamente independiente. </p>
+
+                <p><b>AISLAMIENTO DE COMUNICACIÓN ENTRE PROCESOS</b></p>
+                <p>La seguridad y estabilidad del sistema requieren que ningún proceso de un contenedor debe poder interferir con la ejecución de uno en otro contenedor.  Para lograr esto, el núcleo restringe toda comunicación entre procesos, regiones de memoria compartida y envío de señales entre procesos de distintos grupos. </p>
+                
+                <p><b>AISLAMIENTO DE INTERFACES DE RED</b></p>
+                <p>La conectividad de red en contenedores se maneja a través de interfaces virtuales separadas.  Cada contenedor tendrá una interfaz de red con una dirección de acceso a medio (MAC) distinta, permitiendo que cada contenedor tenga su propia identidad de red única y configuración de conectividad independiente. </p>
+
+                <p><b>GESTIÓN DE DISPOSITIVOS DE HARDWARE</b></p>
+                <p>El acceso al hardware en contenedores está cuidadosamente controlado. Normalmente los sistemas huésped no tienen acceso directo a ningún dispositivo en hardware.  Esta restricción es fundamental para mantener la seguridad y estabilidad del sistema anfitrión. </p>
+
+                <p><b>LÍMITES DE RECURSOS</b></p>
+                <p>Una característica crucial de los contenedores modernos es su capacidad para gestionar recursos.  Casi todas las implementaciones permiten asignar cotas máximas para el consumo de recursos compartidos, como espacio de memoria o disco o tiempo de CPU empleados por cada uno de los contenedores.  La Tabla 16 describe los tipos de recursos gestionados en contenedores y sus impactos. </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>RECURSO</th>
+                                <th>MÉTRICA</th>
+                                <th>PROPÓSITO</th>
+                                <th>IMPACTO DE LÍMITES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CPU</td>
+                                <td>"Ciclos de procesador, % de uso"</td>
+                                <td>Prevenir monopolización</td>
+                                <td>Throttling de procesos</td>
+                            </tr>
+                            <tr>
+                                <td>Memoria</td>
+                                <td>RAM en MB/GB</td>
+                                <td>Evitar agotamiento del sistema</td>
+                                <td>OOM killer activado</td>
+                            </tr>
+                            <tr>
+                                <td>Disco</td>
+                                <td>"Espacio en MB/GB, IOPS"</td>
+                                <td>Controlar almacenamiento</td>
+                                <td>Fallos de escritura</td>
+                            </tr>
+                             <tr>
+                                <td>Red</td>
+                                <td>"Ancho de banda, paquetes/seg"</td>
+                                <td>Gestionar conectividad</td>
+                                <td>Limiting de tráfico</td>
+                            </tr>
+                            <tr>
+                                <td>Procesos</td>
+                                <td>Número máximo de PIDs</td>
+                                <td>Prevenir fork bombs</td>
+                                <td>Fallos de creación</td>
+                            </tr>
+                            <tr>
+                                <td>Archivos</td>
+                                <td>Descriptores abiertos</td>
+                                <td>Controlar recursos de SO</td>
+                                <td>Error en apertura</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 16. Tipos de Recursos Gestionados en Contenedores (elaboración propia basada en Wolf et al., 2015; Merkel, 2014). </div>
+                </div>
+
+                <h3>VENTAJAS OPERACIONALES DE LOS CONTENEDORES</h3>
+                <h4>EFICIENCIA DE RECURSOS OPTIMIZADA</h4>
+                <p>Una de las ventajas más significativas de los contenedores es un consumo de recursos óptimo.  Esta eficiencia contrasta marcadamente con otros métodos de virtualización donde una máquina virtual siempre ocupará algunos recursos, así esté inactiva.  La diferencia es fundamental: mientras que las máquinas virtuales tradicionales mantienen un overhead constante debido a la necesidad de emular hardware y ejecutar sistemas operativos completos, en contenedores una máquina virtual que no tiene trabajo se convierte sencillamente en un grupo de procesos dormidos, probables candidatos a ser paginados a disco.  La Tabla 17 presenta una comparativa de eficiencia entre contenedores y virtualización tradicional. </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>MÉTRICA</th>
+                                <th>VIRTUALIZACIÓN TRADICIONAL</th>
+                                <th>CONTENEDORES</th>
+                                <th>MEJORA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Tiempo de inicio</td>
+                                <td>30-60 segundos</td>
+                                <td>1-3 segundos</td>
+                                <td>90-95%</td>
+                            </tr>
+                            <tr>
+                                <td>Memoria base</td>
+                                <td>512MB - 2GB</td>
+                                <td>1-50MB</td>
+                                <td>95-98%</td>
+                            </tr>
+                            <tr>
+                                <td>Overhead de CPU</td>
+                                <td>5-15%</td>
+                                <td>&lt;1%</td>
+                                <td>85-95%</td>
+                            </tr>
+                            <tr>
+                                <td>Densidad de instancias</td>
+                                <td>10-20 por servidor</td>
+                                <td>100-1000 por servidor</td>
+                                <td>500-5000%</td>
+                            </tr>
+                            <tr>
+                                <td>Tiempo de despliegue</td>
+                                <td>Minutos</td>
+                                <td>Segundos</td>
+                                <td>90-95%</td>
+                            </tr>
+                            <tr>
+                                <td>Tamaño de imagen</td>
+                                <td>1-10GB</td>
+                                <td>10-500MB</td>
+                                <td>80-95%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 17. Comparativa de Eficiencia: Contenedores vs. Virtualización Tradicional (adaptado de Merkel, 2014; Felter et al., 2015; Sharma et al., 2016). </div>
+                </div>
+
+                <h4>VELOCIDAD DE DESPLIEGUE Y ESCALABILIDAD</h4>
+                <p>Los contenedores han revolucionado los tiempos de despliegue de aplicaciones.  Donde las máquinas virtuales tradicionales requieren arrancar un sistema operativo completo, los contenedores pueden iniciar aplicaciones en cuestión de segundos.  Esta capacidad es crucial para: </p>
+                <ul>
+                    <li>Escalado automático: Respuesta rápida a cambios en la demanda</li>
+                    <li>Desarrollo ágil: Ciclos de desarrollo más rápidos</li>
+                    <li>Microservicios: Arquitecturas distribuidas eficientes</li>
+                    <li>CI/CD: Pipelines de integración y despliegue continuos</li>
+                </ul>
+
+                <h3>LIMITACIONES Y CONSIDERACIONES</h3>
+                <h4>PÉRDIDA DE FLEXIBILIDAD ARQUITECTÓNICA</h4>
+                <p>Aunque los contenedores ofrecen numerosas ventajas, también presentan limitaciones importantes. Al operar a un nivel más alto, un contenedor presenta algunas limitantes adicionales (principalmente, se pierde la flexibilidad de ejecutar sistemas operativos distintos).  Esta limitación es particularmente relevante en entornos que requieren: </p>
+                <ul>
+                    <li>Sistemas operativos heterogéneos</li>
+                    <li>Aplicaciones legacy con dependencias específicas de SO</li>
+                    <li>Entornos de testing que requieren múltiples sistemas operativos</li>
+                    <li>Aplicaciones con requisitos de kernel específicos</li>
+                </ul>
+
+                <h4>FALTA DE UNIVERSALIDAD</h4>
+                <p>Otro desafío significativo es que se pierde buena parte de la universalidad mencionada en las secciones anteriores.  Las diferentes implementaciones de contenedores comparten principios básicos de operación, pero la manera en que logran la separación e incluso la nomenclatura que emplean difieren fuertemente.  La Tabla 18 muestra las variaciones en implementaciones de contenedores según la plataforma. </p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>PLATAFORMA</th>
+                                <th>TECNOLOGÍA BASE</th>
+                                <th>NOMENCLATURA</th>
+                                <th>CARACTERÍSTICAS DISTINTIVAS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Linux</td>
+                                <td>namespaces + cgroups</td>
+                                <td>Containers</td>
+                                <td>Implementación de referencia</td>
+                            </tr>
+                            <tr>
+                                <td>FreeBSD</td>
+                                <td>Jails</td>
+                                <td>Jails</td>
+                                <td>Primer sistema completo</td>
+                            </tr>
+                            <tr>
+                                <td>Solaris</td>
+                                <td>Zones</td>
+                                <td>Zones</td>
+                                <td>Gestión avanzada de recursos</td>
+                            </tr>
+                            <tr>
+                                <td>Windows</td>
+                                <td>Windows Containers</td>
+                                <td>Containers</td>
+                                <td>Compatibilidad con aplicaciones Windows</td>
+                            </tr>
+                            <tr>
+                                <td>AIX</td>
+                                <td>WPARs</td>
+                                <td>partitions</td>
+                                <td>Workload Partitions</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 18. Variaciones en Implementaciones de Contenedores (elaboración propia basada en Wolf et al., 2015; FreeBSD Wiki, 2025). </div>
+                </div>
+
+                <h3>EJEMPLO PRÁCTICO: IMPLEMENTACIÓN DE CONTENEDORES</h3>
+                <p>Para ilustrar los conceptos fundamentales de los contenedores, el Código 4 presenta un ejemplo práctico que demuestra la creación, configuración y gestión de un contenedor simple. </p>
+                <div class="code-block">
+<pre>// 4 - Ejemplo simplificado de implementación de contenedores 
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;sys/mount.h&gt;
+#include &lt;sched.h&gt;
+#include &lt;signal.h&gt;
+
+#define STACK_SIZE (1024 * 1024)  // 1MB stack
+
+// Estructura para configuración del contenedor
+struct container_config {
+    char* hostname;
+    char* root_path; 
+    int cpu_limit;
+    int memory_limit;
+    char* network_interface;
+};
+
+// Función que se ejecutará dentro del contenedor
+int container_main(void* arg) {
+    struct container_config* config = (struct container_config*)arg;
+    
+    // 1. Cambiar el hostname del contenedor 
+    if (sethostname(config->hostname, strlen(config->hostname)) == -1) {
+        perror("Error setting hostname");
+        return 1; 
+    }
+    
+    // 2. Cambiar root directory (chroot) 
+    if (chroot(config->root_path) == -1) {
+        perror("Error in chroot");
+        return 1; 
+    }
+    
+    // 3. Cambiar al directorio root del nuevo filesystem 
+    if (chdir("/") == -1) {
+        perror("Error changing directory");
+        return 1; 
+    }
+    
+    // 4. Montar /proc para el contenedor 
+    if (mount("proc", "/proc", "proc", 0, NULL) == -1) {
+        perror("Error mounting /proc");
+        return 1; 
+    }
+    
+    // 5. Inicializar el proceso principal del contenedor 
+    printf("Contenedor iniciado correctamente!\n");
+    printf("Hostname: %s\n", config->hostname); 
+    printf("Root path: %s\n", config->root_path);
+    
+    // 6. Ejecutar shell interactivo 
+    execl("/bin/bash", "bash", NULL);
+    
+    return 0;
+} 
+
+// Función para crear un nuevo contenedor
+int create_container(struct container_config* config) {
+    // Alocar stack para el nuevo proceso
+    char* stack = malloc(STACK_SIZE);
+    if (!stack) { 
+        perror("Error allocating stack");
+        return -1;
+    } 
+    
+    // Crear nuevo proceso con namespaces aislados
+    int flags = CLONE_NEWPID |  // Nuevo namespace de procesos 
+                CLONE_NEWNS |   // Nuevo namespace de filesystems 
+                CLONE_NEWNET |  // Nuevo namespace de red 
+                CLONE_NEWUTS |  // Nuevo namespace de hostname 
+                CLONE_NEWIPC;   // Nuevo namespace de IPC 
+    
+    pid_t container_pid = clone(container_main, 
+                               stack + STACK_SIZE, 
+                               flags | SIGCHLD, 
+                               config); 
+    if (container_pid == -1) { 
+        perror("Error creating container");
+        free(stack);
+        return -1;
+    } 
+    
+    printf("Contenedor creado con PID: %d\n", container_pid);
+    
+    // Esperar a que termine el contenedor 
+    int status;
+    waitpid(container_pid, &status, 0);
+    
+    free(stack);
+    return 0;
+} 
+
+// Función principal
+int main(int argc, char* argv[]) {
+    // Verificar privilegios de root
+    if (getuid() != 0) {
+        fprintf(stderr, "Este programa requiere privilegios de root\n");
+        return 1; 
+    }
+    
+    // Configuración del contenedor
+    struct container_config config = {
+        .hostname = "mi-contenedor",
+        .root_path = "/tmp/container-root",
+        .cpu_limit = 50,        // 50% CPU
+        .memory_limit = 512,    // 512MB RAM
+        .network_interface = "veth0"
+    };
+    printf("Iniciando contenedor...\n"); 
+    printf("Configuración:\n");
+    printf("  Hostname: %s\n", config.hostname);
+    printf("  Root path: %s\n", config.root_path);
+    printf("  CPU limit: %d%%\n", config.cpu_limit);
+    printf("  Memory limit: %dMB\n", config.memory_limit); 
+    
+    // Crear y ejecutar el contenedor
+    if (create_container(&config) == -1) {
+        fprintf(stderr, "Error creando contenedor\n");
+        return 1; 
+    }
+    
+    printf("Contenedor terminado exitosamente\n");
+    return 0;
+} </pre>
+                <div class="code-caption">Código 4. Ejemplo simplificado de implementación de contenedores usando namespaces de Linux. </div>
+                </div>
+                <p>Este código ilustra los conceptos fundamentales de la creación de contenedores: </p>
+                <ul>
+                    <li><b>Aislamiento de namespaces:</b> Uso de CLONE_NEW* flags para crear espacios de nombres separados </li>
+                    <li><b>Cambio de root filesystem:</b> Implementación de chroot() para aislar el sistema de archivos </li>
+                    <li><b>Configuración de hostname:</b> Personalización del entorno del contenedor </li>
+                    <li><b>Montaje de sistemas de archivos:</b> Configuración del entorno /proc del contenedor </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="activity-card" id="actividad-aprendizaje">
+            <div class="activity-title">
+                <i class="fas fa-tasks"></i>
+                Actividad de Aprendizaje 2: Virtualización
+            </div>
+            <p class="activity-description">Pon a prueba tus conocimientos sobre los conceptos fundamentales de virtualización en sistemas operativos.</p>
+            <a href="actividad_6_2.html" class="activity-btn">
+                <i class="fas fa-pencil-alt"></i> Realizar Actividad
+            </a>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="6.1.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Volver a 6.1: El Ambiente de Seguridad</a>
+            <a href="index.html" class="nav-btn">Volver al Menú Principal <i class="fas fa-home"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 6: Seguridad y Virtualización</p>
+            <p>Desarrollado para fines educativos - © 2025 | Referencias: Carretero et al. (2001), Silberschatz et al. (2018), Stallings (2018), Tanenbaum & Bos (2015), Wolf et al. (2015).</p>
+        </footer>
+    </div>
+
+    <script>
+        // Variables globales
+        let sidebarOpen = false;
+
+        // Toggle del menú lateral
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Cerrar menú al hacer clic en un enlace de navegación
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        // Ajustar espaciado del contenedor dinámicamente
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                container.style.marginLeft = '370px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            }
+        }
+
+        // Resaltar sección activa en el menú
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section, .intro');
+            const navItems = document.querySelectorAll('.nav-item[data-section]');
+            
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150 && rect.bottom >= 150) {
+                    currentSection = section.id.replace('seccion-', '');
+                }
+            });
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.section === currentSection) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Indicador de progreso de lectura
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        }
+
+        // Botón de ir arriba
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        function toggleScrollToTopBtn() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Event listeners
+        window.addEventListener('scroll', () => {
+            updateActiveSection();
+            updateReadingProgress();
+            toggleScrollToTopBtn();
+        });
+
+        // Desplazamiento suave para enlaces del menú
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 100;
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveSection();
+            updateReadingProgress();
+            updateContainerSpacing();
+            
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) {
+                    toggleSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

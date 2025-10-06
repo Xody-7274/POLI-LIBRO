@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4.1 Estructura del Sistema de Archivos</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /*
+        Aquí comienza un bloque de estilos CSS para definir la apariencia de la página.
+        Incluye:
+        - Variables de color (--primary, --secondary, etc.) para un diseño consistente.
+        - Estilos base para todos los elementos (*).
+        - Estilos para el cuerpo de la página (body), incluyendo un fondo degradado.
+        - Diseño de componentes específicos como botones flotantes, menú lateral, contenedor principal,
+          encabezados, secciones, tablas, bloques de código, tarjetas de actividad, pie de página, etc.
+        - Media Queries (@media) para adaptar el diseño a pantallas más pequeñas (diseño responsivo).
+        */
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* Botón flotante de inicio */
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        /* Menú de navegación lateral */
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Botón toggle del menú */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        /* Indicador de progreso de lectura */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        /* Overlay para cerrar el menú */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Contenedor principal con espaciado para botones flotantes */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .content ul, .content ol {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+        
+        .table-container {
+            max-width: 800px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-caption {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: var(--gray);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        .activity-card {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 4px solid var(--success);
+            text-align: center;
+        }
+        
+        .activity-title {
+            font-size: 1.8rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .activity-description {
+            margin-bottom: 20px;
+        }
+        
+        .activity-btn {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .activity-btn:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-number {
+                min-width: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio de Unidades">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">4.1 Estructura</div>
+            <div class="sidebar-subtitle">Componentes de un Archivo</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item">
+                    <i class="fas fa-play-circle"></i>
+                    Inicio de la unidad
+                </a>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    Menú principal
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#seccion-4-1-1" class="nav-item" data-section="4-1-1">
+                    <i class="fas fa-tag"></i>
+                    4.1.1 Nombre
+                </a>
+                <a href="#seccion-4-1-2" class="nav-item" data-section="4-1-2">
+                    <i class="fas fa-ruler-combined"></i>
+                    4.1.2 Tamaño y Estructura
+                </a>
+                <a href="#seccion-4-1-3" class="nav-item" data-section="4-1-3">
+                    <i class="fas fa-file-alt"></i>
+                    4.1.3 Tipos de Archivos
+                </a>
+                <a href="#seccion-4-1-4" class="nav-item" data-section="4-1-4">
+                    <i class="fas fa-map-marker-alt"></i>
+                    4.1.4 Localización
+                </a>
+                <a href="#seccion-4-1-5" class="nav-item" data-section="4-1-5">
+                    <i class="fas fa-info-circle"></i>
+                    4.1.5 Atributos
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="#actividad-aprendizaje" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad de aprendizaje
+                </a>
+                <a href="4.2.html" class="nav-item">
+                    <i class="fas fa-arrow-right"></i>
+                    Siguiente: Implementación
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 4</a>
+                <span>/</span>
+                <span>4.1 Estructura del Sistema de Archivos</span>
+            </div>
+            <h1>4.1 Estructura del Sistema de Archivos</h1>
+            <div class="subtitle">Los componentes fundamentales de los archivos</div>
+        </header>
+        
+        <div class="intro">
+            <h3>INTRODUCCIÓN</h3>
+            <p>La estructura de un archivo puede dividirse en seis componentes principales que definen sus características y comportamiento dentro del sistema operativo. Estos elementos proporcionan la información necesaria para que el sistema operativo pueda gestionar eficientemente los recursos de almacenamiento.</p>
+            <p class="citation">(Silberschatz et al., 2018)</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>COMPONENTE</th>
+                            <th>DESCRIPCIÓN</th>
+                            <th>PROPÓSITO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Nombre</td>
+                            <td>Identificador simbólico compuesto por una cadena de caracteres</td>
+                            <td>Facilitar la identificación humana del archivo</td>
+                        </tr>
+                        <tr>
+                            <td>Identificador</td>
+                            <td>Etiqueta única utilizada internamente por el sistema</td>
+                            <td>Gestión interna y referencias del sistema</td>
+                        </tr>
+                        <tr>
+                            <td>Tipo</td>
+                            <td>Especifica el formato y versión del archivo</td>
+                            <td>Determinar programas compatibles y métodos de acceso</td>
+                        </tr>
+                        <tr>
+                            <td>Localización</td>
+                            <td>Ubicación física en el dispositivo de almacenamiento</td>
+                            <td>Acceso directo a los datos del archivo</td>
+                        </tr>
+                        <tr>
+                            <td>Tamaño</td>
+                            <td>Cantidad de espacio ocupado, generalmente en bytes</td>
+                            <td>Control de espacio y gestión de recursos</td>
+                        </tr>
+                         <tr>
+                            <td>Atributos/Metadatos</td>
+                            <td>Información adicional como fechas, permisos, propietario</td>
+                            <td>Administración, seguridad y auditoría</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="table-caption">Tabla 1. Componentes fundamentales de la estructura de archivos (basado en Silberschatz et al., 2018; Carretero et al., 2001).</div>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-4-1-1">
+            <div class="section-header">
+                <div class="section-number">4.1.1</div>
+                <div class="section-title">Nombre (Nomenclatura)</div>
+            </div>
+            <div class="content">
+                <h3>IDENTIFICACIÓN Y CONVENCIONES</h3>
+                <p>La nomenclatura de archivos representa uno de los aspectos más visibles del sistema de archivos para los usuarios. Normalmente el nombre se divide en dos partes separadas por un punto: el <span class="highlight">nombre base</span> y la <span class="highlight">extensión</span>.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015; Stallings, 2018)</p>
+                <p>La extensión indica el tipo de contenido del archivo, como por ejemplo "prog.c" que representa el código fuente para el compilador de C. Existen diversas extensiones de archivos ampliamente reconocidas, tales como .zip para archivos comprimidos, .html para páginas web, .ps para PostScript, y .pdf para documentos portables. Estas nomenclaturas son especialmente útiles para asociar automáticamente las aplicaciones apropiadas.</p>
+                <p class="citation">(Silberschatz et al., 2018; Carretero et al., 2001)</p>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-4-1-2">
+            <div class="section-header">
+                <div class="section-number">4.1.2</div>
+                <div class="section-title">Tamaño (Estructura de archivo)</div>
+            </div>
+            <div class="content">
+                <h3>MODELOS DE ORGANIZACIÓN INTERNA</h3>
+                <p>Aunque existen múltiples formas de organizar la información dentro de los archivos, tres modelos son los más comúnmente implementados en los sistemas operativos modernos.</p>
+                <p class="citation">(Silberschatz et al., 2018)</p>
+                
+                <h4>1. SECUENCIA DE BYTES SIN ESTRUCTURA</h4>
+                <p>En este modelo, el sistema operativo no se interesa por el contenido, tratándolo simplemente como un bloque de bytes. La interpretación de los datos es responsabilidad del usuario o de la aplicación, lo que proporciona máxima flexibilidad.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015; Carretero et al., 2001)</p>
+
+                <h4>2. SECUENCIA DE REGISTROS DE LONGITUD CONSTANTE</h4>
+                <p>Considerado obsoleto, este modelo organiza el archivo como una secuencia de registros de tamaño fijo. Las operaciones de lectura y escritura se realizan sobre registros completos.</p>
+                <p class="citation">(Silberschatz et al., 2018; Tanenbaum & Bos, 2015)</p>
+
+                <h4>3. ÁRBOL DE REGISTROS DE LONGITUD VARIABLE</h4>
+                <p>Este modelo utiliza una estructura jerárquica donde cada registro contiene una clave que define su posición, permitiendo búsquedas rápidas y eficientes basadas en dicha clave.</p>
+                <p class="citation">(Stallings, 2018; Carretero et al., 2001)</p>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-4-1-3">
+            <div class="section-header">
+                <div class="section-number">4.1.3</div>
+                <div class="section-title">Tipos de Archivos</div>
+            </div>
+            <div class="content">
+                <h3>CATEGORÍAS Y FUNCIONES</h3>
+                <p>Los sistemas operativos modernos reconocen distintos tipos de archivos dependiendo de su naturaleza y función. Los más comunes se dividen en archivos regulares y directorios.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+                
+                <h4>ARCHIVOS REGULARES</h4>
+                <p>Constituyen la categoría más común y contienen exclusivamente información del usuario. Se subdividen en:</p>
+                <ul>
+                    <li><span class="highlight">Archivos ASCII (texto plano):</span> Al ser un estándar universal, se pueden mostrar, imprimir y editar con gran flexibilidad.</li>
+                    <li><span class="highlight">Archivos binarios:</span> Aunque no son legibles para el usuario, son interpretados eficientemente por la máquina.</li>
+                </ul>
+                 <p class="citation">(Stallings, 2018; Carretero et al., 2001)</p>
+                
+                <h4>DIRECTORIOS COMO ARCHIVOS ESPECIALES</h4>
+                <p>Los directorios también son considerados archivos especiales, cuya función principal es mantener la estructura organizacional de los demás archivos. Un sistema de archivos es una sección del disco que contiene archivos y se accede montándolo en un directorio específico.</p>
+                 <p class="citation">(Stallings, 2018; Tanenbaum & Bos, 2015)</p>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-4-1-4">
+            <div class="section-header">
+                <div class="section-number">4.1.4</div>
+                <div class="section-title">Localización</div>
+            </div>
+            <div class="content">
+                <h3>UBICACIÓN Y MÉTODOS DE ACCESO</h3>
+                <p>La localización de archivos se refiere a dónde están físicamente almacenados en la memoria del sistema, ya sea en memoria física o virtual.</p>
+                <p class="citation">(Silberschatz et al., 2018)</p>
+                
+                <h4>TIPOS DE ACCESO A ARCHIVOS</h4>
+                <p>El tipo de acceso determina cómo se pueden leer y manipular los datos:</p>
+                <ul>
+                    <li><b>Acceso Secuencial:</b> Proporciona una forma lineal de leer los datos, procesándolos en un orden predeterminado. Es eficiente para grandes volúmenes de datos que deben ser leídos en su totalidad.</li>
+                    <li><b>Acceso Aleatorio (o Directo):</b> Permite acceder a cualquier parte del archivo directamente, sin necesidad de leer desde el principio. Este avance fue clave para mejorar el rendimiento de las bases de datos.</li>
+                </ul>
+                <p class="citation">(Tanenbaum & Bos, 2015; Stallings, 2018)</p>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-4-1-5">
+            <div class="section-header">
+                <div class="section-number">4.1.5</div>
+                <div class="section-title">Atributos de Archivos</div>
+            </div>
+            <div class="content">
+                <h3>METADATOS Y PROPIEDADES</h3>
+                <p>Todo archivo posee un nombre y datos, pero también almacena información adicional conocida como <span class="highlight">metadatos</span> o atributos, como fechas, permisos y propietario.</p>
+                <p class="citation">(Silberschatz et al., 2018; Carretero et al., 2001)</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ATRIBUTO</th>
+                                <th>DESCRIPCIÓN</th>
+                                <th>PROPÓSITO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Fecha de creación</td>
+                                <td>Timestamp de cuando fue creado el archivo</td>
+                                <td>Auditoría y gestión temporal</td>
+                            </tr>
+                            <tr>
+                                <td>Fecha de modificación</td>
+                                <td>Última vez que se modificó el contenido</td>
+                                <td>Control de versiones</td>
+                            </tr>
+                            <tr>
+                                <td>Fecha de acceso</td>
+                                <td>Último acceso de lectura al archivo</td>
+                                <td>Optimización de caché</td>
+                            </tr>
+                            <tr>
+                                <td>Propietario</td>
+                                <td>Usuario que posee el archivo</td>
+                                <td>Control de acceso y seguridad</td>
+                            </tr>
+                            <tr>
+                                <td>Grupo</td>
+                                <td>Grupo de usuarios con permisos especiales</td>
+                                <td>Gestión de permisos grupales</td>
+                            </tr>
+                            <tr>
+                                <td>Permisos</td>
+                                <td>Derechos de lectura, escritura y ejecución</td>
+                                <td>Seguridad y control de acceso</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 2. Atributos principales de los archivos (adaptado de Tanenbaum & Bos, 2015; Silberschatz et al., 2018).</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="activity-card" id="actividad-aprendizaje">
+            <div class="activity-title">
+                <i class="fas fa-tasks"></i>
+                Actividad de Aprendizaje 1: Estructura de Archivos
+            </div>
+            <p class="activity-description">Pon a prueba tus conocimientos sobre los componentes y características que definen a un archivo en un sistema operativo.</p>
+            <a href="actividad_4_1.html" class="activity-btn">
+                <i class="fas fa-pencil-alt"></i> Realizar Actividad
+            </a>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Volver al Inicio</a>
+            <a href="4.2.html" class="nav-btn">Continuar a 4.2: Implementación <i class="fas fa-arrow-right"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 4: Sistema de Archivos</p>
+            <p>Desarrollado para fines educativos - © 2025 | Referencias: Carretero et al. (2001), Silberschatz et al. (2018), Stallings (2018), Tanenbaum & Bos (2015).</p>
+        </footer>
+    </div>
+
+    <script>
+        // Variables globales
+        let sidebarOpen = false;
+
+        // Toggle del menú lateral
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Cerrar menú al hacer clic en un enlace de navegación
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        // Ajustar espaciado del contenedor dinámicamente
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                container.style.marginLeft = '370px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            }
+        }
+
+        // Resaltar sección activa en el menú
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section, .intro');
+            const navItems = document.querySelectorAll('.nav-item[data-section]');
+            
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150 && rect.bottom >= 150) {
+                    currentSection = section.id.replace('seccion-', '');
+                }
+            });
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.section === currentSection) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Indicador de progreso de lectura
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        }
+
+        // Botón de ir arriba
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        function toggleScrollToTopBtn() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Event listeners
+        window.addEventListener('scroll', () => {
+            updateActiveSection();
+            updateReadingProgress();
+            toggleScrollToTopBtn();
+        });
+
+        // Desplazamiento suave para enlaces del menú
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 100;
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveSection();
+            updateReadingProgress();
+            updateContainerSpacing();
+            
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) {
+                    toggleSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

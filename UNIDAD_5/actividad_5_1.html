@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="es"> <head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Actividad 5.1: Batalla del Hardware de E/S</title> <link rel="icon" type="image/png" href="logoescom.png"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> <style>
+        /* Definición de variables CSS (custom properties) para una paleta de colores global y temática */
+        :root {
+            --primary: #2c3e50; /* Color primario oscuro */
+            --secondary: #3498db; /* Color secundario azul */
+            --success: #2ecc71; /* Color para éxito (verde) */
+            --accent: #e74c3c; /* Color de acento (rojo/naranja) */
+            --warning: #f39c12; /* Color para advertencias (amarillo) */
+            --light: #ecf0f1; /* Color claro, para textos sobre fondos oscuros */
+            --dark: #1a2a3a; /* Color oscuro alternativo */
+            --gray: #95a5a6; /* Color gris */
+            --monster-color: #e67e22; /* Color específico para el "monstruo" o tema de esta actividad (naranja) */
+        }
+
+        /* Reseteo de estilos universal para eliminar márgenes y paddings por defecto de los navegadores */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box; /* El padding y el borde no aumentan el tamaño total del elemento */
+        }
+
+        /* Estilos base para el cuerpo (body) de la página */
+        body {
+            background: linear-gradient(135deg, #0a0f3d, #1a2a3a, #2c3e50); /* Fondo con gradiente oscuro */
+            color: var(--light); /* Color de texto principal */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Familia de fuentes */
+            line-height: 1.6; /* Altura de línea para mejor legibilidad */
+            min-height: 100vh; /* Altura mínima igual a la altura de la ventana */
+            position: relative; /* Para posicionar elementos hijos de forma absoluta respecto al body */
+        }
+
+        /* Pseudo-elemento para añadir un efecto de fondo animado sutil */
+        body::before {
+            content: ""; /* Necesario para que el pseudo-elemento se muestre */
+            position: fixed; /* Fijo en la pantalla */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(230, 126, 34, 0.1) 0%, transparent 50%), /* Gradientes radiales con opacidad baja y colores temáticos */
+                radial-gradient(circle at 80% 80%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(231, 76, 60, 0.05) 0%, transparent 50%);
+            z-index: -1; /* Detrás de todo el contenido */
+            animation: backgroundShift 12s ease-in-out infinite; /* Animación para el fondo */
+        }
+
+        /* Animación para el cambio de opacidad del fondo */
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        /* Animación para el efecto de victoria (brillo sutil) */
+        @keyframes victoryGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.05) hue-rotate(8deg); } /* Ligero aumento de brillo y cambio de tonalidad */
+        }
+
+        /* Animación para el efecto de derrota (pulso sutil) */
+        @keyframes defeatPulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(0.95) contrast(1.05); } /* Ligero oscurecimiento y aumento de contraste */
+        }
+
+        /* Estilos para el botón flotante de "inicio" */
+        .floating-home-btn {
+            position: fixed; /* Fijo en la pantalla */
+            top: 20px;
+            right: 20px;
+            background: var(--secondary); /* Color de fondo */
+            color: white; /* Color del icono */
+            width: 60px;
+            height: 60px;
+            border-radius: 50%; /* Forma circular */
+            display: flex; /* Para centrar el icono */
+            align-items: center;
+            justify-content: center;
+            text-decoration: none; /* Quita el subrayado del enlace */
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3); /* Sombra */
+            transition: all 0.3s ease; /* Transición suave para efectos hover */
+            z-index: 1000; /* Asegura que esté encima de otros elementos */
+            font-size: 1.5rem; /* Tamaño del icono */
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9; /* Color al pasar el ratón */
+            transform: translateY(-3px); /* Efecto de elevación */
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4); /* Sombra más pronunciada */
+        }
+        
+        /* Clase para ocultar el botón de inicio (usado con JS) */
+        .floating-home-btn.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Estilos para el menú de navegación lateral (sidebar) */
+        .sidebar-nav {
+            position: fixed; /* Fijo en la pantalla */
+            left: 0;
+            top: 0;
+            width: 280px; /* Ancho del menú */
+            height: 100vh; /* Altura completa de la ventana */
+            background: rgba(0, 0, 0, 0.9); /* Fondo oscuro semitransparente */
+            backdrop-filter: blur(10px); /* Efecto de desenfoque para el fondo detrás del menú */
+            border-right: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil a la derecha */
+            z-index: 999; /* Encima del contenido pero debajo de elementos como el toggle del menú */
+            transition: transform 0.3s ease; /* Transición para el efecto de deslizamiento */
+            transform: translateX(-100%); /* Oculto fuera de la pantalla a la izquierda por defecto */
+            overflow-y: auto; /* Permite scroll si el contenido del menú es muy largo */
+        }
+
+        /* Clase que se añade con JS para mostrar el menú */
+        .sidebar-nav.active {
+            transform: translateX(0); /* Mueve el menú a su posición visible */
+        }
+
+        /* Cabecera del menú lateral */
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1); /* Fondo ligeramente coloreado */
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3); /* Línea divisoria */
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Contenedor de las secciones de navegación en el menú */
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        /* Una sección de navegación individual */
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        /* Título de una sección de navegación */
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        /* Elemento individual de navegación (enlace) */
+        .nav-item {
+            display: block; /* Ocupa todo el ancho */
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent; /* Borde para efecto hover */
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1); /* Fondo al pasar el ratón */
+            border-left-color: var(--secondary); /* Color del borde izquierdo */
+            padding-left: 25px; /* Desplaza el texto ligeramente a la derecha */
+        }
+
+        /* Iconos dentro de los elementos de navegación */
+        .nav-item i {
+            margin-right: 10px; /* Espacio entre el icono y el texto */
+            width: 20px; /* Ancho fijo para alineación */
+            text-align: center;
+        }
+
+        /* Botón para mostrar/ocultar el menú lateral (hamburguesa) */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px; /* Bordes redondeados */
+            border: none; /* Sin borde */
+            cursor: pointer; /* Cursor de mano */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001; /* Encima del overlay y del menú */
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px); /* Ligera elevación */
+        }
+
+        /* Estilo del botón toggle cuando el menú está activo (icono de 'X') */
+        .menu-toggle.active {
+            background: var(--accent); /* Color rojo para indicar "cerrar" */
+        }
+
+        /* Indicador de progreso de lectura en la parte superior de la página */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px; /* Altura de la barra */
+            background: rgba(255, 255, 255, 0.1); /* Color de fondo de la barra (track) */
+            z-index: 998; /* Debajo del menú toggle pero encima del contenido */
+        }
+
+        /* Barra que muestra el progreso actual de lectura */
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success)); /* Color de la barra de progreso */
+            width: 0%; /* Inicia vacía, se actualiza con JS */
+            transition: width 0.1s ease; /* Transición suave para el cambio de ancho */
+        }
+
+        /* Overlay que cubre la página cuando el menú lateral está abierto */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Fondo negro semitransparente */
+            z-index: 998; /* Debajo del menú, encima del contenido */
+            opacity: 0; /* Oculto por defecto */
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Clase para mostrar el overlay */
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Contenedor principal del contenido de la página */
+        .container {
+            max-width: 1200px; /* Ancho máximo del contenido */
+            margin: 0 auto; /* Centrado horizontal */
+            padding: 20px; /* Relleno interno */
+            transition: margin-left 0.3s ease, margin-right 0.3s ease; /* Transición para cuando el menú lateral afecta los márgenes */
+        }
+
+        /* Cabecera de la página (título, breadcrumb) */
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(0, 0, 0, 0.3); /* Fondo semitransparente */
+            border-radius: 15px; /* Bordes redondeados */
+            margin-bottom: 30px;
+        }
+
+        /* Estilo para las "migas de pan" (breadcrumb) */
+        .breadcrumb {
+            display: flex;
+            justify-content: center; /* Centra los elementos */
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1rem;
+        }
+
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        /* Separador en el breadcrumb */
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+
+        /* Título principal H1 */
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        /* Subtítulo */
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Sección de instrucciones del juego/actividad */
+        .instructions {
+            background: rgba(52, 152, 219, 0.15);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--secondary); /* Borde decorativo a la izquierda */
+        }
+
+        .instructions h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .instructions ul {
+            padding-left: 25px; /* Espacio para las viñetas */
+            color: var(--light);
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        /* Arena de batalla principal donde se desarrolla la actividad */
+        .battle-arena {
+            background: rgba(255, 255, 255, 0.05); /* Fondo muy sutil */
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Sombra */
+            border: 1px solid rgba(230, 126, 34, 0.2); /* Borde con el color temático (naranja) */
+            position: relative; /* Para pseudo-elementos */
+            overflow: hidden; /* Para contener animaciones internas */
+        }
+
+        /* Pseudo-elemento para un brillo sutil en la arena */
+        .battle-arena::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(230, 126, 34, 0.05) 0%, transparent 70%);
+            z-index: -1;
+            animation: arenaGlow 4s ease-in-out infinite; /* Animación de brillo */
+        }
+
+        /* Animación de brillo para la arena */
+        @keyframes arenaGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Sección que muestra al "monstruo" o entidad a vencer */
+        .monster-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(230, 126, 34, 0.15); /* Fondo con color temático (naranja) */
+            border-radius: 15px;
+            border: 2px solid rgba(230, 126, 34, 0.4); /* Borde más pronunciado */
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Pseudo-elemento para un aura animada alrededor del monstruo */
+        .monster-section::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%; /* Más grande que el contenedor para el efecto de rotación */
+            height: 200%;
+            background: radial-gradient(circle, rgba(230, 126, 34, 0.1) 0%, transparent 70%);
+            animation: monsterAura 3s linear infinite; /* Animación de aura */
+            z-index: -1;
+        }
+
+        /* Animación de rotación para el aura del monstruo */
+        @keyframes monsterAura {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Avatar del monstruo (puede ser un emoji o imagen) */
+        .monster-avatar {
+            font-size: 5rem; /* Tamaño del avatar */
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite; /* Animación de flotación */
+        }
+
+        /* Animación de flotación vertical */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); } /* Sube y baja */
+        }
+
+        .monster-name {
+            font-size: 1.8rem;
+            color: var(--monster-color); /* Color temático (naranja) */
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Contenedor de la barra de vida del monstruo */
+        .health-bar-container {
+            width: 300px; /* Ancho de la barra */
+            height: 20px; /* Altura de la barra */
+            background: rgba(0, 0, 0, 0.3); /* Fondo del track de la barra */
+            border-radius: 10px;
+            margin: 0 auto 15px; /* Centrado y con margen inferior */
+            overflow: hidden; /* Para que la barra interna no se salga */
+            border: 2px solid rgba(230, 126, 34, 0.5); /* Borde temático (naranja) */
+        }
+
+        /* Barra que representa la vida actual del monstruo */
+        .health-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--warning)); /* Gradiente de colores rojo a amarillo */
+            transition: width 0.5s ease; /* Transición suave para cambios de vida */
+            border-radius: 8px; /* Bordes redondeados internos */
+        }
+
+        /* Texto que muestra los HP (ej: 8 / 8 HP) */
+        .health-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--light);
+        }
+
+        /* Contenedor de las estadísticas del jugador */
+        .player-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px; /* Espacio entre tarjetas de estadísticas */
+            margin-bottom: 20px;
+            flex-wrap: wrap; /* Permite que las tarjetas se acomoden en pantallas pequeñas */
+        }
+
+        /* Tarjeta individual de estadística */
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2); /* Borde sutil */
+        }
+
+        /* Valor numérico de la estadística */
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        /* Etiqueta de la estadística (ej: Tiempo) */
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Indicadores visuales de errores (puntos) */
+        .error-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Espacio entre puntos */
+            margin-top: 10px;
+        }
+
+        /* Punto individual de error */
+        .error-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%; /* Forma circular */
+            background: rgba(255, 255, 255, 0.2); /* Color por defecto (no error) */
+            transition: all 0.3s ease;
+        }
+
+        /* Estilo del punto de error cuando está lleno (error cometido) */
+        .error-dot.filled {
+            background: var(--accent); /* Color rojo */
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); /* Brillo rojo */
+        }
+
+        /* Sección donde se muestran las preguntas */
+        .questions-section {
+            margin-top: 30px;
+        }
+
+        .questions-section h3 {
+            color: var(--warning);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            text-align: center;
+            border-bottom: 2px solid var(--warning); /* Línea divisoria debajo del título */
+            padding-bottom: 10px;
+        }
+
+        /* Contenedor de una pregunta individual */
+        .question {
+            background: rgba(255, 255, 255, 0.08); /* Fondo sutil */
+            border-radius: 10px;
+            padding: 25px; /* Relleno amplio */
+            margin-bottom: 25px;
+            border-left: 4px solid var(--warning); /* Borde decorativo izquierdo */
+            transition: all 0.3s ease;
+        }
+
+        .question:hover {
+            background: rgba(255, 255, 255, 0.12); /* Fondo ligeramente más claro al pasar el ratón */
+            transform: translateX(5px); /* Pequeño desplazamiento a la derecha */
+        }
+
+        /* Número de la pregunta (ej: Desafío 1) */
+        .question-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--warning);
+            margin-bottom: 15px;
+        }
+
+        /* Texto de la pregunta */
+        .question-text {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.5; /* Mejora legibilidad */
+        }
+
+        /* Contenedor de las opciones de respuesta */
+        .options {
+            display: grid; /* Organiza las opciones en una cuadrícula (en este caso, una columna) */
+            gap: 12px; /* Espacio entre opciones */
+        }
+
+        /* Opción de respuesta individual */
+        .option {
+            background: rgba(255, 255, 255, 0.05); /* Fondo muy sutil */
+            border: 2px solid rgba(255, 255, 255, 0.1); /* Borde sutil */
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer; /* Indica que es clickeable */
+            transition: all 0.3s ease;
+            display: flex; /* Para alinear la letra y el texto de la opción */
+            align-items: flex-start; /* Alinea al inicio verticalmente */
+            gap: 12px; /* Espacio entre la letra y el texto */
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--secondary); /* Cambia color de borde al pasar el ratón */
+            transform: translateX(3px); /* Pequeño desplazamiento */
+        }
+
+        /* Estilo para la opción seleccionada por el usuario */
+        .option.selected {
+            background: rgba(52, 152, 219, 0.2); /* Fondo azulado */
+            border-color: var(--secondary);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.3); /* Brillo azulado */
+        }
+
+        /* Estilo para la opción correcta después de responder */
+        .option.correct {
+            background: rgba(46, 204, 113, 0.2); /* Fondo verdoso */
+            border-color: var(--success);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.4); /* Brillo verde */
+            animation: correctPulse 0.6s ease; /* Animación de pulso */
+        }
+
+        /* Estilo para la opción incorrecta seleccionada por el usuario */
+        .option.incorrect {
+            background: rgba(231, 76, 60, 0.2); /* Fondo rojizo */
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); /* Brillo rojo */
+            animation: incorrectShake 0.6s ease; /* Animación de sacudida */
+        }
+
+        /* Animación de pulso para respuesta correcta */
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); } /* Crece ligeramente */
+            100% { transform: scale(1); }
+        }
+
+        /* Animación de sacudida para respuesta incorrecta */
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); } /* Se mueve a la izquierda */
+            75% { transform: translateX(3px); } /* Se mueve a la derecha */
+        }
+
+        /* Letra de la opción (ej: a), b), c)) */
+        .option-letter {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--secondary);
+            min-width: 25px; /* Ancho mínimo para alineación */
+        }
+
+        /* Color de la letra para opción correcta */
+        .option.correct .option-letter {
+            color: var(--success);
+        }
+
+        /* Color de la letra para opción incorrecta */
+        .option.incorrect .option-letter {
+            color: var(--accent);
+        }
+
+        /* Texto de la opción */
+        .option-text {
+            flex: 1; /* Ocupa el espacio restante */
+            font-size: 1rem;
+        }
+
+        /* Controles de la batalla (botones de atacar, reiniciar, etc.) */
+        .battle-controls {
+            display: flex;
+            flex-wrap: wrap; /* Permite que los botones se acomoden en varias líneas */
+            gap: 20px; /* Espacio entre botones */
+            align-items: center;
+            justify-content: center; /* Centra los botones */
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2); /* Fondo semitransparente */
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+
+        /* Estilo base para botones */
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px; /* Bordes muy redondeados (forma de píldora) */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none; /* Para enlaces estilizados como botones */
+            display: inline-flex; /* Para alinear icono y texto */
+            align-items: center;
+            gap: 8px; /* Espacio entre icono y texto */
+            font-size: 1.1rem;
+        }
+
+        /* Botón de ataque principal */
+        .btn-attack {
+            background: var(--accent); /* Color rojo/naranja */
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); /* Sombra */
+            font-size: 1.2rem; /* Ligeramente más grande */
+            padding: 18px 35px;
+        }
+
+        .btn-attack:hover {
+            background: #c0392b; /* Rojo más oscuro */
+            transform: translateY(-3px); /* Elevación */
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4); /* Sombra más pronunciada */
+        }
+
+        /* Estilo del botón de ataque cuando está deshabilitado */
+        .btn-attack:disabled {
+            background: var(--gray); /* Color gris */
+            cursor: not-allowed; /* Cursor de no permitido */
+            transform: none; /* Sin transformación */
+            box-shadow: none; /* Sin sombra */
+        }
+
+        /* Botones secundarios (reiniciar, ver soluciones) */
+        .btn-secondary {
+            background: var(--gray); /* Color gris */
+            color: white;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d; /* Gris más oscuro */
+            transform: translateY(-3px);
+        }
+
+        /* Botones de éxito (navegación) */
+        .btn-success {
+            background: var(--success); /* Color verde */
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-success:hover {
+            background: #27ae60; /* Verde más oscuro */
+            transform: translateY(-3px);
+        }
+
+        /* Contenedor para mensajes de estado del juego (victoria, derrota, continuar) */
+        .game-status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: none; /* Oculto por defecto, se muestra con JS */
+        }
+
+        /* Estilo para mensaje de victoria */
+        .game-status.victory {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        /* Estilo para mensaje de derrota */
+        .game-status.defeat {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        /* Estilo para mensajes intermedios */
+        .game-status.continue {
+            background: rgba(243, 156, 18, 0.2);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+
+        /* Contenedor para los botones de navegación inferiores */
+        .navigation {
+            display: flex;
+            justify-content: space-between; /* Distribuye el espacio entre los botones */
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px; /* Espacio entre botones si se envuelven */
+        }
+
+        /* Contenedor para centrar el botón de "Menú Principal" */
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            flex: 1; /* Ocupa el espacio disponible para centrar su contenido */
+        }
+
+        /* Barra de progreso para indicar cuántas preguntas han sido respondidas */
+        .progress-bar {
+            width: 100%;
+            height: 8px; /* Altura de la barra */
+            background: rgba(255, 255, 255, 0.1); /* Fondo del track */
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden; /* Para que el relleno no se salga */
+        }
+
+        /* Relleno de la barra de progreso */
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success)); /* Color del relleno */
+            transition: width 0.3s ease; /* Transición suave para el cambio de ancho */
+            width: 0%; /* Inicia vacía, se actualiza con JS */
+        }
+
+        /* Botón flotante para "ir arriba" de la página */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent); /* Color rojo */
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%; /* Circular */
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); /* Sombra */
+            transition: all 0.3s ease;
+            opacity: 0; /* Oculto por defecto, se muestra con JS */
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        /* Clase para mostrar el botón de "ir arriba" */
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b; /* Rojo más oscuro */
+            transform: translateY(-3px); /* Elevación */
+        }
+
+        /* Estilos responsivos para pantallas pequeñas (max-width: 768px) */
+        @media (max-width: 768px) {
+            .sidebar-nav { /* Menú lateral ocupa todo el ancho */
+                width: 100%;
+            }
+
+            h1 { /* Título principal más pequeño */
+                font-size: 2rem;
+            }
+
+            .battle-controls { /* Controles de batalla en columna */
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .player-stats { /* Estadísticas del jugador en columna */
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .navigation { /* Navegación inferior en columna */
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-center { /* Botón central se reordena en móviles */
+                order: 2; /* Cambia el orden visual */
+            }
+
+            .navigation .btn { /* Botones de navegación ocupan todo el ancho */
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .question { /* Padding reducido para las preguntas */
+                padding: 20px;
+            }
+
+            .floating-home-btn { /* Botón de inicio flotante más pequeño */
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .container { /* Márgenes y padding reducidos para el contenedor principal */
+                margin-left: 20px;
+                margin-right: 20px;
+                padding: 10px;
+            }
+
+            .health-bar-container { /* Barra de vida más estrecha */
+                width: 250px;
+            }
+
+            .monster-avatar { /* Avatar del monstruo más pequeño */
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="readingProgressBar"></div> </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i> </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio">
+        <i class="fas fa-home"></i> </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">Batalla Hardware</div>
+            <div class="sidebar-subtitle">Principios de E/S</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    Menú principal
+                </a>
+                <a href="5.1.html" class="nav-item">
+                    <i class="fas fa-book-open"></i>
+                    Volver al material
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Otras Actividades</div>
+                <a href="actividad_5_2.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 5.2
+                </a>
+                <a href="actividad_5_3.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 5.3
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i> </button>
+
+    <div class="container">
+        <div class="header">
+             <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="5.1.html">5.1 Principios del Hardware de E/S</a>
+                <span>/</span>
+                <span>Batalla del Hardware</span>
+            </div>
+            <h1>⚡ Batalla del Hardware de E/S</h1> <div class="subtitle">¡Derrota al Guardián del Hardware con tus conocimientos!</div> </div>
+
+        <div class="instructions">
+            <h3><i class="fas fa-gamepad"></i> Instrucciones de Batalla</h3> <ul>
+                <li><strong>Misión:</strong> Derrota al Guardián del Hardware respondiendo correctamente las preguntas sobre principios de E/S.</li>
+                <li><strong>Mecánica:</strong> Cada respuesta correcta inflige 1 punto de daño. Cada respuesta incorrecta cuenta como un error.</li>
+                <li><strong>Victoria:</strong> Reduce la vida del guardián a 0 HP respondiendo las 8 preguntas correctamente.</li>
+                <li><strong>Derrota:</strong> Cometes más de 3 errores antes de derrotar al guardián.</li>
+                <li><strong>Estrategia:</strong> Lee cuidadosamente cada pregunta. ¡Solo tienes una oportunidad por batalla!</li>
+            </ul>
+        </div>
+
+        <div class="battle-arena">
+            <div class="monster-section">
+                <div class="monster-avatar" id="monsterAvatar">🤖</div> <div class="monster-name">Guardián del Hardware</div>
+                <div class="health-bar-container">
+                    <div class="health-bar" id="healthBar" style="width: 100%;"></div> </div>
+                <div class="health-text" id="healthText">8 / 8 HP</div> </div>
+
+            <div class="player-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="timerValue">0s</div> <div class="stat-label"><i class="fas fa-clock"></i> Tiempo</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="attemptsValue">0</div> <div class="stat-label"><i class="fas fa-sword"></i> Ataques</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="errorsValue">0 / 3</div> <div class="stat-label"><i class="fas fa-skull"></i> Errores</div>
+                     <div class="error-indicators" id="errorIndicators">
+                        <div class="error-dot"></div> <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="questions-section">
+                <h3><i class="fas fa-scroll"></i> Desafíos del Hardware</h3>
+                <div id="questionsContainer"></div> </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div> </div>
+
+            <div class="battle-controls">
+                 <button class="btn btn-attack" onclick="attack()" id="attackBtn">
+                    <i class="fas fa-bolt"></i> ¡ATACAR!
+                </button>
+                <button class="btn btn-secondary" onclick="resetBattle()">
+                    <i class="fas fa-redo"></i> Nueva Batalla
+                </button>
+                <button class="btn btn-secondary" onclick="showSolutions()">
+                    <i class="fas fa-lightbulb"></i> Ver Respuestas
+                </button>
+            </div>
+
+            <div class="game-status" id="gameStatus"></div> </div>
+
+        <div class="navigation">
+            <a href="5.1.html" class="btn btn-success">
+                <i class="fas fa-arrow-left"></i> Volver al Material
+            </a>
+            <div class="nav-center">
+                <a href="index.html" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Menú Principal
+                </a>
+            </div>
+            <a href="5.2.html" class="btn btn-success">
+                Siguiente Tema <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales del juego
+        let time = 0; // Contador de tiempo transcurrido en segundos
+        let attempts = 0; // Número de veces que el jugador ha "atacado" (enviado respuestas)
+        let errors = 0; // Contador de errores cometidos por el jugador en el último ataque
+        let monsterHP = 8; // Puntos de vida iniciales del "Guardián del Hardware" (igual al número de preguntas)
+        let maxHP = 8; // Máximos puntos de vida del guardián
+        let maxErrors = 3; // Número máximo de errores permitidos antes de perder
+        let gameOver = false; // Bandera para indicar si el juego ha terminado
+        let timerInterval; // Referencia al intervalo del temporizador para poder detenerlo
+        let sidebarOpen = false; // Estado del menú lateral (abierto/cerrado)
+        let selectedAnswers = {}; // Objeto para almacenar las respuestas seleccionadas por el usuario (índice de pregunta: índice de opción)
+        let completed = 0; // Contador de cuántas preguntas han sido respondidas
+
+        // Datos del juego: Array de objetos, cada uno representa una pregunta
+        const questions = [
+            {
+                question: "Además de la memoria y el procesador, ¿cuál es el otro componente principal de un equipo de cómputo?",
+                options: [ // Array de opciones para la pregunta
+                    "Tarjeta gráfica",
+                    "Fuente de poder",
+                    "Disipadores de calor",
+                    "Dispositivos de entrada y salida (E/S)"
+                ],
+                correct: 3 // Índice de la opción correcta (0-indexed)
+            },
+            {
+                question: "Mientras que los ingenieros en programación trabajan con la interfaz entre el hardware y el software, para los ingenieros eléctricos los dispositivos de entrada y salida son vistos como:",
+                options: [
+                    "Interfaces lógicas del sistema",
+                    "Controladores virtuales",
+                    "Elementos de software embebido",
+                    "Chips, alambres, motores, etc."
+                ],
+                correct: 3
+            },
+            {
+                question: "Cuando se habla de los dispositivos de entrada y salida, el sistema operativo tiene la obligación de:",
+                options: [
+                    "Reiniciar los dispositivos en cada arranque del sistema",
+                    "Actualizar los controladores automáticamente",
+                    "Aumentar la velocidad de los dispositivos",
+                    "Gestionar los dispositivos de entrada y salida presentes en el equipo de cómputo, detectando las interrupciones y controlando los errores"
+                ],
+                correct: 3
+            },
+            {
+                question: "Este tipo de dispositivos de E/S almacena la información en bloques de tamaño fijo, además de que cada uno de estos bloques contiene su propia dirección:",
+                options: [
+                    "Dispositivos secuenciales",
+                    "Dispositivos de red",
+                    "Dispositivos de buffer",
+                    "Dispositivos de bloque"
+                ],
+                correct: 3
+            },
+            {
+                question: "Al tipo de dispositivos que almacena o envía un flujo de caracteres, y que no son direccionables ni contienen operaciones de búsqueda, se les denomina:",
+                options: [
+                    "Dispositivos de interfaz",
+                    "Dispositivos de acceso aleatorio",
+                    "Dispositivos lógicos",
+                    "Dispositivos de carácter"
+                ],
+                correct: 3
+            },
+            {
+                question: "Se trata de un conjunto de circuitos electrónicos que pueden manejar un puerto, colector o dispositivo:",
+                options: [
+                    "Multiplexor de señales",
+                    "Adaptador de red",
+                    "Sensor digital",
+                    "Controlador de un dispositivo E/S"
+                ],
+                correct: 3
+            },
+            {
+                question: "Es el tipo de mecanismo de comunicación entre los dispositivos E/S y el procesador para mejorar la eficiencia y rendimiento del equipo, atendiendo a eventos externos sin necesidad de verificar el estado entre los distintos dispositivos de E/S:",
+                options: [
+                    "Llamadas al sistema",
+                    "Control de periféricos",
+                    "Barrido periódico de estado",
+                    "Interrupciones al sistema operativo"
+                ],
+                correct: 3
+            },
+            {
+                question: "Al circuito que permite que algunos dispositivos de E/S puedan leer o escribir en la memoria principal sin necesidad de que el procesador intervenga en cada byte transferido, se le conoce como:",
+                options: [
+                    "Multiprocesador independiente",
+                    "Manejador de I/O",
+                    "Bus de datos compartido",
+                    "Acceso de memoria directo"
+                ],
+                correct: 3
+            }
+        ];
+
+        // Elementos del DOM para el menú lateral
+        const menuToggle = document.getElementById('menuToggle'); // Botón para abrir/cerrar menú
+        const sidebarNav = document.getElementById('sidebarNav'); // El panel del menú
+        const sidebarOverlay = document.getElementById('sidebarOverlay'); // Capa oscura de fondo
+
+        // Función para mostrar/ocultar el menú lateral
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen; // Cambia el estado del menú
+            
+            if (sidebarOpen) { // Si se va a abrir
+                sidebarNav.classList.add('active'); // Muestra el menú
+                sidebarOverlay.classList.add('active'); // Muestra el overlay
+                menuToggle.classList.add('active'); // Cambia estilo del botón toggle
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>'; // Cambia ícono a 'X'
+                document.body.style.overflow = 'hidden'; // Evita scroll en el cuerpo de la página
+            } else { // Si se va a cerrar
+                sidebarNav.classList.remove('active'); // Oculta el menú
+                sidebarOverlay.classList.remove('active'); // Oculta el overlay
+                menuToggle.classList.remove('active'); // Restaura estilo del botón toggle
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>'; // Cambia ícono a 'hamburguesa'
+                document.body.style.overflow = 'auto'; // Permite scroll nuevamente
+            }
+            
+            updateContainerSpacing(); // Ajusta el margen del contenido principal
+        }
+
+        // Asigna la función toggleSidebar a los eventos click del botón y del overlay
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Función para ajustar el espaciado del contenedor principal cuando el menú se abre/cierra
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            // Lógica responsiva para los márgenes del contenedor
+            if (window.innerWidth <= 768) { // Pantallas pequeñas
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) { // Pantallas grandes con menú abierto
+                container.style.marginLeft = '370px'; // Deja espacio para el menú
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else if (window.innerWidth > 1024) { // Pantallas muy grandes con menú cerrado
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else { // Pantallas medianas con menú cerrado
+                container.style.marginLeft = '70px';
+                container.style.marginRight = '70px';
+                container.style.padding = '20px';
+            }
+        }
+
+        // Función para actualizar la barra de progreso de lectura
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop; // Scroll vertical actual
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight; // Altura total scrolleable
+            const scrolled = Math.min((winScroll / height) * 100, 100); // Porcentaje scrolleado, máximo 100
+            document.getElementById('readingProgressBar').style.width = scrolled + '%'; // Actualiza el ancho de la barra
+        }
+
+        // Elementos del DOM para botones flotantes (ir arriba, ir a inicio)
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        const floatingHomeBtn = document.querySelector('.floating-home-btn');
+
+        // Función para mostrar/ocultar los botones flotantes según el scroll
+        function toggleFloatingButtons() {
+            const scrollPosition = window.pageYOffset; // Posición actual del scroll
+            const windowHeight = window.innerHeight; // Altura de la ventana visible
+            const documentHeight = document.documentElement.scrollHeight; // Altura total del documento
+            
+            // Muestra el botón "ir arriba" si el scroll es mayor a 300px
+            if (scrollPosition > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+            
+            // Oculta el botón "inicio" si se está cerca del final de la página
+            const nearBottom = scrollPosition + windowHeight >= documentHeight - 100;
+            if (nearBottom) {
+                floatingHomeBtn.classList.add('hidden');
+            } else {
+                floatingHomeBtn.classList.remove('hidden');
+            }
+        }
+
+        // Evento para el botón "ir arriba": scroll suave al inicio
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Función para inicializar el juego: crea las preguntas y opciones en el DOM
+        function initGame() {
+            const container = document.getElementById('questionsContainer'); // Contenedor de las preguntas
+            
+            // Itera sobre cada pregunta en el array 'questions'
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div'); // Crea un div para la pregunta
+                questionDiv.className = 'question'; // Asigna clase CSS
+                // Crea el HTML interno para la pregunta y sus opciones
+                questionDiv.innerHTML = `
+                    <div class="question-number">Desafío ${index + 1}</div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options">
+                        ${q.options.map((option, optIndex) => `
+                            <div class="option" onclick="selectOption(${index}, ${optIndex})" id="q${index}opt${optIndex}">
+                                <div class="option-letter">${String.fromCharCode(97 + optIndex)})</div>
+                                <div class="option-text">${option}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(questionDiv); // Añade la pregunta al DOM
+            });
+
+            startTimer(); // Inicia el temporizador del juego
+        }
+
+        // Función para iniciar el temporizador
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                time++; // Incrementa el tiempo cada segundo
+                document.getElementById('timerValue').textContent = `${time}s`; // Actualiza el DOM
+            }, 1000);
+        }
+
+        // Función para detener el temporizador
+        function stopTimer() {
+            clearInterval(timerInterval); // Limpia el intervalo
+        }
+
+        // Función para actualizar la barra de progreso de preguntas respondidas
+        function updateProgress() {
+            completed = Object.keys(selectedAnswers).length; // Número de preguntas con una respuesta seleccionada
+            
+            const percentage = (completed / questions.length) * 100; // Calcula el porcentaje
+            document.getElementById('progressFill').style.width = `${percentage}%`; // Actualiza el ancho de la barra
+        }
+
+        // Función para actualizar el avatar del monstruo según su vida
+        function updateMonsterAvatar() {
+            const avatar = document.getElementById('monsterAvatar');
+            const healthPercentage = (monsterHP / maxHP) * 100;
+            
+            // Cambia el emoji del avatar según la vida restante
+            if (healthPercentage > 70) {
+                avatar.textContent = '🤖'; // Salud alta
+            } else if (healthPercentage > 40) {
+                avatar.textContent = '⚙️'; // Salud media
+            } else if (healthPercentage > 0) {
+                avatar.textContent = '🔧'; // Salud baja
+            } else {
+                avatar.textContent = '💥'; // Derrotado
+            }
+        }
+
+        // Función para actualizar todos los elementos de la UI relacionados con el estado del juego
+        function updateUI() {
+            // Actualiza la barra de vida del monstruo
+            const healthPercentage = (monsterHP / maxHP) * 100;
+            document.getElementById('healthBar').style.width = `${healthPercentage}%`;
+            document.getElementById('healthText').textContent = `${monsterHP} / ${maxHP} HP`;
+            
+            // Actualiza los indicadores de error (puntos rojos)
+            const errorDots = document.querySelectorAll('.error-dot');
+            errorDots.forEach((dot, index) => {
+                if (index < errors) {
+                    dot.classList.add('filled'); // Rellena el punto si hay error
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+            
+            // Actualiza las estadísticas del jugador
+            document.getElementById('attemptsValue').textContent = attempts;
+            document.getElementById('errorsValue').textContent = `${errors} / ${maxErrors}`;
+            
+            updateMonsterAvatar(); // Llama a la función que actualiza el avatar
+        }
+
+        // Función que se ejecuta cuando el usuario selecciona una opción de respuesta
+        function selectOption(questionIndex, optionIndex) {
+            // Limpia la clase 'selected' de todas las opciones de la pregunta actual
+            for (let i = 0; i < questions[questionIndex].options.length; i++) {
+                const option = document.getElementById(`q${questionIndex}opt${i}`);
+                option.classList.remove('selected');
+            }
+            
+            // Marca la nueva opción seleccionada
+            const selectedOptionElement = document.getElementById(`q${questionIndex}opt${optionIndex}`);
+            selectedOptionElement.classList.add('selected');
+            
+            // Guarda la respuesta seleccionada
+            selectedAnswers[questionIndex] = optionIndex;
+            
+            updateProgress(); // Actualiza la barra de progreso de respuestas
+        }
+
+        // Función principal del juego, se llama al "Atacar" (enviar respuestas)
+        function attack() {
+            if (gameOver) return; // Si el juego terminó, no hacer nada
+            
+            // Verifica si todas las preguntas han sido respondidas
+            if (completed < questions.length) {
+                showGameStatus("⚠️ ¡Responde todas las preguntas antes de atacar al guardián!", "continue");
+                return;
+            }
+
+            attempts++; // Incrementa el número de intentos
+            let correctCount = 0; // Contador de respuestas correctas en este ataque
+            
+            // Verifica cada respuesta y aplica estilos de "correcto" o "incorrecto"
+            questions.forEach((q, qIndex) => {
+                const userAnswerIndex = selectedAnswers[qIndex]; // Respuesta del usuario para esta pregunta
+                const correctAnswerIndex = q.correct; // Respuesta correcta para esta pregunta
+                
+                // Aplica estilos a todas las opciones de la pregunta actual
+                for (let i = 0; i < q.options.length; i++) {
+                    const optionElement = document.getElementById(`q${qIndex}opt${i}`);
+                    optionElement.classList.remove('selected', 'correct', 'incorrect'); // Limpia estilos previos
+                    
+                    if (i === correctAnswerIndex) { // Si es la opción correcta
+                        optionElement.classList.add('correct');
+                    } else if (i === userAnswerIndex && i !== correctAnswerIndex) { // Si es la opción seleccionada por el usuario Y es incorrecta
+                        optionElement.classList.add('incorrect');
+                    }
+                }
+                
+                if (userAnswerIndex === correctAnswerIndex) { // Si la respuesta del usuario es correcta
+                    correctCount++;
+                }
+            });
+            
+            // Calcula el daño al monstruo (igual al número de respuestas correctas)
+            const damage = correctCount;
+            // Calcula los errores en este ataque (total de preguntas menos las correctas)
+            const currentErrorsInAttack = questions.length - correctCount; 
+            
+            monsterHP = Math.max(0, monsterHP - damage); // Reduce la vida del monstruo, mínimo 0
+            errors = Math.min(maxErrors, currentErrorsInAttack); // Actualiza el contador de errores (basado en el último ataque, no acumulativo de forma tradicional)
+            // Nota: Si se desearan errores acumulativos, la lógica de 'errors' debería ser diferente.
+
+            updateUI(); // Actualiza la interfaz gráfica
+            checkGameEnd(); // Verifica si el juego ha terminado (victoria/derrota)
+        }
+
+        // Función para verificar las condiciones de fin de juego (victoria o derrota)
+        function checkGameEnd() {
+            const attackBtn = document.getElementById('attackBtn'); // Botón de atacar
+            
+            if (monsterHP <= 0) { // Condición de Victoria: Monstruo sin HP
+                stopTimer();
+                gameOver = true;
+                showGameStatus(`
+                    <i class="fas fa-trophy"></i> 
+                    ¡VICTORIA ÉPICA! Has derrotado al Guardián del Hardware<br>
+                    <small>Tiempo: ${time}s | Ataques: ${attempts} | Errores: ${errors}/${maxErrors}</small>
+                `, 'victory');
+                attackBtn.disabled = true; // Deshabilita el botón de atacar
+                
+                // Aplica efectos visuales de victoria
+                document.body.style.background = 'linear-gradient(135deg, #0a0f3d, #1a2a3a, #154025, #1f4a30)';
+                document.body.style.animation = 'victoryGlow 2s ease-in-out infinite';
+                document.getElementById('monsterAvatar').textContent = '💥'; // Cambia avatar a explosión
+                
+            } else if (errors >= maxErrors) { // Condición de Derrota: Se alcanzó el máximo de errores
+                stopTimer();
+                gameOver = true;
+                showGameStatus(`
+                    <i class="fas fa-skull-crossbones"></i> 
+                    ¡EL GUARDIÁN TE HA VENCIDO!<br>
+                    <small>Demasiados errores. El hardware permanece protegido...</small>
+                `, 'defeat');
+                attackBtn.disabled = true; // Deshabilita el botón de atacar
+                
+                // Aplica efectos visuales de derrota
+                document.body.style.background = 'linear-gradient(135deg, #0a0f3d, #4a2530, #5a3035)';
+                document.body.style.animation = 'defeatPulse 1s ease-in-out infinite';
+                
+            } else { // El juego continúa (esto no debería ocurrir si el ataque se hace solo al final y las condiciones de victoria/derrota son las únicas salidas)
+                // Este mensaje podría aparecer si la lógica permitiera ataques parciales.
+                showGameStatus(`
+                    <i class="fas fa-sword"></i> ¡Batalla épica! Daño infligido: ${maxHP - monsterHP}<br>
+                    El guardián resiste con ${monsterHP} HP restantes.
+                `, 'continue');
+            }
+        }
+
+        // Función para mostrar mensajes de estado del juego (victoria, derrota, continuar)
+        function showGameStatus(message, type) {
+            const statusDiv = document.getElementById('gameStatus');
+            statusDiv.innerHTML = message; // Establece el contenido del mensaje
+            statusDiv.className = `game-status ${type}`; // Aplica clase CSS para estilo (victory, defeat, continue)
+            statusDiv.style.display = 'block'; // Muestra el mensaje
+            
+            // Si el mensaje es de tipo 'continue', lo oculta después de 4 segundos
+            if (type === 'continue') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        // Función para reiniciar la batalla (empezar de nuevo)
+        function resetBattle() {
+            // Reinicia todas las variables del juego a su estado inicial
+            time = 0;
+            attempts = 0;
+            errors = 0;
+            monsterHP = maxHP;
+            gameOver = false;
+            selectedAnswers = {}; // Limpia las respuestas seleccionadas
+            completed = 0; // Reinicia el contador de preguntas respondidas
+            
+            // Reinicia la UI
+            document.getElementById('timerValue').textContent = '0s';
+            document.getElementById('attemptsValue').textContent = '0';
+            document.getElementById('errorsValue').textContent = `0 / ${maxErrors}`; // Muestra 0 errores del máximo permitido
+            document.getElementById('gameStatus').style.display = 'none'; // Oculta mensajes de estado
+            document.getElementById('attackBtn').disabled = false; // Habilita botón de atacar
+            document.getElementById('progressFill').style.width = '0%'; // Reinicia barra de progreso de respuestas
+            document.body.style.background = 'linear-gradient(135deg, #0a0f3d, #1a2a3a, #2c3e50)'; // Restaura fondo
+            document.body.style.animation = 'none'; // Quita animaciones de victoria/derrota
+            
+            // Limpia estilos de las opciones de las preguntas
+            questions.forEach((q, qIndex) => {
+                for (let i = 0; i < q.options.length; i++) {
+                    const optionElement = document.getElementById(`q${qIndex}opt${i}`);
+                    optionElement.classList.remove('selected', 'correct', 'incorrect');
+                }
+            });
+            
+            updateUI(); // Actualiza la UI general
+            
+            // Reinicia el temporizador
+            stopTimer();
+            startTimer();
+        }
+
+        // Función para mostrar las respuestas correctas (usado por el botón "Ver Respuestas")
+        function showSolutions() {
+            // Construye un string con todas las respuestas correctas
+            const correctAnswersText = questions.map((q, i) => {
+                const correctLetter = String.fromCharCode(97 + q.correct); // Convierte índice a letra (a, b, c...)
+                return `${i + 1}. ${correctLetter}) ${q.options[q.correct]}`; // Formato: "1. a) Respuesta Correcta"
+            }).join('\n\n'); // Separa cada respuesta con doble salto de línea
+            
+            // Muestra las respuestas en una alerta
+            alert(`💡 Respuestas Correctas:\n\n${correctAnswersText}\n\n¡Usa esta información sabiamente, guerrero!`);
+        }
+
+        // Event listeners globales
+        window.addEventListener('scroll', () => { // Al hacer scroll en la ventana
+            updateReadingProgress(); // Actualiza barra de progreso de lectura
+            toggleFloatingButtons(); // Muestra/oculta botones flotantes
+        });
+
+        window.addEventListener('resize', () => { // Al redimensionar la ventana
+            // Si la ventana es grande y el menú está abierto, ciérralo (para evitar problemas de layout)
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing(); // Ajusta espaciado del contenedor
+        });
+
+        // Atajos de teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) { // Escape para cerrar menú
+                toggleSidebar();
+            }
+            
+            if (e.key === 'm' || e.key === 'M') { // 'm' para abrir/cerrar menú
+                if (!e.ctrlKey && !e.altKey) { // Evita interferir con otros atajos de 'm'
+                    toggleSidebar();
+                }
+            }
+            
+            if (e.key === 'Enter' && !gameOver) { // Enter para "Atacar" si el juego no ha terminado
+                attack();
+            }
+        });
+
+        // Se ejecuta cuando el DOM está completamente cargado y parseado
+        document.addEventListener('DOMContentLoaded', function() {
+            initGame(); // Inicializa el juego
+            updateContainerSpacing(); // Ajusta espaciado inicial
+            updateReadingProgress(); // Inicializa barra de progreso de lectura
+            
+            // Si la pantalla es pequeña al cargar, asegura que el menú esté cerrado
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

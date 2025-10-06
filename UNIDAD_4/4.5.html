@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4.5 Optimización del Sistema de Archivos</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .content ul {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+
+        .activity-card {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 4px solid var(--success);
+            text-align: center;
+        }
+        
+        .activity-title {
+            font-size: 1.8rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+        
+        .activity-btn {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .activity-btn:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav { width: 100%; }
+            h1 { font-size: 2rem; }
+            .subtitle { font-size: 1.4rem; }
+            .section-title { font-size: 1.5rem; }
+            .section-number { min-width: 100px; font-size: 1.8rem; }
+            .nav-buttons { flex-direction: column; gap: 15px; }
+            .nav-btn { width: 100%; text-align: center; justify-content: center; }
+            .floating-home-btn { width: 50px; height: 50px; font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio de Unidades"><i class="fas fa-home"></i></a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">4.5 Optimización</div>
+            <div class="sidebar-subtitle">Recuperación y Rendimiento</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item"><i class="fas fa-play-circle"></i> Inicio de la unidad</a>
+                <a href="index.html" class="nav-item"><i class="fas fa-arrow-left"></i> Menú principal</a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#seccion-4-5-1" class="nav-item" data-section="4-5-1"><i class="fas fa-undo"></i> 4.5.1 Recuperación</a>
+                <a href="#seccion-4-5-2" class="nav-item" data-section="4-5-2"><i class="fas fa-check-circle"></i> 4.5.2 Consistencia</a>
+                <a href="#seccion-4-5-3" class="nav-item" data-section="4-5-3"><i class="fas fa-tachometer-alt"></i> 4.5.3 Rendimiento</a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="#actividad-aprendizaje" class="nav-item"><i class="fas fa-tasks"></i> Actividad de aprendizaje</a>
+                <a href="4.4.html" class="nav-item"><i class="fas fa-arrow-left"></i> Anterior: Sistemas Estructurados</a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop"><i class="fas fa-chevron-up"></i></button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 4</a>
+                <span>/</span>
+                <span>4.5 Optimización del Sistema de Archivos</span>
+            </div>
+            <h1>4.5 Optimización del Sistema de Archivos</h1>
+            <div class="subtitle">Técnicas para la eficiencia y la robustez</div>
+        </header>
+        
+        <div class="intro">
+            <h3>INTRODUCCIÓN</h3>
+            <p>La implementación funcional de un sistema de archivos es solo el primer paso. Hacerlo funcionar de manera eficiente y robusta en la vida real es un desafío mucho más complejo. Los sistemas modernos deben equilibrar eficiencia, utilización del espacio, integridad de datos, recuperación ante fallos y rendimiento consistente bajo cargas de trabajo variables.</p>
+            <p class="citation">(Tanenbaum & Bos, 2015; Silberschatz et al., 2018; Stallings, 2018)</p>
+            <p>La optimización efectiva requiere un enfoque integral que considere tanto la teoría como las limitaciones prácticas del hardware y los patrones de uso reales.</p>
+            <p class="citation">(Carretero et al., 2001)</p>
+        </div>
+        
+        <div class="section" id="seccion-4-5-1">
+            <div class="section-header">
+                <div class="section-number">4.5.1</div>
+                <div class="section-title">Recuperación</div>
+            </div>
+            <div class="content">
+                <h3>ADMINISTRACIÓN Y FRAGMENTACIÓN DEL ESPACIO</h3>
+                <p>La administración eficiente del espacio en disco es fundamental para la optimización y recuperación. Esto implica abordar el problema de la <b>fragmentación</b>, que se manifiesta de dos formas:</p>
+                <ul>
+                    <li><b>Fragmentación externa:</b> Ocurre cuando el espacio libre se distribuye en pequeños segmentos no contiguos, impidiendo la asignación de archivos grandes aunque haya suficiente espacio total disponible.</li>
+                    <li><b>Fragmentación interna:</b> Surge cuando los bloques asignados a un archivo no se utilizan completamente, resultando en un desperdicio de espacio dentro de las propias unidades de asignación.</li>
+                </ul>
+                <p class="citation">(Silberschatz et al., 2018; Stallings, 2018)</p>
+                <h4>TÉCNICAS DE OPTIMIZACIÓN DEL ESPACIO</h4>
+                <p>Los sistemas de archivos modernos implementan múltiples técnicas para mitigar la fragmentación y optimizar el uso del espacio. Estas incluyen algoritmos de asignación inteligentes, procesos de compactación o desfragmentación, y estrategias de localidad que buscan minimizar tanto la fragmentación como los tiempos de acceso.</p>
+                <p class="citation">(Silberschatz et al., 2018; Stallings, 2018)</p>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-4-5-2">
+            <div class="section-header">
+                <div class="section-number">4.5.2</div>
+                <div class="section-title">Consistencia</div>
+            </div>
+            <div class="content">
+                <h3>VERIFICACIÓN Y REPARACIÓN</h3>
+                <p>La verificación de consistencia es un mecanismo crucial para mantener la integridad de un sistema de archivos. Las inconsistencias surgen principalmente de interrupciones no planificadas (como un corte de energía) durante operaciones críticas que involucran múltiples escrituras en el disco.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015; Carretero et al., 2001)</p>
+                <h4>ALGORITMOS DE DETECCIÓN Y VERIFICACIÓN</h4>
+                <p>Los sistemas modernos implementan verificadores de consistencia como <b>fsck</b> en UNIX/Linux y <b>chkdsk</b> en Windows. Estas herramientas realizan múltiples pases de verificación para identificar, diagnosticar y corregir inconsistencias en las estructuras del sistema de archivos.</p>
+                 <p class="citation">(Tanenbaum & Bos, 2015; Carretero et al., 2001)</p>
+                <h4>ESTRATEGIAS DE REPARACIÓN Y SUS LÍMITES</h4>
+                <p>La reparación automática presenta desafíos, ya que determinar el estado correcto puede ser ambiguo. Los verificadores a menudo deben tomar decisiones conservadoras que priorizan la integridad estructural del sistema de archivos, incluso si esto implica la pérdida de algunos datos, para evitar un daño mayor.</p>
+                 <p class="citation">(Silberschatz et al., 2018; Tanenbaum & Bos, 2015)</p>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-4-5-3">
+            <div class="section-header">
+                <div class="section-number">4.5.3</div>
+                <div class="section-title">Rendimiento</div>
+            </div>
+            <div class="content">
+                <h3>TÉCNICAS DE ACELERACIÓN</h3>
+                <p>La optimización del rendimiento requiere un enfoque multidimensional que considera la arquitectura del sistema, los patrones de acceso y el hardware subyacente.</p>
+                <p class="citation">(Silberschatz et al., 2018)</p>
+                
+                <h4>JERARQUÍAS DE CACHÉ Y GESTIÓN DE MEMORIA</h4>
+                <p>Los sistemas de archivos implementan cachés sofisticadas para explotar la localidad temporal y espacial. Estas cachés almacenan bloques de datos, metadatos, información de directorios e índices a los que se ha accedido recientemente, acelerando futuras solicitudes.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+
+                <h4>ESTRATEGIAS DE PREFETCHING Y READ-AHEAD</h4>
+                <p>El <i>prefetching</i> (pre-búsqueda) mejora el rendimiento anticipando los datos que probablemente se solicitarán a continuación (por ejemplo, durante una lectura secuencial) y cargándolos en la caché por adelantado.</p>
+                <p class="citation">(Stallings, 2018)</p>
+                
+                <h4>TÉCNICAS DE ESCRITURA ASÍNCRONA (WRITE-BEHIND)</h4>
+                <p>La escritura asíncrona desacopla las operaciones de escritura de la aplicación de la transferencia física al disco. El sistema agrupa múltiples escrituras pequeñas en la memoria y las envía al disco como una operación más grande y eficiente, reduciendo la latencia percibida por el usuario.</p>
+                <p class="citation">(Silberschatz et al., 2018; Stallings, 2018)</p>
+
+                <h4>PARALELIZACIÓN Y CONCURRENCIA</h4>
+                <p>Los sistemas de archivos modernos utilizan mecanismos avanzados como esquemas de bloqueo de grano fino y estructuras <i>lock-free</i> para permitir operaciones paralelas seguras sobre las estructuras de datos, maximizando la concurrencia sin comprometer la consistencia.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015; Carretero et al., 2001)</p>
+            </div>
+        </div>
+        
+        <div class="activity-card" id="actividad-aprendizaje">
+            <div class="activity-title"><i class="fas fa-tasks"></i> Actividad de Aprendizaje 5</div>
+            <p>Demuestra tu dominio sobre las técnicas avanzadas de optimización de sistemas de archivos, incluyendo consistencia, recuperación y mejora del rendimiento.</p>
+            <a href="actividad_4_5.html" class="activity-btn"><i class="fas fa-pencil-alt"></i> Realizar Actividad</a>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="4.4.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Volver a 4.4: Sistemas Estructurados</a>
+            <a href="index.html" class="nav-btn">Finalizar Unidad 4 <i class="fas fa-flag-checkered"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 4: Sistema de Archivos</p>
+            <p>Desarrollado para fines educativos - © 2025 | Referencias: Carretero et al. (2001), Silberschatz et al. (2018), Stallings (2018), Tanenbaum & Bos (2015).</p>
+        </footer>
+    </div>
+
+    <script>
+        let sidebarOpen = false;
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            sidebarNav.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+            menuToggle.classList.toggle('active');
+            menuToggle.innerHTML = sidebarOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+            document.body.style.overflow = sidebarOpen ? 'hidden' : 'auto';
+        }
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => { if (window.innerWidth <= 768) toggleSidebar(); });
+        });
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section');
+            const navItems = document.querySelectorAll('.nav-item[data-section]');
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150 && rect.bottom >= 150) currentSection = section.id.replace('seccion-', '');
+            });
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.section === currentSection) item.classList.add('active');
+            });
+        }
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById('progressBar').style.width = ((winScroll / height) * 100) + '%';
+        }
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        function toggleScrollToTopBtn() {
+            scrollToTopBtn.classList.toggle('visible', window.pageYOffset > 300);
+        }
+        scrollToTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        window.addEventListener('scroll', () => { updateActiveSection(); updateReadingProgress(); toggleScrollToTopBtn(); });
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) window.scrollTo({ top: target.offsetTop - 100, behavior: 'smooth' });
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveSection();
+            updateReadingProgress();
+            if (window.innerWidth <= 768) sidebarNav.classList.remove('active');
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) toggleSidebar();
+            if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.altKey) toggleSidebar();
+        });
+    </script>
+</body>
+</html>

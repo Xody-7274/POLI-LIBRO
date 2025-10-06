@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referencias Bibliográficas - Unidad 3</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables CSS raíz para temas y consistencia */
+        :root {
+            --primary: #2c3e50; /* Color primario */
+            --secondary: #3498db; /* Color secundario */
+            --accent: #e74c3c; /* Color de acento */
+            --light: #ecf0f1; /* Color claro (a menudo para texto sobre fondos oscuros) */
+            --dark: #2c3e50; /* Color oscuro */
+            --gray: #95a5a6; /* Color gris */
+            --success: #2ecc71; /* Color para mensajes o elementos de éxito */
+            --warning: #f39c12; /* Color para mensajes o elementos de advertencia */
+            --card-bg: rgba(255, 255, 255, 0.05); /* Color de fondo para tarjetas con algo de transparencia */
+        }
+        
+        /* Reseteo universal y estilo de fuente base */
+        * {
+            margin: 0; /* Elimina los márgenes predeterminados de todos los elementos */
+            padding: 0; /* Elimina el padding predeterminado de todos los elementos */
+            box-sizing: border-box; /* Cambia el modelo de caja para que el padding y el borde no se sumen al ancho/alto del elemento */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Establece una pila de fuentes preferida */
+        }
+        
+        /* Estilo del cuerpo (body) */
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50); /* Establece un fondo degradado */
+            color: var(--light); /* Establece el color de texto predeterminado a la variable light */
+            min-height: 100vh; /* Asegura que el cuerpo ocupe al menos la altura completa del viewport */
+            line-height: 1.7; /* Establece la altura de línea para mejorar la legibilidad del texto */
+        }
+        
+        /* Estilo del contenedor principal */
+        .container {
+            max-width: 1200px; /* Establece un ancho máximo para el área de contenido principal */
+            margin: 0 auto; /* Centra el contenedor en la página */
+            padding: 20px; /* Añade padding dentro del contenedor */
+        }
+        
+        /* Estilo de la sección de cabecera (header) */
+        header {
+            text-align: center; /* Centra el contenido de texto de la cabecera */
+            padding: 40px 20px; /* Añade padding a la cabecera */
+            margin-bottom: 30px; /* Añade espacio debajo de la cabecera */
+            background: rgba(0, 0, 0, 0.3); /* Fondo semitransparente para la cabecera */
+            border-radius: 15px; /* Redondea las esquinas de la cabecera */
+            position: relative; /* Necesario para z-index y posicionamiento absoluto de pseudo-elementos */
+            overflow: hidden; /* Evita que el contenido se salga de la cabecera */
+        }
+        
+        /* Estilo para el "breadcrumb" o migas de pan (navegación de ubicación) */
+        .breadcrumb {
+            display: flex; /* Usa flexbox para alinear los elementos */
+            justify-content: center; /* Centra los elementos horizontalmente */
+            margin-bottom: 20px; /* Espacio debajo del breadcrumb */
+            color: var(--gray); /* Color del texto del breadcrumb */
+            font-size: 1.1rem; /* Tamaño de fuente */
+        }
+        
+        /* Estilo para los enlaces dentro del breadcrumb */
+        .breadcrumb a {
+            color: var(--secondary); /* Color del enlace */
+            text-decoration: none; /* Sin subrayado por defecto */
+            transition: color 0.3s; /* Transición suave para el cambio de color */
+        }
+        
+        /* Estilo para los enlaces del breadcrumb al pasar el cursor */
+        .breadcrumb a:hover {
+            color: white; /* Cambia el color del enlace a blanco */
+            text-decoration: underline; /* Añade subrayado */
+        }
+        
+        /* Estilo para los separadores (span) en el breadcrumb */
+        .breadcrumb span {
+            margin: 0 10px; /* Espacio a los lados del separador */
+        }
+        
+        /* Estilo del encabezado principal (H1) */
+        h1 {
+            font-size: 2.8rem; /* Tamaño de fuente grande para el título principal */
+            margin-bottom: 10px; /* Espacio debajo del H1 */
+            color: white; /* Color de texto blanco */
+        }
+        
+        /* Estilo del subtítulo */
+        .subtitle {
+            font-size: 1.8rem; /* Tamaño de fuente para el subtítulo */
+            color: var(--secondary); /* Usa el color secundario */
+            margin-bottom: 20px; /* Espacio debajo del subtítulo */
+            font-weight: 300; /* Peso de fuente ligero */
+            text-align: center; /* Centra el texto del subtítulo */
+        }
+        
+        /* Estilo para la sección de introducción */
+        .intro {
+            max-width: 900px; /* Ancho máximo para la sección de introducción */
+            margin: 0 auto 40px; /* Centrado y con margen inferior */
+            padding: 25px; /* Padding interno */
+            background: var(--card-bg); /* Fondo de tarjeta semitransparente */
+            border-radius: 15px; /* Esquinas redondeadas */
+            border-left: 4px solid var(--secondary); /* Borde izquierdo decorativo con color secundario */
+            text-align: justify; /* Texto justificado para mejor lectura */
+        }
+        
+        /* Contenedor para la lista de referencias */
+        .references-container {
+            display: grid; /* Usa CSS Grid para organizar las referencias */
+            gap: 25px; /* Espacio entre cada ítem de referencia */
+            margin-bottom: 40px; /* Margen inferior para el contenedor */
+        }
+        
+        /* Estilo para cada ítem de referencia individual */
+        .reference-item {
+            background: var(--card-bg); /* Fondo de tarjeta */
+            border-radius: 15px; /* Esquinas redondeadas */
+            padding: 25px; /* Padding interno */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+            border-left: 4px solid var(--secondary); /* Borde izquierdo decorativo */
+            transition: all 0.3s ease; /* Transición suave para todos los cambios */
+        }
+        
+        /* Efecto hover para ítems de referencia */
+        .reference-item:hover {
+            transform: translateY(-3px); /* Mueve el ítem ligeramente hacia arriba */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Aumenta la sombra */
+        }
+        
+        /* Estilo para la citación bibliográfica (autor, año, título) */
+        .reference-citation {
+            font-size: 1.1rem; /* Tamaño de fuente de la cita */
+            font-weight: 600; /* Peso de fuente semigrueso */
+            color: white; /* Color de texto blanco */
+            margin-bottom: 15px; /* Espacio inferior */
+            line-height: 1.6; /* Altura de línea para mejorar legibilidad */
+        }
+        
+        /* Estilo para el tipo de referencia (ej. Libro, Artículo) */
+        .reference-type {
+            display: inline-block; /* Para que el fondo y padding se apliquen correctamente */
+            background: var(--secondary); /* Fondo con color secundario */
+            color: white; /* Texto blanco */
+            padding: 4px 12px; /* Padding interno */
+            border-radius: 20px; /* Esquinas redondeadas para forma de píldora */
+            font-size: 0.85rem; /* Tamaño de fuente pequeño */
+            font-weight: 500; /* Peso de fuente medio */
+            margin-bottom: 12px; /* Espacio inferior */
+        }
+        
+        /* Estilo para la descripción de la referencia */
+        .reference-description {
+            color: var(--light); /* Color de texto claro */
+            font-size: 0.95rem; /* Tamaño de fuente */
+            margin-bottom: 12px; /* Espacio inferior */
+            opacity: 0.9; /* Ligera transparencia para suavizar */
+        }
+        
+        /* Contenedor para las etiquetas de temas relacionados */
+        .reference-topics {
+            display: flex; /* Usa flexbox para alinear etiquetas */
+            flex-wrap: wrap; /* Permite que las etiquetas pasen a la siguiente línea si no caben */
+            gap: 8px; /* Espacio entre etiquetas */
+        }
+        
+        /* Estilo para cada etiqueta de tema */
+        .topic-tag {
+            background: rgba(231, 76, 60, 0.2); /* Fondo semitransparente con color de acento */
+            color: var(--accent); /* Color de texto de acento */
+            padding: 3px 10px; /* Padding interno */
+            border-radius: 12px; /* Esquinas redondeadas */
+            font-size: 0.8rem; /* Tamaño de fuente pequeño */
+            font-weight: 500; /* Peso de fuente medio */
+        }
+        
+        /* Estilo para la nota sobre el formato de citación */
+        .citation-note {
+            background: rgba(46, 204, 113, 0.1); /* Fondo semitransparente con color de éxito */
+            border-radius: 10px; /* Esquinas redondeadas */
+            padding: 20px; /* Padding interno */
+            margin: 30px 0; /* Margen vertical */
+            border-left: 4px solid var(--success); /* Borde izquierdo decorativo con color de éxito */
+        }
+        
+        /* Estilo para el encabezado H3 dentro de la nota de citación */
+        .citation-note h3 {
+            color: var(--success); /* Color de texto de éxito */
+            margin-bottom: 15px; /* Espacio inferior */
+            font-size: 1.3rem; /* Tamaño de fuente */
+        }
+        
+        /* Estilo para los párrafos dentro de la nota de citación */
+        .citation-note p {
+            margin-bottom: 10px; /* Espacio inferior para cada párrafo */
+        }
+        
+        /* Estilo para la sección de estadísticas de referencias */
+        .stats-section {
+            background: rgba(0, 0, 0, 0.2); /* Fondo semitransparente oscuro */
+            border-radius: 15px; /* Esquinas redondeadas */
+            padding: 25px; /* Padding interno */
+            margin: 40px 0; /* Margen vertical */
+            text-align: center; /* Centra el texto */
+        }
+        
+        /* Estilo para la cuadrícula de estadísticas */
+        .stats-grid {
+            display: grid; /* Usa CSS Grid */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Columnas responsivas */
+            gap: 20px; /* Espacio entre ítems de estadística */
+            margin-top: 20px; /* Espacio superior */
+        }
+        
+        /* Estilo para cada ítem de estadística */
+        .stat-item {
+            background: rgba(52, 152, 219, 0.1); /* Fondo semitransparente con color secundario */
+            padding: 20px; /* Padding interno */
+            border-radius: 10px; /* Esquinas redondeadas */
+            border: 1px solid rgba(52, 152, 219, 0.3); /* Borde sutil */
+        }
+        
+        /* Estilo para el número de la estadística */
+        .stat-number {
+            font-size: 2rem; /* Tamaño de fuente grande */
+            font-weight: bold; /* Texto en negrita */
+            color: var(--secondary); /* Color secundario */
+            display: block; /* Para que ocupe su propia línea */
+        }
+        
+        /* Estilo para la etiqueta de la estadística */
+        .stat-label {
+            font-size: 0.9rem; /* Tamaño de fuente pequeño */
+            color: var(--gray); /* Color gris */
+            margin-top: 5px; /* Espacio superior */
+        }
+        
+        /* Estilo para el contenedor de botones de navegación */
+        .nav-buttons {
+            display: flex; /* Usa flexbox */
+            justify-content: center; /* Centra los botones horizontalmente */
+            margin-top: 40px; /* Espacio superior */
+        }
+        
+        /* Estilo para el botón de navegación */
+        .nav-btn {
+            display: inline-flex; /* Permite alinear ícono y texto */
+            align-items: center; /* Centra verticalmente ícono y texto */
+            background: var(--secondary); /* Fondo con color secundario */
+            color: white; /* Texto blanco */
+            padding: 15px 30px; /* Padding interno amplio */
+            border-radius: 30px; /* Esquinas redondeadas para forma de píldora */
+            text-decoration: none; /* Sin subrayado */
+            font-weight: 600; /* Texto semigrueso */
+            transition: all 0.3s ease; /* Transición suave para todos los cambios */
+            font-size: 1.1rem; /* Tamaño de fuente */
+        }
+        
+        /* Efecto hover para el botón de navegación */
+        .nav-btn:hover {
+            background: #2980b9; /* Oscurece el color secundario */
+            transform: translateY(-3px); /* Mueve el botón ligeramente hacia arriba */
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4); /* Añade sombra */
+        }
+        
+        /* Estilo para el ícono dentro del botón de navegación */
+        .nav-btn i {
+            margin-right: 10px; /* Espacio a la derecha del ícono */
+        }
+        
+        /* Estilo del pie de página (footer) */
+        footer {
+            text-align: center; /* Centra el texto */
+            margin-top: 60px; /* Espacio superior */
+            padding: 30px; /* Padding interno */
+            color: var(--gray); /* Color gris para el texto */
+            font-size: 0.9rem; /* Tamaño de fuente pequeño */
+            border-top: 1px solid rgba(255, 255, 255, 0.1); /* Línea divisoria superior sutil */
+        }
+        
+        /* Media query para ajustes responsivos en pantallas más pequeñas (ancho máximo 768px) */
+        @media (max-width: 768px) {
+            /* Ajusta el tamaño de fuente del H1 */
+            h1 {
+                font-size: 2rem;
+            }
+            
+            /* Ajusta el tamaño de fuente del subtítulo */
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            /* Ajusta el tamaño de fuente de la citación bibliográfica */
+            .reference-citation {
+                font-size: 1rem;
+            }
+            
+            /* Ajusta las columnas de la cuadrícula de estadísticas */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 3</a>
+                <span>/</span>
+                <span>Referencias</span>
+            </div>
+            <h1>Referencias Bibliográficas</h1>
+            <div class="subtitle">Fuentes consultadas para la Unidad 3: Administración de Memoria</div>
+        </header>
+        
+        <div class="intro">
+            <p>El contenido de la Unidad 3: Administración de Memoria, se ha construido a partir de textos clásicos y fundamentales en el campo de los sistemas operativos. Estas obras proporcionan el rigor teórico y los ejemplos prácticos necesarios para comprender la abstracción de memoria, la memoria virtual y la segmentación.</p>
+        </div>
+
+        <div class="stats-section">
+            <h2 style="color: var(--secondary); margin-bottom: 20px;">Estadísticas de las Referencias</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">4</span>
+                    <div class="stat-label">Referencias Totales</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">2001-2015</span>
+                    <div class="stat-label">Rango Temporal</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">4</span>
+                    <div class="stat-label">Editoriales Distintas</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">1</span>
+                    <div class="stat-label">Idioma Principal (Español)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="references-container">
+            <div class="reference-item">
+                <div class="reference-type">Libro de Texto Aplicado</div>
+                <div class="reference-citation">
+                    Carretero, J., De Miguel, P., García, F., & Pérez, F. (2001). <em>Sistemas operativos: Una visión aplicada</em>. McGraw-Hill.
+                </div>
+                <div class="reference-description">
+                    Texto clave en español que ofrece una perspectiva práctica sobre la gestión de memoria, abordando temas como particionamiento, fragmentación, y algoritmos de asignación.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Administración de Memoria</span>
+                    <span class="topic-tag">Fragmentación</span>
+                    <span class="topic-tag">Swap</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Libro de Texto Fundamental</div>
+                <div class="reference-citation">
+                    Tanenbaum, A. S. (2009). <em>Sistemas operativos modernos</em> (3ª ed.). Pearson Educación.
+                </div>
+                <div class="reference-description">
+                    Obra de referencia que explica con claridad conceptos modernos de sistemas operativos, incluyendo discusiones detalladas sobre abstracción de memoria, memoria virtual, paginación y segmentación.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Memoria Virtual</span>
+                    <span class="topic-tag">Paginación</span>
+                    <span class="topic-tag">Segmentación</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Libro de Texto Clásico</div>
+                <div class="reference-citation">
+                    Tanenbaum, A. S., & Woodhull, A. S. (2001). <em>Sistemas operativos: Diseño e implementación</em> (2ª ed.). Prentice Hall.
+                </div>
+                <div class="reference-description">
+                    Este libro se centra en los aspectos de diseño e implementación, proporcionando valiosos conocimientos sobre cómo las técnicas de gestión de memoria se construyen en la práctica dentro de un sistema operativo.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Diseño de SO</span>
+                    <span class="topic-tag">Implementación</span>
+                    <span class="topic-tag">Gestión de Memoria</span>
+                </div>
+            </div>
+            
+            <div class="reference-item">
+                <div class="reference-type">Libro de Texto Académico</div>
+                <div class="reference-citation">
+                    Wolf, G., Ruiz, E., Bergero, F., & Meza, E. (2015). <em>Fundamentos de sistemas operativos</em>. Universidad Nacional Autónoma de México.
+                </div>
+                <div class="reference-description">
+                    Fuente académica que explica los principios fundamentales de los sistemas operativos desde una perspectiva educativa, ideal para comprender el concepto de abstracción de memoria.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Fundamentos de SO</span>
+                    <span class="topic-tag">Abstracción de Memoria</span>
+                    <span class="topic-tag">Educación</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="citation-note">
+            <h3><i class="fas fa-quote-left"></i> Nota sobre el Formato de Citas</h3>
+            <p>Las referencias bibliográficas han sido elaboradas siguiendo el formato APA (American Psychological Association, 7ª edición), un estándar ampliamente utilizado en el ámbito académico de las ciencias de la computación.</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">
+                <i class="fas fa-home"></i> Volver al Índice Principal
+            </a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 3: Administración de Memoria</p>
+            <p>Referencias bibliográficas organizadas según estándares académicos - © 2025</p>
+        </footer>
+    </div>
+</body>
+</html>

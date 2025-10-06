@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1.1 Aspectos Básicos del Sistema Operativo</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .content ul, .content ol {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+        
+        .quote-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+            font-style: italic;
+            color: var(--light);
+        }
+
+        .quote-box .citation {
+            border-left: none;
+            margin: 10px 0 0 0;
+            padding-left: 0;
+        }
+        
+        .table-container {
+            max-width: 800px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-caption {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: var(--gray);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        .figure-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .figure-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin: 15px 0;
+            color: var(--gray);
+            font-style: italic;
+            flex-direction: column;
+        }
+        
+        .figure-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+        
+        .figure-caption {
+            font-style: italic;
+            color: var(--gray);
+            margin-top: 10px;
+        }
+
+        .imagen-figura1 {
+            max-width: 600px;
+            width: 100%;
+            height: auto;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-number {
+                min-width: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al índice de unidades">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">1.1 Aspectos Básicos</div>
+            <div class="sidebar-subtitle">Introducción al SO</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item">
+                    <i class="fas fa-rocket"></i> Inicio del Tema
+                </a>
+                <a href="1.0.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i> Menú de Unidad 1
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#seccion-1-1-1" class="nav-item" data-section="1-1-1">
+                    <i class="fas fa-bullseye"></i> 1.1.1 Objetivos
+                </a>
+                <a href="#seccion-1-1-2" class="nav-item" data-section="1-1-2">
+                    <i class="fas fa-chart-line"></i> 1.1.2 Evolución
+                </a>
+                <a href="#seccion-1-1-3" class="nav-item" data-section="1-1-3">
+                    <i class="fas fa-server"></i> 1.1.3 Tipos de SO
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="actividad_1_1.html" class="nav-item">
+                    <i class="fas fa-tasks"></i> Actividad de aprendizaje
+                </a>
+                <a href="1.2.html" class="nav-item">
+                    <i class="fas fa-arrow-right"></i> Siguiente: Núcleo del SO
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="1.0.html">Unidad 1</a>
+                <span>/</span>
+                <span>1.1 Aspectos básicos del SO</span>
+            </div>
+            <h1>1.1 Aspectos Básicos del Sistema Operativo</h1>
+            <div class="subtitle">Estructura de un Sistema Operativo</div>
+        </header>
+        
+        <div class="intro">
+            <h3>Concepto:</h3>
+            <div class="quote-box">
+                "Un sistema operativo (SO) es un software que actúa como intermediario entre el hardware de una computadora y los programas de usuario, gestionando los recursos del sistema (como la CPU, memoria, almacenamiento y periféricos) y proporcionando servicios comunes para facilitar la ejecución de aplicaciones"
+                <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 3).</div>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-1-1-1">
+            <div class="section-header">
+                <div class="section-number">1.1.1</div>
+                <div class="section-title">Objetivos</div>
+            </div>
+            <div class="content">
+                <h3>Aspectos básicos:</h3>
+                <ol>
+                    <li><strong>Gestión de procesos:</strong> Controla la ejecución de múltiples programas y asigna tiempo de CPU.</li>
+                    <li><strong>Gestión de memoria:</strong> Administra la memoria principal (RAM) y virtual.</li>
+                    <li><strong>Sistema de archivos:</strong> Organiza y almacena datos en dispositivos de almacenamiento.</li>
+                    <li><strong>Interfaz de usuario:</strong> Proporciona entornos gráficos (GUI) o de línea de comandos (CLI).</li>
+                    <li><strong>Seguridad y acceso:</strong> Controla permisos y protege los recursos del sistema.</li>
+                </ol>
+
+                <h3>Abstracción proporcionada por el sistema operativo</h3>
+                <h4>Concepto:</h4>
+                <p>El sistema operativo (SO) actúa como una capa de <strong>abstracción</strong> entre el hardware físico y las aplicaciones de usuario, simplificando la interacción con los recursos del sistema. Esta abstracción permite que los programas no necesiten gestionar directamente los detalles complejos del hardware, sino que interactúen con interfaces estandarizadas proporcionadas por el SO.</p>
+                
+                <div class="quote-box">
+                    "El sistema operativo proporciona abstracciones de los recursos físicos, como procesadores, memoria, discos y dispositivos de E/S, para que los programas puedan operar de manera más simple y portátil"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 4).</div>
+                </div>
+
+                <h4>Principales abstracciones del SO:</h4>
+                <ol>
+                    <li><strong>Procesos (Abstracción de la CPU):</strong>
+                        <ul>
+                            <li>El SO maneja la ejecución de programas como <strong>procesos</strong>, ocultando los detalles de la planificación y el multiplexado de la CPU.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Espacio de direcciones (Abstracción de la memoria):</strong>
+                        <ul>
+                            <li>Proporciona la ilusión de memoria contigua y protegida mediante <strong>memoria virtual</strong>, independientemente de la distribución física de la RAM.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Archivos (Abstracción del almacenamiento):</strong>
+                        <ul>
+                            <li>Organiza los datos en un sistema jerárquico de archivos, ocultando los detalles del manejo de sectores en discos.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Dispositivos de E/S (Abstracción del hardware):</strong>
+                        <ul>
+                            <li>Ofrece interfaces genéricas (controladores) para interactuar con periféricos (teclados, impresoras, etc.) sin requerir conocimiento específico del hardware.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Interfaz de usuario (Abstracción de la interacción):</strong>
+                        <ul>
+                            <li>Proporciona entornos gráficos (GUI) o de comandos (CLI) para que el usuario no necesite operar directamente con instrucciones de bajo nivel.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <div class="figure-container">
+                    <div class="figura">
+                        <img src="FIGURA1.jpg" alt="" class="imagen-figura1"/>
+                    </div>
+                    <div class="figure-caption">Figura 1. Capas de abstracción. Autoría propia.</div>
+                </div>
+
+                <h3>Administración de Recursos en Sistemas Operativos</h3>
+                <h4>Concepto:</h4>
+                <p>El sistema operativo (SO) es el responsable de <strong>gestionar los recursos del hardware</strong> de manera eficiente, asegurando su correcta asignación entre múltiples procesos y usuarios.</p>
+                
+                <div class="quote-box">
+                    "La principal tarea de un sistema operativo es administrar los recursos de una computadora, incluyendo el procesador, la memoria, los dispositivos de almacenamiento y los periféricos, de manera que se maximice el rendimiento y se eviten conflictos"
+                    <div class="citation">(Stallings, 2018, p. 27).</div>
+                </div>
+
+                <h4>Recursos gestionados por el SO:</h4>
+                <ol>
+                    <li><strong>Gestión del Procesador (CPU):</strong>
+                        <ul>
+                            <li>Asigna tiempo de CPU a los procesos mediante <strong>planificación (scheduling)</strong>.</li>
+                            <li>Implementa mecanismos como <em>multiprogramación</em>, <em>multitarea</em> y <em>tiempo compartido</em>.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Gestión de Memoria (RAM y Memoria Virtual):</strong>
+                        <ul>
+                            <li>Controla la asignación y liberación de memoria para procesos.</li>
+                            <li>Implementa técnicas como <em>paginación</em> y <em>segmentación</em> para optimizar su uso.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Gestión de Almacenamiento (Discos y Sistemas de Archivos):</strong>
+                        <ul>
+                            <li>Administra el espacio en discos duros, SSDs y otros medios.</li>
+                            <li>Proporciona una estructura lógica (<em>sistema de archivos</em>) para almacenar y recuperar datos.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Gestión de Dispositivos de Entrada/Salida (E/S):</strong>
+                        <ul>
+                            <li>Controla el acceso a periféricos (impresoras, teclados, redes) mediante <em>controladores (drivers)</em>.</li>
+                            <li>Implementa <em>buffering</em> y <em>spooling</em> para mejorar la eficiencia.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Gestión de Redes (Comunicación entre Sistemas):</strong>
+                        <ul>
+                            <li>Facilita la comunicación entre computadoras mediante protocolos de red.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h4>Objetivos de la Administración de Recursos:</h4>
+                <p>✔ <strong>Eficiencia:</strong> Maximizar el uso de los recursos disponibles.</p>
+                <p>✔ <strong>Equidad:</strong> Distribuir recursos de manera justa entre procesos.</p>
+                <p>✔ <strong>Aislamiento:</strong> Evitar que un proceso monopolice o dañe el sistema.</p>
+                <p>✔ <strong>Seguridad:</strong> Controlar el acceso a los recursos según permisos.</p>
+
+                <h3>Aislamiento en Sistemas Operativos</h3>
+                <h4>Concepto:</h4>
+                <p>El <strong>aislamiento</strong> en sistemas operativos se refiere a los mecanismos que garantizan que los procesos, usuarios o aplicaciones no interfieran entre sí ni con el núcleo del sistema, protegiendo la integridad, confidencialidad y disponibilidad de los recursos.</p>
+                
+                <div class="quote-box">
+                    "El aislamiento es un principio fundamental en el diseño de sistemas operativos, que previene que fallos o ataques en un proceso afecten a otros o al sistema en general"
+                    <div class="citation">(Anderson, 2020, p. 145).</div>
+                </div>
+
+                <h4>Mecanismos de Aislamiento:</h4>
+                <ol>
+                    <li><strong>Aislamiento de Procesos:</strong>
+                        <ul>
+                            <li>Cada proceso ejecuta en su <strong>espacio de direcciones virtuales</strong>, evitando que acceda a la memoria de otros procesos.</li>
+                            <li>Implementado mediante protección de memoria (MMU) y segmentación-paginación.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Aislamiento de Usuarios:</strong>
+                        <ul>
+                            <li>Los sistemas multiusuario (ejemplo:: Linux, Windows) asignan <strong>permisos</strong> (UID/GID) para restringir el acceso a archivos y recursos.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Aislamiento del Kernel (Modo Supervisor vs. Usuario):</strong>
+                        <ul>
+                            <li>El núcleo del SO ejecuta en <strong>modo kernel</strong> (anillo 0), mientras que los procesos lo hacen en <strong>modo usuario</strong> (anillo 3), limitando operaciones privilegiadas.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Virtualización y Contenedores:</strong>
+                        <ul>
+                            <li>Máquinas virtuales (VMs) y contenedores (Docker) aíslan entornos completos o aplicaciones para evitar conflictos.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Sandboxing:</strong>
+                        <ul>
+                            <li>Técnica que ejecuta aplicaciones en entornos restringidos (ejemplo: navegadores web, apps móviles).</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h4>Importancia del Aislamiento:</h4>
+                <ul>
+                    <li><strong>Seguridad:</strong> Previene exploits como <em>buffer overflows</em> o <em>inyección de código</em>.</li>
+                    <li><strong>Estabilidad:</strong> Evita que un proceso defectuoso colapse el sistema.</li>
+                    <li><strong>Privacidad:</strong> Protege datos sensibles entre usuarios o aplicaciones.</li>
+                </ul>
+
+                <h4>Ejemplos prácticos:</h4>
+                <ul>
+                    <li>En Linux, los <em>namespaces</em> y <em>cgroups</em> aíslan recursos en contenedores.</li>
+                    <li>Windows usa <em>Virtual Trust Levels</em> (VTLs) para aislamiento de procesos críticos.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-1-1-2">
+            <div class="section-header">
+                <div class="section-number">1.1.2</div>
+                <div class="section-title">Evolución de los Sistemas Operativos</div>
+            </div>
+            <div class="content">
+                <h4>Concepto:</h4>
+                <p>Los sistemas operativos (SO) han evolucionado desde programas básicos para gestionar hardware hasta plataformas complejas que soportan multitarea, redes, seguridad avanzada y computación distribuida. Su desarrollo ha estado ligado al avance del hardware y las necesidades de los usuarios.</p>
+                
+                <div class="quote-box">
+                    "La historia de los sistemas operativos refleja la transición desde el procesamiento en serie hasta los entornos interactivos, paralelos y en tiempo real, impulsados por las demandas de eficiencia y usabilidad"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 32).</div>
+                </div>
+
+                <div class="quote-box">
+                    "La evolución de los sistemas operativos ha sido impulsada por la necesidad de abstraer el hardware, mejorar la eficiencia y adaptarse a nuevos paradigmas como la movilidad y la nube"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 45).</div>
+                </div>
+
+                <h3>Línea del Tiempo: Evolución de los Sistemas Operativos</h3>
+                <h4>1. Década de 1940–1950: Sin Sistemas Operativos</h4>
+                <ul>
+                    <li><strong>1945–1955:</strong> Computadoras como <strong>ENIAC</strong> y <strong>UNIVAC</strong> se programaban manualmente mediante interruptores y cables.</li>
+                    <li><strong>No existía SO</strong>: Los usuarios gestionaban directamente el hardware.</li>
+                </ul>
+
+                <h4>2. Década de 1950–1960: Sistemas Batch (Procesamiento por Lotes)</h4>
+                <ul>
+                    <li><strong>1956:</strong> <strong>GM-NAA I/O</strong> (General Motors), considerado el primer SO primitivo, para ejecutar trabajos en secuencia.</li>
+                    <li><strong>1961:</strong> <strong>OS/360</strong> (IBM), diseñado para mainframes, introdujo manejo de archivos y dispositivos.</li>
+                </ul>
+
+                <h4>3. Década de 1960–1970: Multiprogramación y Tiempo Compartido</h4>
+                <ul>
+                    <li><strong>1965:</strong> <strong>CTSS</strong> (MIT), primer sistema de tiempo compartido.</li>
+                    <li><strong>1969:</strong> Nace <strong>UNIX</strong> (Bell Labs), base de SO modernos (Linux, macOS).</li>
+                </ul>
+
+                <h4>4. Década de 1980: Computadoras Personales e Interfaces Gráficas</h4>
+                <ul>
+                    <li><strong>1981:</strong> <strong>MS-DOS</strong> (Microsoft), SO dominante en PCs.</li>
+                    <li><strong>1984:</strong> <strong>Mac OS</strong> (Apple), primera GUI comercial exitosa.</li>
+                    <li><strong>1985:</strong> <strong>Windows 1.0</strong> (Microsoft), complemento gráfico para MS-DOS.</li>
+                </ul>
+
+                <h4>5. Década de 1990: Redes y SO Modernos</h4>
+                <ul>
+                    <li><strong>1991:</strong> <strong>Linux</strong> (Linus Torvalds), kernel libre basado en UNIX.</li>
+                    <li><strong>1993:</strong> <strong>Windows NT</strong> (Microsoft), enfoque en estabilidad y redes.</li>
+                    <li><strong>1995:</strong> <strong>Windows 95</strong>, populariza interfaz gráfica y multitarea.</li>
+                </ul>
+
+                <h4>6. Siglo XXI: Móviles, Virtualización y Nube</h4>
+                <ul>
+                    <li><strong>2001:</strong> <strong>Mac OS X</strong> (Apple), basado en UNIX (BSD).</li>
+                    <li><strong>2007:</strong> <strong>iOS</strong> (Apple) y <strong>2008: Android</strong> (Google), dominan el mercado móvil.</li>
+                    <li><strong>2010s:</strong> Expansión de <strong>virtualización</strong> (VMware, KVM) y <strong>contenedores</strong> (Docker, Kubernetes).</li>
+                    <li><strong>2020s:</strong> SO para <strong>IoT</strong> (Raspbian, FreeRTOS) y computación cuántica.</li>
+                </ul>
+
+                <h3>Temas: Procesamiento por Lotes, Sistemas en Lotes con Spool y Sistemas Multiprogramados</h3>
+
+                <h4>1. Procesamiento por Lotes (Batch Processing)</h4>
+                <h4>Definición:</h4>
+                <p>Método donde los trabajos se agrupan en "lotes" y se ejecutan secuencialmente sin interacción del usuario.</p>
+
+                <h4>Características:</h4>
+                <ul>
+                    <li><strong>Década de 1950–1960</strong> (mainframes como IBM 1401).</li>
+                    <li>Los trabajos se organizaban en tarjetas perforadas o cintas magnéticas.</li>
+                    <li><strong>Limitación:</strong> Ociosidad de la CPU durante operaciones de E/S.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El procesamiento por lotes optimizaba el uso de costosos sistemas mainframe, pero carecía de interactividad"
+                    <div class="citation">(Tanenbaum y Bos, 2015, p. 34).</div>
+                </div>
+
+                <h4>2. Sistemas en Lotes con Spool (Simultaneous Peripheral Operations Online)</h4>
+                <h4>Definición:</h4>
+                <p>Técnica que supera la ociosidad de la CPU almacenando trabajos en discos (cola de impresión o ejecución) mientras otros procesos usan la CPU.</p>
+
+                <h4>Funcionamiento:</h4>
+                <ol>
+                    <li>Los trabajos se cargan desde tarjetas a disco (<strong>spooling input</strong>).</li>
+                    <li>La CPU ejecuta un trabajo mientras otro se carga/descarga en paralelo.</li>
+                    <li>Resultados se guardan en disco (<strong>spooling output</strong>) para imprimirse después.</li>
+                </ol>
+
+                <h4>Ejemplo:</h4>
+                <ul>
+                    <li><strong>IBM OS/360</strong> (1960s) usaba spooling para gestionar impresoras y lectores de tarjetas.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El spooling permitió mayor solapamiento entre E/S y cómputo, reduciendo tiempos muertos"
+                    <div class="citation">(Stallings, 2018, p. 52).</div>
+                </div>
+
+                <h4>3. Sistemas Multiprogramados</h4>
+                <h4>Definición:</h4>
+                <p>SO que mantiene múltiples programas en memoria, alternando la CPU entre ellos cuando uno espera por E/S.</p>
+
+                <h4>Ventajas:</h4>
+                <ul>
+                    <li><strong>Mayor utilización de la CPU</strong>: Evita ociosidad durante esperas de E/S.</li>
+                    <li><strong>Primer paso hacia la multitarea</strong>: Base para sistemas modernos.</li>
+                </ul>
+
+                <h4>Mecanismos clave:</h4>
+                <ul>
+                    <li><strong>Gestión de memoria</strong>: Asignación dinámica a múltiples procesos.</li>
+                    <li><strong>Planificación (scheduling)</strong>: Algoritmos como FCFS o Round-Robin.</li>
+                </ul>
+
+                <h4>Ejemplo:</h4>
+                <ul>
+                    <li><strong>UNIX</strong> (1969) y <strong>OS/360 MFT</strong> (Multiprogramming with a Fixed number of Tasks).</li>
+                </ul>
+
+                <div class="quote-box">
+                    "La multiprogramación marcó la transición de sistemas batch a interactivos, explotando el paralelismo entre CPU y E/S"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 78).</div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Tipo</strong></th>
+                                <th><strong>Ventaja</strong></th>
+                                <th><strong>Desventaja</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Batch puro</strong></td>
+                                <td>Simple, eficiente para tareas repetitivas</td>
+                                <td>Sin interactividad, CPU ociosa</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Batch con Spool</strong></td>
+                                <td>Mejor uso de CPU y periféricos</td>
+                                <td>Requiere almacenamiento secundario</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Multiprogramación</strong></td>
+                                <td>Máxima utilización de recursos</td>
+                                <td>Complejidad en gestión de memoria</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 1.</strong><br><em><strong>Comparativa.</strong></em></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-1-1-3">
+            <div class="section-header">
+                <div class="section-number">1.1.3</div>
+                <div class="section-title">Tipos: mainframe, servidor, multiprocesador, embebidos y tiempo real</div>
+            </div>
+            <div class="content">
+                <h3>Tipos de Sistemas Operativos</h3>
+
+                <h4>1. Mainframe</h4>
+                <h4>Definición:</h4>
+                <p>SO diseñados para mainframes (computadoras de alta capacidad utilizadas en entornos empresariales y gubernamentales).</p>
+
+                <h4>Características:</h4>
+                <ul>
+                    <li><strong>Alta disponibilidad</strong>: Funcionamiento continuo (99.999% uptime).</li>
+                    <li><strong>Soporte para miles de usuarios concurrentes</strong>.</li>
+                    <li><strong>Ejemplos</strong>: IBM z/OS, UNIX System Services.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Los SO para mainframes priorizan la confiabilidad, escalabilidad y seguridad en entornos críticos"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 89).</div>
+                </div>
+
+                <h4>2. Servidor</h4>
+                <h4>Definición:</h4>
+                <p>SO optimizados para gestionar servicios en red (web, correo, bases de datos).</p>
+
+                <h4>Características:</h4>
+                <ul>
+                    <li><strong>Multiusuario y multitarea avanzada</strong>.</li>
+                    <li><strong>Soporte para hardware de alto rendimiento</strong> (múltiples CPUs, RAID).</li>
+                    <li><strong>Ejemplos</strong>: Windows Server, Linux (RHEL, Ubuntu Server).</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Los SO servidor deben equilibrar rendimiento, seguridad y capacidad de administración remota"
+                    <div class="citation">(Stallings, 2018, p. 112).</div>
+                </div>
+
+                <h4>3. Multiprocesador (Sistemas Paralelos)</h4>
+                <h4>Definición:</h4>
+                <p>SO que gestionan computadoras con múltiples CPUs/núcleos para alto rendimiento.</p>
+
+                <h4>Características:</h4>
+                <ul>
+                    <li><strong>Compartición de memoria (SMP) o clusters</strong>.</li>
+                    <li><strong>Planificación equilibrada entre procesadores</strong>.</li>
+                    <li><strong>Ejemplos</strong>: UNIX, Linux (con soporte para NUMA).</li>
+                </ul>
+
+                <div class="quote-box">
+                    "La sincronización entre procesadores es clave para evitar condiciones de carrera y garantizar escalabilidad"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 67).</div>
+                </div>
+
+                <h4>4. Embebidos (Embedded)</h4>
+                <h4>Definición:</h4>
+                <p>SO para dispositivos con recursos limitados (IoT, electrodomésticos, wearables).</p>
+
+                <h4>Características:</h4>
+                <ul>
+                    <li><strong>Bajo consumo de energía y memoria</strong>.</li>
+                    <li><strong>Tiempo real (a menudo RTOS)</strong>.</li>
+                    <li><strong>Ejemplos</strong>: FreeRTOS, Embedded Linux, QNX.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Los SO embebidos sacrifican funciones generales por eficiencia y especialización"
+                    <div class="citation">(Laplante, 2020, p. 134).</div>
+                </div>
+
+                <h4>5. Tiempo Real (RTOS)</h4>
+                <h4>Definición:</h4>
+                <p>SO que garantizan respuestas en tiempos deterministas (críticos para industria, medicina, etc.).</p>
+
+                <h4>Tipos:</h4>
+                <ul>
+                    <li><strong>Hard Real-Time</strong>: Fallar en un plazo es inaceptable (ejemplo: control de aviones).</li>
+                    <li><strong>Soft Real-Time</strong>: Plazos flexibles (ejemplo: streaming multimedia).</li>
+                </ul>
+
+                <h4>Ejemplos:</h4>
+                <p>VxWorks, RTLinux.</p>
+
+                <div class="quote-box">
+                    "Un RTOS debe priorizar la predictibilidad sobre el rendimiento bruto"
+                    <div class="citation">(Liu, 2019, p. 211).</div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Tipo</strong></th>
+                                <th><strong>Enfoque</strong></th>
+                                <th><strong>Ejemplo</strong></th>
+                                <th><strong>Referencia</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Mainframe</strong></td>
+                                <td>Confiabilidad masiva</td>
+                                <td>IBM z/OS</td>
+                                <td>(Silberschatz, 2018)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Servidor</strong></td>
+                                <td>Servicios en red</td>
+                                <td>Linux Server</td>
+                                <td>(Stallings, 2018)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Multiprocesador</strong></td>
+                                <td>Paralelismo</td>
+                                <td>UNIX</td>
+                                <td>(Tanenbaum, 2015)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Embebidos</strong></td>
+                                <td>Eficiencia en recursos</td>
+                                <td>FreeRTOS</td>
+                                <td>(Laplante, 2020)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tiempo Real</strong></td>
+                                <td>Predictibilidad</td>
+                                <td>VxWorks</td>
+                                <td>(Liu, 2019)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 2.</strong><br><em><strong>Comparativa Resumida</strong>.</em></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="1.0.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Volver al Menú de Unidad</a>
+            <a href="1.2.html" class="nav-btn">Continuar a 1.2: Fundamentos del Núcleo del Sistema Operativo<i class="fas fa-arrow-right"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 1: Introducción a los Sistemas Operativos</p>
+            <p>Desarrollado para fines educativos - © 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        let sidebarOpen = false;
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                container.style.marginLeft = '370px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            }
+        }
+
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section');
+            const navItems = document.querySelectorAll('.nav-item[data-section]');
+            let currentSectionId = '';
+
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150 && rect.bottom >= 150) {
+                    currentSectionId = section.id;
+                }
+            });
+
+            navItems.forEach(item => {
+                const sectionId = 'seccion-' + item.dataset.section;
+                if (sectionId === currentSectionId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        }
+
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        function toggleScrollToTopBtn() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        window.addEventListener('scroll', () => {
+            updateActiveSection();
+            updateReadingProgress();
+            toggleScrollToTopBtn();
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 100;
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveSection();
+            updateReadingProgress();
+            updateContainerSpacing();
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) { 
+                    toggleSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

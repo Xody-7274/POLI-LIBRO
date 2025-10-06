@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actividad 2.3: Batalla de Comunicación entre Procesos</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --accent: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #1a2a3a;
+            --gray: #95a5a6;
+            --monster-color: #27ae60;
+            --ipc-green: #00d2a0;
+            --pipe-blue: #4dabf7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a2f1f, #1a3a2a, #2c5e40);
+            color: var(--light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(39, 174, 96, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 210, 160, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(77, 171, 247, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: ipcFlow 14s ease-in-out infinite;
+        }
+
+        @keyframes ipcFlow {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes victorySync {
+            0%, 100% { filter: brightness(1) hue-rotate(0deg); }
+            50% { filter: brightness(1.05) hue-rotate(10deg); }
+        }
+
+        @keyframes defeatBlock {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(0.95) contrast(1.05) hue-rotate(-10deg); }
+        }
+
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .floating-home-btn.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1rem;
+        }
+
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: rgba(52, 152, 219, 0.15);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .instructions h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .instructions ul {
+            padding-left: 25px;
+            color: var(--light);
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .battle-arena {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .battle-arena::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(39, 174, 96, 0.08) 0%, transparent 70%);
+            z-index: -1;
+            animation: communicationGlow 5s ease-in-out infinite;
+        }
+
+        @keyframes communicationGlow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.9; }
+        }
+
+        .monster-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(39, 174, 96, 0.15);
+            border-radius: 15px;
+            border: 2px solid rgba(39, 174, 96, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .monster-section::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 210, 160, 0.1) 0%, transparent 70%);
+            animation: dataFlow 6s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes dataFlow {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(360deg) scale(1.1); }
+        }
+
+        .monster-avatar {
+            font-size: 5rem;
+            margin-bottom: 15px;
+            animation: communicationPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes communicationPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .monster-name {
+            font-size: 1.8rem;
+            color: var(--monster-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .health-bar-container {
+            width: 300px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            overflow: hidden;
+            border: 2px solid rgba(39, 174, 96, 0.5);
+        }
+
+        .health-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--ipc-green), var(--monster-color));
+            transition: width 0.5s ease;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 210, 160, 0.5);
+        }
+
+        .health-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--light);
+        }
+
+        .player-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .error-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .error-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .error-dot.filled {
+            background: var(--accent);
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+
+        .questions-section {
+            margin-top: 30px;
+        }
+
+        .questions-section h3 {
+            color: var(--warning);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            text-align: center;
+            border-bottom: 2px solid var(--warning);
+            padding-bottom: 10px;
+        }
+
+        .question-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--warning);
+            transition: all 0.3s ease;
+        }
+
+        .question-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(5px);
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: var(--warning);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .question-text {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .question-select {
+            margin-left: 15px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            background: #ffffff;
+            color: #2c3e50;
+            border: 2px solid var(--secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            min-width: 140px;
+        }
+
+        .question-select:focus {
+            outline: none;
+            border-color: var(--warning);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .question-select.correct {
+            border-color: var(--success);
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+            animation: correctPulse 0.6s ease;
+        }
+
+        .question-select.incorrect {
+            border-color: var(--accent);
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
+            animation: incorrectShake 0.6s ease;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .battle-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+
+        .btn-attack {
+            background: var(--monster-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            font-size: 1.2rem;
+            padding: 18px 35px;
+        }
+
+        .btn-attack:hover {
+            background: #219a52;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-attack:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+            transform: translateY(-3px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+        }
+
+        .game-status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: none;
+        }
+
+        .game-status.victory {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        .game-status.defeat {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .game-status.continue {
+            background: rgba(243, 156, 18, 0.2);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .solutions-section {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--success);
+            display: none;
+        }
+
+        .solutions-section h4 {
+            color: var(--success);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .solution-item {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(46, 204, 113, 0.05);
+            border-radius: 5px;
+            border-left: 3px solid var(--success);
+        }
+
+        .solution-number {
+            font-weight: bold;
+            color: var(--success);
+            margin-right: 8px;
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .battle-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .player-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .navigation {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-center {
+                order: 2;
+            }
+
+            .navigation .btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .question-text {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .container {
+                margin-left: 20px;
+                margin-right: 20px;
+                padding: 10px;
+            }
+
+            .health-bar-container {
+                width: 250px;
+            }
+
+            .monster-avatar {
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="readingProgressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">Batalla IPC</div>
+            <div class="sidebar-subtitle">Comunicación entre procesos</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    Menú principal
+                </a>
+                <a href="2.3.html" class="nav-item">
+                    <i class="fas fa-book-open"></i>
+                    Volver al material
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Otras Actividades</div>
+                <a href="actividad_2_1.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 2.1
+                </a>
+                <a href="actividad_2_2.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 2.2
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="2.3.html">2.3 Comunicación entre procesos</a>
+                <span>/</span>
+                <span>Batalla IPC</span>
+            </div>
+            <h1>📡 Batalla de Comunicación entre Procesos</h1>
+            <div class="subtitle">¡Derrota al Guardián de la IPC completando las comunicaciones!</div>
+        </div>
+
+        <div class="instructions">
+            <h3><i class="fas fa-gamepad"></i> Protocolo de Comunicación</h3>
+            <ul>
+                <li><strong>Objetivo:</strong> Derrota al Guardián de la IPC completando correctamente las oraciones sobre comunicación entre procesos.</li>
+                <li><strong>Mecánica:</strong> Cada respuesta correcta reduce 1 HP del guardián. Cada respuesta incorrecta cuenta como un error de comunicación.</li>
+                <li><strong>Victoria:</strong> Reduce la vida del guardián a 0 HP antes de cometer 5 errores.</li>
+                <li><strong>Derrota:</strong> Cometes 5 errores antes de derrotar al guardián.</li>
+                <li><strong>Estrategia:</strong> Lee cuidadosamente cada oración y selecciona la palabra que mejor complete el contexto de IPC.</li>
+            </ul>
+        </div>
+
+        <div class="battle-arena">
+            <div class="monster-section">
+                <div class="monster-avatar" id="monsterAvatar">📡</div>
+                <div class="monster-name">Guardián de la IPC</div>
+                <div class="health-bar-container">
+                    <div class="health-bar" id="healthBar" style="width: 100%;"></div>
+                </div>
+                <div class="health-text" id="healthText">10 / 10 HP</div>
+            </div>
+
+            <div class="player-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="timerValue">0s</div>
+                    <div class="stat-label"><i class="fas fa-clock"></i> Tiempo</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="attemptsValue">0</div>
+                    <div class="stat-label"><i class="fas fa-satellite-dish"></i> Transmisiones</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="errorsValue">0 / 5</div>
+                    <div class="stat-label"><i class="fas fa-bug"></i> Errores IPC</div>
+                    <div class="error-indicators" id="errorIndicators">
+                        <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="questions-section">
+                <h3><i class="fas fa-scroll"></i> Completa las Comunicaciones para Atacar</h3>
+                <div id="questionsContainer"></div>
+            </div>
+
+            <div class="battle-controls">
+                <button class="btn btn-attack" onclick="transmit()" id="attackBtn">
+                    <i class="fas fa-broadcast-tower"></i> ¡TRANSMITIR!
+                </button>
+                <button class="btn btn-secondary" onclick="resetBattle()">
+                    <i class="fas fa-redo"></i> Nueva Batalla
+                </button>
+                <button class="btn btn-secondary" id="solutionsBtn">
+                    <i class="fas fa-lightbulb"></i> Ver Protocolos
+                </button>
+            </div>
+
+            <div class="game-status" id="gameStatus"></div>
+            <div class="solutions-section" id="solutions">
+                <h4><i class="fas fa-unlock"></i> Protocolos de Comunicación Correctos</h4>
+                <div id="solutionsList"></div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <a href="2.3.html" class="btn btn-success">
+                <i class="fas fa-arrow-left"></i> Volver al Material
+            </a>
+            <div class="nav-center">
+                <a href="index.html" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Menú Principal
+                </a>
+            </div>
+            <a href="2.4.html" class="btn btn-success">
+                Siguiente Tema <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Variables del juego
+        let time = 0;
+        let attempts = 0;
+        let errors = 0;
+        let monsterHP = 10;
+        let maxHP = 10;
+        let maxErrors = 5;
+        let gameOver = false;
+        let timerInterval;
+        let sidebarOpen = false;
+        let usedOptions = new Set();
+
+        // Datos del juego: preguntas sobre comunicación entre procesos
+        const questions = [
+            {
+                text: "La comunicación entre procesos (IPC) permite a los procesos independientes compartir _____ y sincronizar sus actividades.",
+                answer: "datos"
+            },
+            {
+                text: "La _____ compartida es el mecanismo de IPC más rápido, ya que evita copias de datos y llamadas al sistema costosas.",
+                answer: "memoria"
+            },
+            {
+                text: "En el paso de mensajes, los procesos utilizan las primitivas _____ y receive() para intercambiar información.",
+                answer: "send"
+            },
+            {
+                text: "Las tuberías anónimas se utilizan principalmente para la comunicación entre procesos que tienen una relación de _____.",
+                answer: "parentesco"
+            },
+            {
+                text: "En la comunicación directa, el emisor debe especificar el _____ del proceso receptor al enviar un mensaje.",
+                answer: "identificador"
+            },
+            {
+                text: "Las tuberías nombradas (FIFOs) permiten la comunicación entre procesos _____ que no tienen un ancestro común.",
+                answer: "no relacionados"
+            },
+            {
+                text: "La memoria compartida requiere mecanismos de _____ para evitar condiciones de carrera entre procesos.",
+                answer: "sincronización"
+            },
+            {
+                text: "En los sistemas distribuidos, el _____ de mensajes es el mecanismo principal de comunicación.",
+                answer: "paso"
+            },
+            {
+                text: "Las tuberías proporcionan comunicación _____, donde los datos fluyen en una sola dirección.",
+                answer: "unidireccional"
+            },
+            {
+                text: "Los buzones o _____ permiten la comunicación indirecta entre procesos sin conocer directamente al receptor.",
+                answer: "puertos"
+            }
+        ];
+
+        const wordBank = ["datos", "memoria", "send", "parentesco", "identificador", "no relacionados", "sincronización", "paso", "unidireccional", "puertos"];
+
+        // Elementos DOM para el menú lateral
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                container.style.marginLeft = '370px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else if (window.innerWidth > 1024) {
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                container.style.marginLeft = '70px';
+                container.style.marginRight = '70px';
+                container.style.padding = '20px';
+            }
+        }
+
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = Math.min((winScroll / height) * 100, 100);
+            document.getElementById('readingProgressBar').style.width = scrolled + '%';
+        }
+
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        const floatingHomeBtn = document.querySelector('.floating-home-btn');
+
+        function toggleFloatingButtons() {
+            const scrollPosition = window.pageYOffset;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            
+            if (scrollPosition > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+            
+            const nearBottom = scrollPosition + windowHeight >= documentHeight - 100;
+            if (nearBottom) {
+                floatingHomeBtn.classList.add('hidden');
+            } else {
+                floatingHomeBtn.classList.remove('hidden');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        function initGame() {
+            const container = document.getElementById('questionsContainer');
+            
+            questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-item';
+                
+                const parts = question.text.split('_____');
+                
+                questionDiv.innerHTML = `
+                    <div class="question-number">Comunicación ${index + 1}</div>
+                    <div class="question-text">
+                        ${parts[0]}
+                        <select class="question-select" id="q${index + 1}" onchange="handleSelectionChange(${index + 1})">
+                            <option value="">-- Selecciona --</option>
+                        </select>
+                        ${parts[1]}
+                    </div>
+                `;
+                
+                container.appendChild(questionDiv);
+            });
+
+            loadSolutions();
+            updateSelectOptions();
+            startTimer();
+        }
+
+        function handleSelectionChange(questionNumber) {
+            updateSelectOptions();
+            updateProgress();
+        }
+
+        function updateProgress() {
+            let completed = 0;
+            for (let i = 1; i <= questions.length; i++) {
+                if (document.getElementById(`q${i}`).value !== "") {
+                    completed++;
+                }
+            }
+        }
+
+        function updateSelectOptions() {
+            usedOptions.clear();
+            for (let i = 1; i <= questions.length; i++) {
+                const value = document.getElementById(`q${i}`).value;
+                if (value !== "") {
+                    usedOptions.add(value);
+                }
+            }
+
+            for (let i = 1; i <= questions.length; i++) {
+                const select = document.getElementById(`q${i}`);
+                const currentValue = select.value;
+                
+                select.innerHTML = '<option value="">-- Selecciona --</option>';
+                
+                wordBank.forEach(word => {
+                    if (!usedOptions.has(word) || word === currentValue) {
+                        const option = document.createElement('option');
+                        option.value = word;
+                        option.textContent = word.charAt(0).toUpperCase() + word.slice(1);
+                        select.appendChild(option);
+                    }
+                });
+                
+                select.value = currentValue;
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                time++;
+                document.getElementById('timerValue').textContent = `${time}s`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function updateMonsterAvatar() {
+            const avatar = document.getElementById('monsterAvatar');
+            const healthPercentage = (monsterHP / maxHP) * 100;
+            
+            if (healthPercentage > 70) {
+                avatar.textContent = '📡';
+            } else if (healthPercentage > 40) {
+                avatar.textContent = '🔌';
+            } else if (healthPercentage > 0) {
+                avatar.textContent = '📊';
+            } else {
+                avatar.textContent = '💥';
+            }
+        }
+
+        function updateUI() {
+            const healthPercentage = (monsterHP / maxHP) * 100;
+            document.getElementById('healthBar').style.width = `${healthPercentage}%`;
+            document.getElementById('healthText').textContent = `${monsterHP} / ${maxHP} HP`;
+            
+            const errorDots = document.querySelectorAll('.error-dot');
+            errorDots.forEach((dot, index) => {
+                if (index < errors) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+            
+            document.getElementById('attemptsValue').textContent = attempts;
+            document.getElementById('errorsValue').textContent = `${errors} / ${maxErrors}`;
+            
+            updateMonsterAvatar();
+        }
+
+        function transmit() {
+            if (gameOver) return;
+            
+            let unanswered = 0;
+            for (let i = 1; i <= questions.length; i++) {
+                if (document.getElementById(`q${i}`).value === "") {
+                    unanswered++;
+                }
+            }
+            
+            if (unanswered > 0) {
+                showGameStatus(`<i class="fas fa-exclamation-triangle"></i> ¡Completa todas las comunicaciones antes de transmitir! Faltan ${unanswered} respuestas.`, 'continue');
+                return;
+            }
+            
+            attempts++;
+            let correctAnswers = 0;
+            let currentErrors = 0;
+            
+            questions.forEach((question, index) => {
+                const select = document.getElementById(`q${index + 1}`);
+                const selectedValue = select.value.toLowerCase();
+                const correctAnswer = question.answer.toLowerCase();
+                
+                select.classList.remove('correct', 'incorrect');
+                
+                if (selectedValue === correctAnswer && selectedValue !== '') {
+                    correctAnswers++;
+                    select.classList.add('correct');
+                } else if (selectedValue !== '') {
+                    currentErrors++;
+                    select.classList.add('incorrect');
+                }
+            });
+            
+            const damage = correctAnswers;
+            monsterHP = Math.max(0, monsterHP - damage);
+            errors = Math.min(maxErrors, currentErrors);
+            
+            updateUI();
+            checkGameEnd();
+        }
+
+        function showGameStatus(message, type) {
+            const statusDiv = document.getElementById('gameStatus');
+            statusDiv.innerHTML = message;
+            statusDiv.className = `game-status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'continue') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        function checkGameEnd() {
+            const attackBtn = document.getElementById('attackBtn');
+            
+            if (monsterHP <= 0) {
+                stopTimer();
+                gameOver = true;
+                showGameStatus(`
+                    <i class="fas fa-trophy"></i> 
+                    ¡COMUNICACIÓN ESTABLECIDA! Has derrotado al Guardián de la IPC<br>
+                    <small>Tiempo: ${time}s | Transmisiones: ${attempts} | Errores IPC: ${errors}/${maxErrors}</small>
+                `, 'victory');
+                attackBtn.disabled = true;
+                
+                document.body.style.background = 'linear-gradient(135deg, #0a2f1f, #1a3a2a, #154025, #1f4a30)';
+                document.body.style.animation = 'victorySync 2s ease-in-out infinite';
+                document.getElementById('monsterAvatar').textContent = '💥';
+                
+            } else if (errors >= maxErrors) {
+                stopTimer();
+                gameOver = true;
+                showGameStatus(`
+                    <i class="fas fa-skull-crossbones"></i> 
+                    ¡ERROR DE COMUNICACIÓN! El Guardián de la IPC bloqueó la transmisión<br>
+                    <small>Demasiados errores de protocolo. ¡Inténtalo de nuevo!</small>
+                `, 'defeat');
+                attackBtn.disabled = true;
+                
+                document.body.style.background = 'linear-gradient(135deg, #0a2f1f, #4a2530, #5a3035)';
+                document.body.style.animation = 'defeatBlock 1s ease-in-out infinite';
+                
+            } else {
+                let message = '';
+                if (attempts === 1) {
+                    if (monsterHP < maxHP) {
+                        message = `<i class="fas fa-satellite-dish"></i> ¡Transmisión exitosa! El guardián tiene ${monsterHP} HP restantes.`;
+                    } else {
+                        message = `<i class="fas fa-shield-alt"></i> El guardián bloqueó tu transmisión. ¡Corrige los protocolos!`;
+                    }
+                } else {
+                    message = `<i class="fas fa-broadcast-tower"></i> ¡Continúa transmitiendo! HP restantes: ${monsterHP}`;
+                }
+                showGameStatus(message, 'continue');
+            }
+        }
+
+        function loadSolutions() {
+            const solutionsList = document.getElementById("solutionsList");
+            questions.forEach((question, index) => {
+                const solutionDiv = document.createElement("div");
+                solutionDiv.className = "solution-item";
+                solutionDiv.innerHTML = `
+                    <span class="solution-number">${index + 1}.</span>
+                    <strong>${question.text.replace('_____', `<span style="color: var(--success)">${question.answer}</span>`)}</strong>
+                `;
+                solutionsList.appendChild(solutionDiv);
+            });
+        }
+
+        function toggleSolutions() {
+            const solutions = document.getElementById("solutions");
+            const button = document.getElementById("solutionsBtn");
+            
+            const isHidden = solutions.style.display === "none" || !solutions.style.display;
+            
+            if (isHidden) {
+                solutions.style.display = "block";
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar Protocolos';
+                }
+                setTimeout(() => {
+                    solutions.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            } else {
+                solutions.style.display = "none";
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-lightbulb"></i> Ver Protocolos';
+                }
+            }
+        }
+
+        function resetBattle() {
+            time = 0;
+            attempts = 0;
+            errors = 0;
+            monsterHP = maxHP;
+            gameOver = false;
+            usedOptions.clear();
+            
+            document.getElementById('timerValue').textContent = '0s';
+            document.getElementById('attemptsValue').textContent = '0';
+            document.getElementById('errorsValue').textContent = '0 / 5';
+            document.getElementById('gameStatus').style.display = 'none';
+            document.getElementById('attackBtn').disabled = false;
+            document.getElementById('solutions').style.display = 'none';
+            document.body.style.background = 'linear-gradient(135deg, #0a2f1f, #1a3a2a, #2c5e40)';
+            document.body.style.animation = 'none';
+            
+            const solutionsBtn = document.getElementById('solutionsBtn');
+            if (solutionsBtn) {
+                solutionsBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Ver Protocolos';
+            }
+            
+            questions.forEach((question, index) => {
+                const select = document.getElementById(`q${index + 1}`);
+                select.value = '';
+                select.classList.remove('correct', 'incorrect');
+            });
+            
+            updateSelectOptions();
+            updateUI();
+            
+            stopTimer();
+            startTimer();
+        }
+
+        // Event listeners globales
+        window.addEventListener('scroll', () => {
+            updateReadingProgress();
+            toggleFloatingButtons();
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) {
+                    toggleSidebar();
+                }
+            }
+            
+            if (e.key === 'Enter' && !gameOver) {
+                transmit();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initGame();
+            updateContainerSpacing();
+            updateReadingProgress();
+            
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+            
+            const solutionsBtn = document.getElementById('solutionsBtn');
+            if (solutionsBtn) {
+                solutionsBtn.addEventListener('click', toggleSolutions);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1.4 Llamadas a Sistema</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h2 {
+            font-size: 1.6rem;
+            color: var(--secondary);
+            margin: 25px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .content ul, .content ol {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+
+        .quote-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+            font-style: italic;
+            color: var(--light);
+        }
+
+        .quote-box .citation {
+            border-left: none;
+            margin: 10px 0 0 0;
+            padding-left: 0;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid var(--warning);
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+        
+        .importance-card {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .importance-title {
+            font-size: 1.4rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .table-container {
+            max-width: 900px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            vertical-align: top;
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-caption {
+            text-align: center;
+            padding: 15px;
+            font-style: italic;
+            color: var(--gray);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .characteristic-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .characteristic-title {
+            font-size: 1.4rem;
+            color: var(--warning);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .signal-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .signal-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-number {
+                min-width: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al índice de unidades">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">1.4 Llamadas a Sistema</div>
+            <div class="sidebar-subtitle">System Calls</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item">
+                    <i class="fas fa-rocket"></i> Inicio del Tema
+                </a>
+                <a href="1.0.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i> Menú de Unidad 1
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#seccion-1-4-1" class="nav-item" data-section="1-4-1">
+                    <i class="fas fa-cogs"></i> 1.4.1 Procesos y Señales
+                </a>
+                <a href="#seccion-1-4-2" class="nav-item" data-section="1-4-2">
+                    <i class="fas fa-folder"></i> 1.4.2 Directorios y Archivos
+                </a>
+                <a href="#seccion-1-4-3" class="nav-item" data-section="1-4-3">
+                    <i class="fas fa-shield-alt"></i> 1.4.3 Protección
+                </a>
+                <a href="#seccion-1-4-4" class="nav-item" data-section="1-4-4">
+                    <i class="fas fa-puzzle-piece"></i> 1.4.4 Diversos
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="actividad_1_4.html" class="nav-item">
+                    <i class="fas fa-tasks"></i> Actividad de aprendizaje
+                </a>
+                <a href="1.5.html" class="nav-item">
+                    <i class="fas fa-arrow-right"></i> Siguiente: Shell
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="1.0.html">Unidad 1</a>
+                <span>/</span>
+                <span>1.4 Llamadas a sistema</span>
+            </div>
+            <h1>1.4 Llamadas a Sistema</h1>
+            <div class="subtitle">Llamadas al Sistema (System Calls): Definición, Importancia y Clasificación</div>
+        </header>
+        
+        <div class="intro">
+            <h3>1. Definición</h3>
+            <p>Las llamadas al sistema son interfaces programáticas que permiten a las aplicaciones de usuario solicitar servicios al kernel del sistema operativo, actuando como puente entre el modo usuario y el modo kernel.</p>
+            
+            <div class="quote-box">
+                "Las system calls son el único mecanismo seguro para que un proceso acceda a recursos privilegiados del hardware"
+                <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 72).</div>
+            </div>
+
+            <h4>Características clave:</h4>
+            <ul>
+                <li>Transición de modos: Cambio de modo usuario a modo kernel (ejemplo: instrucción syscall en x86-64).</li>
+                <li>Identificador único: Cada llamada tiene un número (ejemplo: read = 0 en x86 Linux).</li>
+                <li>Protección: Previenen acceso directo al hardware por aplicaciones no privilegiadas.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <div class="content">
+                <h2>2. Importancia</h2>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Aspecto</strong></th>
+                                <th><strong>Explicación</strong></th>
+                                <th><strong>Ejemplo</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Seguridad</td>
+                                <td>Control centralizado del acceso a recursos</td>
+                                <td>open() verifica permisos de archivo</td>
+                            </tr>
+                            <tr>
+                                <td>Portabilidad</td>
+                                <td>Misma llamada funciona en diferentes hardware</td>
+                                <td>write() en disco/red</td>
+                            </tr>
+                            <tr>
+                                <td>Abstracción</td>
+                                <td>Oculta complejidad del hardware</td>
+                                <td>malloc() gestiona memoria física</td>
+                            </tr>
+                            <tr>
+                                <td>Estabilidad</td>
+                                <td>Previene que aplicaciones crashen el sistema</td>
+                                <td>Page faults manejados por el kernel</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 10.</strong><br><em><strong>Importancia.</strong></em></div>
+                </div>
+
+                <div class="quote-box">
+                    "Sin llamadas al sistema, cada aplicación tendría que implementar su propio manejo de hardware, llevando al caos"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 65).</div>
+                </div>
+
+                <h2>3. Clasificación</h2>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Categoría</strong></th>
+                                <th><strong>Ejemplos</strong></th>
+                                <th><strong>Descripción</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Control de procesos</td>
+                                <td>fork(), exec(), exit()</td>
+                                <td>Creación/terminación de procesos</td>
+                            </tr>
+                            <tr>
+                                <td>Gestión de archivos</td>
+                                <td>open(), read(), write()</td>
+                                <td>Operaciones de E/S</td>
+                            </tr>
+                            <tr>
+                                <td>Comunicación</td>
+                                <td>pipe(), shmget()</td>
+                                <td>IPC (Inter-Process Communication)</td>
+                            </tr>
+                            <tr>
+                                <td>Memoria</td>
+                                <td>brk(), mmap()</td>
+                                <td>Asignación de memoria</td>
+                            </tr>
+                            <tr>
+                                <td>Protección</td>
+                                <td>chmod(), kill()</td>
+                                <td>Permisos y señales</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 11.</strong><br><em><strong>Por Función (Unix/Linux).</strong></em></div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Tipo</strong></th>
+                                <th><strong>Ejemplo</strong></th>
+                                <th><strong>Número de pasos en kernel</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Simples</td>
+                                <td>getpid()</td>
+                                <td>1-2</td>
+                            </tr>
+                            <tr>
+                                <td>Complejas</td>
+                                <td>execve()</td>
+                                <td>10+ (carga binarios, librerías)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 12.</strong><br><em><strong>Por Nivel de Complejidad.</strong></em></div>
+                </div>
+
+                <div class="quote-box">
+                    "Algunas llamadas como execve() involucran cientos de líneas de código en el kernel"
+                    <div class="citation">(Love, 2013, p. 112).</div>
+                </div>
+
+                <h4>Por Frecuencia de Uso</h4>
+                <p>(Estadísticas en sistemas Linux, según Bovet & Cesati, 2005):</p>
+                <ol>
+                    <li>read(): ~25% de todas las llamadas</li>
+                    <li>write(): ~15%</li>
+                    <li>open()/close(): ~10%</li>
+                </ol>
+
+                <h4>Ejemplo Técnico</h4>
+                <div class="code-block">
+<span class="comment">// Llamada al sistema para escribir en un archivo</span>
+ssize_t write(int fd, const void *buf, size_t count);
+                </div>
+
+                <p><strong>Flujo:</strong></p>
+                <ol>
+                    <li>Aplicación carga parámetros en registros (RAX=1, RDI=fd, RSI=buf, RDX=count).</li>
+                    <li>Ejecuta syscall.</li>
+                    <li>CPU cambia a modo kernel y salta al handler.</li>
+                    <li>Kernel verifica permisos y ejecuta operación.</li>
+                    <li>Retorna resultado via registro RAX.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-1-4-1">
+            <div class="section-header">
+                <div class="section-number">1.4.1</div>
+                <div class="section-title">Procesos y Señales</div>
+            </div>
+            <div class="content">
+                <h2>1. Procesos: Definición y Características</h2>
+                
+                <h4>Definición:</h4>
+                <p>Un <em>proceso</em> es una instancia de un programa en ejecución, que incluye su código, datos, estado de ejecución y recursos asignados por el SO.</p>
+
+                <div class="quote-box">
+                    "Un proceso es la unidad básica de trabajo en un sistema operativo moderno"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 102).</div>
+                </div>
+
+                <h4>Características clave:</h4>
+                <ul>
+                    <li>Identificador único (PID): Asignado por el SO.</li>
+                    <li>Estado: Ejecución, listo, bloqueado, etc.</li>
+                    <li>Contexto: Registros de CPU, contador de programa, espacio de memoria.</li>
+                    <li>Recursos: Archivos abiertos, conexiones de red.</li>
+                </ul>
+
+                <h2>2. Tipos de Procesos</h2>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Tipo</strong></th>
+                                <th><strong>Descripción</strong></th>
+                                <th><strong>Ejemplo</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Usuario</td>
+                                <td>Aplicaciones comunes</td>
+                                <td>Navegador web, editor de texto</td>
+                            </tr>
+                            <tr>
+                                <td>Sistema (Daemon)</td>
+                                <td>Servicios en segundo plano</td>
+                                <td>sshd (servidor SSH)</td>
+                            </tr>
+                            <tr>
+                                <td>Hijos</td>
+                                <td>Creados por otro proceso (fork())</td>
+                                <td>Procesos multihilo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 13.</strong><br><em><strong>Tipos de procesos.</strong></em></div>
+                </div>
+
+                <div class="quote-box">
+                    "Los procesos del kernel no tienen PID y manejan operaciones críticas como la gestión de memoria"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 115).</div>
+                </div>
+
+                <h2>3. Funcionalidad e Importancia de los Procesos</h2>
+                <ul>
+                    <li>Multitarea: El SO alterna entre procesos para simular ejecución paralela.</li>
+                    <li>Aislamiento: Fallos en un proceso no afectan a otros.</li>
+                    <li>Ejecución concurrente: Múltiples procesos pueden trabajar en tareas relacionadas.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "La creación de procesos mediante fork() y exec() es fundamental en sistemas Unix"
+                    <div class="citation">(Stevens & Rago, 2013, p. 227).</div>
+                </div>
+
+                <h2>4. Señales: Definición y Características</h2>
+
+                <h4>Definición:</h4>
+                <p>Mecanismo de comunicación asíncrona usado para notificar a un proceso sobre eventos (ejemplo: interrupciones, errores).</p>
+
+                <div class="quote-box">
+                    "Las señales son el equivalente software a las interrupciones de hardware"
+                    <div class="citation">(Stallings, 2018, p. 178).</div>
+                </div>
+
+                <h4>Características clave:</h4>
+                <ul>
+                    <li>Asíncronas: Pueden llegar en cualquier momento.</li>
+                    <li>Predefinidas: Números enteros (ejemplo: SIGKILL=9).</li>
+                    <li>Manejables: El proceso puede ignorar o capturar señales.</li>
+                </ul>
+
+                <h2>5. Tipos de Señales</h2>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Señal</strong></th>
+                                <th><strong>Número</strong></th>
+                                <th><strong>Propósito</strong></th>
+                                <th><strong>Acción por defecto</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SIGINT</td>
+                                <td>2</td>
+                                <td>Interrupción desde teclado (Ctrl+C)</td>
+                                <td>Terminar proceso</td>
+                            </tr>
+                            <tr>
+                                <td>SIGKILL</td>
+                                <td>9</td>
+                                <td>Terminación forzosa</td>
+                                <td>Terminar (no puede ignorarse)</td>
+                            </tr>
+                            <tr>
+                                <td>SIGSEGV</td>
+                                <td>11</td>
+                                <td>Acceso inválido a memoria</td>
+                                <td>Volcado de núcleo (core dump)</td>
+                            </tr>
+                            <tr>
+                                <td>SIGCHLD</td>
+                                <td>17</td>
+                                <td>Notificación de proceso hijo terminado</td>
+                                <td>Ignorar</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 14.</strong><br><em><strong>Tipos de señales</strong></em></div>
+                </div>
+
+                <div class="quote-box">
+                    "SIGKILL y SIGSTOP son las únicas señales que no pueden ser capturadas o ignoradas"
+                    <div class="citation">(Kerrisk, 2010, p. 403).</div>
+                </div>
+
+                <h2>6. Funcionalidad e Importancia de las Señales</h2>
+                <ul>
+                    <li>Control de procesos: Terminación (SIGTERM), pausa (SIGSTOP).</li>
+                    <li>Manejo de errores: SIGSEGV para fallos de memoria.</li>
+                    <li>Comunicación entre procesos: SIGUSR1/SIGUSR2 para notificaciones personalizadas.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Las señales permiten a los sistemas operativos manejar condiciones excepcionales de manera estructurada"
+                    <div class="citation">(Robbins, 2019, p. 156).</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-1-4-2">
+            <div class="section-header">
+                <div class="section-number">1.4.2</div>
+                <div class="section-title">Directorios y Archivos</div>
+            </div>
+            <div class="content">
+                <h2>1. Definición y Características</h2>
+
+                <h4>Archivo:</h4>
+                <p>Estructura de almacenamiento lógico que contiene datos, metadatos (nombre, tamaño, permisos) y una ubicación física en el dispositivo de almacenamiento.</p>
+
+                <div class="quote-box">
+                    "Un archivo es la unidad básica de almacenamiento persistente, organizado como una secuencia de bytes"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 521).</div>
+                </div>
+
+                <h4>Directorio:</h4>
+                <p>Archivo especial que actúa como contenedor para organizar otros archivos y subdirectorios, formando una estructura jerárquica (ejemplo: árbol en Unix/Linux).</p>
+
+                <div class="quote-box">
+                    "Los directorios son la abstracción que permite a los usuarios y aplicaciones navegar por el sistema de archivos"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 467).</div>
+                </div>
+
+                <h4>Características comunes:</h4>
+                <ul>
+                    <li>Nombre: Identificador único dentro de un directorio.</li>
+                    <li>Metadatos: Permisos (rwx), timestamps (creación, modificación), tamaño.</li>
+                    <li>Persistencia: Sobreviven al reinicio del sistema.</li>
+                </ul>
+
+                <h2>2. Tipos de Archivos</h2>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Tipo</strong></th>
+                                <th><strong>Descripción</strong></th>
+                                <th><strong>Ejemplo</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Regulares</td>
+                                <td>Datos de usuario (texto, binarios)</td>
+                                <td>documento.txt, a.out</td>
+                            </tr>
+                            <tr>
+                                <td>Directorios</td>
+                                <td>Contenedores de archivos</td>
+                                <td>/home, /etc</td>
+                            </tr>
+                            <tr>
+                                <td>Enlaces</td>
+                                <td>Referencias a otros archivos</td>
+                                <td>Enlaces simbólicos (ln -s)</td>
+                            </tr>
+                            <tr>
+                                <td>Dispositivos</td>
+                                <td>Interfaces para hardware</td>
+                                <td>/dev/sda, /dev/tty</td>
+                            </tr>
+                            <tr>
+                                <td>Tuberías (Pipes)</td>
+                                <td>Comunicación entre procesos</td>
+                                <td>mkfifo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 15.</strong><br><em><strong>Tipos de Archivos.</strong></em></div>
+                </div>
+
+                <div class="quote-box">
+                    "Los archivos de dispositivos permiten tratar el hardware como si fueran archivos regulares"
+                    <div class="citation">(Stallings, 2018, p. 612).</div>
+                </div>
+
+                <h2>3. Tipos de Directorios</h2>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Tipo</strong></th>
+                                <th><strong>Propósito</strong></th>
+                                <th><strong>Ejemplo (Linux)</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Raíz (/)</td>
+                                <td>Base del sistema de archivos</td>
+                                <td>/</td>
+                            </tr>
+                            <tr>
+                                <td>Home</td>
+                                <td>Archivos de usuario</td>
+                                <td>/home/usuario</td>
+                            </tr>
+                            <tr>
+                                <td>Sistema</td>
+                                <td>Configuración del SO</td>
+                                <td>/etc, /bin</td>
+                            </tr>
+                            <tr>
+                                <td>Temporales</td>
+                                <td>Datos no persistentes</td>
+                                <td>/tmp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 16.</strong><br><em><strong>Tipos de directorios</strong></em></div>
+                </div>
+
+                <div class="quote-box">
+                    "La jerarquía de directorios en Unix sigue el estándar FHS (Filesystem Hierarchy Standard)"
+                    <div class="citation">(Robbins, 2019, p. 89).</div>
+                </div>
+
+                <h2>4. Funcionalidad</h2>
+
+                <h4>Para archivos:</h4>
+                <ul>
+                    <li>Almacenamiento: Guardar datos de forma permanente.</li>
+                    <li>Compartición: Múltiples procesos pueden acceder al mismo archivo.</li>
+                    <li>Protección: Permisos (chmod) y ownership (chown).</li>
+                </ul>
+
+                <h4>Para directorios:</h4>
+                <ul>
+                    <li>Organización: Estructura lógica de archivos.</li>
+                    <li>Navegación: Rutas absolutas (/usr/bin) o relativas (../docs).</li>
+                    <li>Montaje: Puntos de unión para sistemas de archivos (/mnt).</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Las operaciones CRUD (Create, Read, Update, Delete) son la base de la manipulación de archivos"
+                    <div class="citation">(Kerrisk, 2010, p. 117).</div>
+                </div>
+
+                <h2>5. Importancia</h2>
+                <ul>
+                    <li>Abstracción: Ocultan complejidad del almacenamiento físico (sectores, bloques).</li>
+                    <li>Seguridad: Control de acceso via permisos y ACLs.</li>
+                    <li>Eficiencia: Buffering y caching para operaciones de E/S.</li>
+                    <li>Portabilidad: Sistemas de archivos compatibles entre SO (ejemplo: FAT32, NTFS, ext4).</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Sin archivos y directorios, los sistemas operativos no podrían gestionar datos de manera estructurada"
+                    <div class="citation">(Love, 2013, p. 203).</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-1-4-3">
+            <div class="section-header">
+                <div class="section-number">1.4.3</div>
+                <div class="section-title">Protección en Sistemas Operativos: Definición, Importancia y Mecanismos Clave</div>
+            </div>
+            <div class="content">
+                <h2>1. Definición de Protección</h2>
+                <p>La protección en sistemas operativos se refiere al conjunto de mecanismos que garantizan el acceso seguro y controlado a los recursos del sistema (hardware, datos y servicios), previniendo usos no autorizados o malintencionados.</p>
+
+                <div class="quote-box">
+                    "La protección es el mecanismo que impone políticas de seguridad, definiendo qué procesos pueden acceder a qué recursos y bajo qué condiciones"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 587).</div>
+                </div>
+
+                <h2>2. Importancia de la Protección</h2>
+                <ul>
+                    <li>Confidencialidad: Evita fugas de datos sensibles.</li>
+                    <li>Integridad: Previene modificaciones no autorizadas.</li>
+                    <li>Disponibilidad: Protege contra ataques de denegación de servicio (DoS).</li>
+                    <li>Aislamiento: Fallos o ataques en un proceso no afectan al sistema completo.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Sin protección, un sistema operativo sería vulnerable a errores, malware y accesos maliciosos"
+                    <div class="citation">(Stallings, 2018, p. 721).</div>
+                </div>
+
+                <h2>3. Mecanismos Clave de Protección</h2>
+
+                <h3>A. Protección con el Kernel</h3>
+                
+                <h4>Funcionalidad:</h4>
+                <ul>
+                    <li>Modos de ejecución: Separa privilegios (modo kernel vs. usuario).</li>
+                    <li>Llamadas al sistema: Única interfaz segura para acceder a recursos.</li>
+                    <li>Validación de parámetros: Verifica solicitudes desde modo usuario.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El kernel actúa como guardián, validando todas las operaciones privilegiadas"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 235).</div>
+                </div>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>En Linux, las syscalls como open() verifican permisos antes de acceder a un archivo.</li>
+                </ul>
+
+                <h3>B. Protección de la Memoria</h3>
+
+                <h4>Mecanismos:</h4>
+                <ul>
+                    <li>Memoria virtual: Aisla espacios de direcciones por proceso.</li>
+                    <li>Segmentación/Paginación: Asigna permisos (lectura/escritura/ejecución).</li>
+                    <li>ASLR (Address Space Layout Randomization): Aleatoriza direcciones para evitar exploits.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "La MMU (Memory Management Unit) es clave para imponer protección de memoria a nivel hardware"
+                    <div class="citation">(Patterson & Hennessy, 2017, p. 503).</div>
+                </div>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>Un intento de acceso a memoria de otro proceso causa un <em>segmentation fault</em> (SEGFAULT).</li>
+                </ul>
+
+                <h3>C. Protección de E/S (Input/Output)</h3>
+
+                <h4>Estrategias:</h4>
+                <ul>
+                    <li>Controladores (drivers) en modo kernel: Evitan acceso directo al hardware.</li>
+                    <li>Permisos de dispositivos: Archivos en /dev con ownership y permisos.</li>
+                    <li>DMAs con IOMMU: Aislan dispositivos para evitar ataques DMA.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El acceso a dispositivos se gestiona mediante operaciones privilegiadas, no directamente por aplicaciones"
+                    <div class="citation">(Anderson, 2020, p. 178).</div>
+                </div>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>En Linux, solo root puede acceder a /dev/sda (disco primario) por defecto.</li>
+                </ul>
+
+                <h3>D. Control de Acceso a Archivos y Directorios</h3>
+
+                <h4>Modelos:</h4>
+                <ul>
+                    <li>Listas ACL (Access Control Lists): Permisos granulares (usuarios/grupos).</li>
+                    <li>Capabilities: Tokens que delegan permisos específicos.</li>
+                    <li>Encriptación: Protección de datos en reposo (ejemplo: BitLocker, LUKS).</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El modelo Unix de permisos (rwx para owner/group/others) es la base del control de acceso"
+                    <div class="citation">(Kerrisk, 2010, p. 215).</div>
+                </div>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>chmod 600 archivo.txt restringe acceso solo al dueño (lectura/escritura).</li>
+                </ul>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Área</strong></th>
+                                <th><strong>Mecanismo</strong></th>
+                                <th><strong>Objetivo</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Kernel</td>
+                                <td>Modos de ejecución</td>
+                                <td>Aislar operaciones privilegiadas</td>
+                            </tr>
+                            <tr>
+                                <td>Memoria</td>
+                                <td>Paginación con permisos</td>
+                                <td>Evitar accesos ilegales</td>
+                            </tr>
+                            <tr>
+                                <td>E/S</td>
+                                <td>Drivers en kernel + IOMMU</td>
+                                <td>Controlar hardware crítico</td>
+                            </tr>
+                            <tr>
+                                <td>Archivos/Directorios</td>
+                                <td>ACLs y encriptación</td>
+                                <td>Garantizar confidencialidad</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 17.</strong><br><em><strong>Resumen de Mecanismos.</strong></em></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-1-4-4">
+            <div class="section-header">
+                <div class="section-number">1.4.4</div>
+                <div class="section-title">Diversos</div>
+            </div>
+            <div class="content">
+                <p>En un sistema operativo, las <strong>llamadas a sistema</strong>, <strong>procesos y señales</strong>, <strong>directorios y archivos</strong>, y la <strong>protección</strong> son componentes interconectados que trabajan en conjunto para proporcionar un entorno seguro, funcional y eficiente para la ejecución de programas. Establecer una relación entre ellos en términos de importancia, seguridad, funcionalidad y clasificación revela cómo cada elemento contribuye al todo.</p>
+
+                <h2>Interdependencia Crítica en Sistemas Operativos: Llamadas al Sistema, Procesos, Señales, Archivos/Directorios y Protección</h2>
+
+                <h3>1. Relación Mutua y su Importancia.</h3>
+                <p>Estos componentes forman un <strong>ecosistema integrado</strong> donde cada elemento depende de los otros para garantizar funcionalidad, seguridad y eficiencia. Su interdependencia es la base de los SO modernos.</p>
+
+                <div class="quote-box">
+                    "La belleza de los sistemas operativos reside en cómo sus componentes abstractos interactúan para crear un todo coherente"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 71).</div>
+                </div>
+
+                <h3>2. Interdependencia Clave</h3>
+
+                <h4>A. Llamadas al Sistema ↔ Procesos</h4>
+                <ul>
+                    <li><strong>Creación de procesos</strong>:
+                        <ul>
+                            <li>fork(), exec() son llamadas al sistema que permiten la multitarea.</li>
+                            <li>Sin ellas, los procesos no podrían iniciarse o modificarse.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <div class="quote-box">
+                    "Las syscalls son el único mecanismo para que un proceso solicite servicios del kernel"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 75).</div>
+                </div>
+
+                <p><strong>Ejemplo</strong>:</p>
+                <div class="code-block">
+pid = fork(); <span class="comment">// Syscall para crear proceso hijo</span>
+                </div>
+
+                <h4>B. Procesos ↔ Señales</h4>
+                <ul>
+                    <li><strong>Comunicación y control</strong>:
+                        <ul>
+                            <li>Señales como SIGKILL o SIGCHLD permiten gestionar el ciclo de vida de procesos.</li>
+                            <li>Los procesos usan signal() o sigaction() para definir handlers.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <div class="quote-box">
+                    "Las señales proporcionan un mecanismo de control asíncrono entre procesos y el SO"
+                    <div class="citation">(Stevens & Rago, 2013, p. 419).</div>
+                </div>
+
+                <p><strong>Ejemplo</strong>:</p>
+                <div class="code-block">
+kill -9 PID <span class="comment"># Envía SIGKILL para terminar un proceso</span>
+                </div>
+
+                <h4>C. Procesos ↔ Archivos/Directorios</h4>
+                <ul>
+                    <li><strong>Aislamiento y acceso</strong>:
+                        <ul>
+                            <li>Cada proceso tiene un <em>file descriptor table</em> para gestionar archivos abiertos.</li>
+                            <li>Los permisos de archivos (rwx) determinan qué procesos pueden acceder.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <div class="quote-box">
+                    "El sistema de archivos es el recurso más compartido, por lo que su protección es crítica"
+                    <div class="citation">(Stallings, 2018, p. 615).</div>
+                </div>
+
+                <p><strong>Ejemplo</strong>:</p>
+                <div class="code-block">
+open("/home/file.txt", O_RDONLY); <span class="comment">// Falla si el proceso no tiene permisos</span>
+                </div>
+
+                <h4>D. Protección ↔ Todos los Componentes</h4>
+                <ul>
+                    <li><strong>Kernel</strong>: Valida syscalls para prevenir accesos ilegales.</li>
+                    <li><strong>Memoria</strong>: Aísla espacios de direcciones por proceso.</li>
+                    <li><strong>Archivos</strong>: ACLs y capacidades restringen operaciones.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "La protección no es un módulo, sino un principio que permea todo diseño de SO"
+                    <div class="citation">(Anderson, 2020, p. 143).</div>
+                </div>
+
+                <p><strong>Ejemplo</strong>:</p>
+                <ul>
+                    <li>Un proceso en modo usuario <strong>no puede</strong> modificar la tabla de páginas del kernel.</li>
+                </ul>
+
+                <h3>3. Ejemplo Integrado</h3>
+                <p><strong>Escenario</strong>: Un shell ejecuta ls -l:</p>
+                <ol>
+                    <li><strong>Proceso shell</strong> hace fork() + exec() para crear proceso ls.</li>
+                    <li><strong>Syscalls</strong> en ls abren el directorio (opendir()) y leen entradas (readdir()).</li>
+                    <li><strong>Señales</strong>: Si el usuario presiona Ctrl+C (SIGINT), termina ls.</li>
+                    <li><strong>Protección</strong>: El kernel verifica permisos para cada acceso a archivos.</li>
+                </ol>
+
+                <h3>4. Importancia de la Integración</h3>
+                <ul>
+                    <li><strong>Consistencia</strong>: Políticas únicas para recursos (ejemplo: permisos POSIX).</li>
+                    <li><strong>Eficiencia</strong>: Mecanismos compartidos (ejemplo: caché de archivos).</li>
+                    <li><strong>Seguridad</strong>: Defensa en profundidad (aislamiento + permisos + validación).</li>
+                </ul>
+
+                <div class="quote-box">
+                    "La seguridad emerge de la interacción correcta de estos componentes, no de partes aisladas"
+                    <div class="citation">(Saltzer & Schroeder, 1975, p. 6).</div>
+                </div>
+
+                <h2>Seguridad Entrelazada en Sistemas Operativos: Conexiones Críticas</h2>
+
+                <h3>1. Definición de Seguridad Entrelazada</h3>
+                <p>La seguridad en los sistemas operativos es un sistema holístico donde la protección emerge de la interacción coordinada entre llamadas al sistema, procesos, archivos/directorios y mecanismos de control de acceso. Ningún componente opera de forma aislada.</p>
+
+                <div class="quote-box">
+                    "La seguridad efectiva requiere que todas las capas del SO trabajen en conjunto, formando una red de defensa interdependiente"
+                    <div class="citation">(Saltzer & Schroeder, 1975, p. 3).</div>
+                </div>
+
+                <h3>2. Conexiones Clave</h3>
+
+                <h4>A. Llamadas al Sistema ↔ Protección</h4>
+                <p><strong>Mecanismo</strong>:</p>
+                <ul>
+                    <li>Las syscalls son la única interfaz autorizada para acceder a recursos privilegiados.</li>
+                    <li>El kernel valida cada solicitud (ejemplo: permisos, parámetros).</li>
+                </ul>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>open() verifica permisos de archivo antes de devolver un file descriptor.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Las llamadas al sistema implementan el principio de mínimo privilegio: un proceso solo obtiene lo que necesita"
+                    <div class="citation">(Anderson, 2020, p. 156).</div>
+                </div>
+
+                <h4>B. Procesos ↔ Protección</h4>
+                <p><strong>Mecanismos</strong>:</p>
+                <ul>
+                    <li>Aislamiento de memoria: Paginación/segmentación con permisos (RWX).</li>
+                    <li>Espacios de direcciones separados: Previene corrupción entre procesos.</li>
+                    <li>Señales de control: SIGKILL para terminar procesos maliciosos.</li>
+                </ul>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>Un proceso no puede acceder a la memoria de otro (genera un <em>segmentation fault</em>).</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El aislamiento de procesos es la primera línea de defensa contra exploits"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 593).</div>
+                </div>
+
+                <h4>C. Directorios/Archivos ↔ Protección</h4>
+                <p><strong>Mecanismos</strong>:</p>
+                <ul>
+                    <li>Permisos POSIX: rwx para owner/group/others.</li>
+                    <li>Listas de Control de Acceso (ACLs): Permisos granulares.</li>
+                    <li>Encriptación: Protege datos sensibles (ejemplo: LUKS en Linux).</li>
+                </ul>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>chmod 700 /etc/shadow restringe acceso al archivo de contraseñas.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El sistema de archivos es el guardian final de los datos, y su protección define la seguridad del sistema"
+                    <div class="citation">(Stallings, 2018, p. 732).</div>
+                </div>
+
+                <h4>D. Interdependencia en Escenarios Reales</h4>
+                <p><strong>Caso 1: Ejecución de un Programa</strong></p>
+                <ol>
+                    <li>Proceso invoca execve() (syscall).</li>
+                    <li>Kernel verifica permisos del archivo binario.</li>
+                    <li>Sistema de archivos comprueba ACLs y atributos.</li>
+                    <li>Memoria asigna espacio con permisos de ejecución.</li>
+                </ol>
+
+                <p><strong>Caso 2: Ataque Mitigado</strong></p>
+                <ul>
+                    <li><strong>Intento de buffer overflow:</strong>
+                        <ul>
+                            <li>Protección de memoria (ASLR/NX bit) bloquea ejecución de código malicioso.</li>
+                            <li>Kernel termina proceso con SIGSEGV.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h3>3. Estadísticas y Vulnerabilidades</h3>
+                <ul>
+                    <li>40% de exploits aprovechan fallos en la interacción entre estos componentes (CVE Database, 2023).</li>
+                    <li>Sistemas con protección entrelazada (ejemplo: SELinux) reducen vulnerabilidades en un 85% (NSA, 2022).</li>
+                </ul>
+
+                <h2>Funcionalidad Colaborativa en Sistemas Operativos</h2>
+
+                <h3>1. Procesos y Llamadas al Sistema</h3>
+                <p><strong>Interacción</strong>:</p>
+                <p>Los procesos dependen de las llamadas al sistema para solicitar servicios del kernel, como creación de procesos, gestión de memoria y E/S.</p>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>fork(): Crea un nuevo proceso hijo.</li>
+                    <li>exec(): Carga un nuevo programa en el espacio de memoria del proceso.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Las llamadas al sistema son la única interfaz segura entre los procesos en modo usuario y el kernel"
+                    <div class="citation">(Silberschatz, Galvin y Gagne, 2018, p. 72).</div>
+                </div>
+
+                <p><strong>Funcionalidad colaborativa</strong>:</p>
+                <ul>
+                    <li>Multitarea: Las syscalls permiten al kernel planificar y alternar entre procesos.</li>
+                    <li>Control de recursos: El kernel asigna CPU, memoria y dispositivos a través de syscalls.</li>
+                </ul>
+
+                <h3>2. Llamadas al Sistema y Directorios/Archivos</h3>
+                <p><strong>Interacción</strong>:</p>
+                <p>Las syscalls permiten a los procesos interactuar con el sistema de archivos (crear, leer, escribir o eliminar archivos/directorios).</p>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>open(): Abre un archivo y devuelve un file descriptor.</li>
+                    <li>read()/write(): Operaciones de E/S en archivos abiertos.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El sistema de archivos expone una API uniforme a través de llamadas al sistema, independientemente del hardware subyacente"
+                    <div class="citation">(Tanenbaum & Bos, 2015, p. 469).</div>
+                </div>
+
+                <p><strong>Funcionalidad colaborativa</strong>:</p>
+                <ul>
+                    <li>Abstracción: Las syscalls ocultan los detalles del almacenamiento físico (discos, SSDs).</li>
+                    <li>Seguridad: El kernel verifica permisos (rwx) en cada operación.</li>
+                </ul>
+
+                <h3>3. Procesos y Directorios/Archivos</h3>
+                <p><strong>Interacción</strong>:</p>
+                <p>Cada proceso tiene un contexto de archivos, que incluye:</p>
+                <ul>
+                    <li>File descriptors para archivos abiertos.</li>
+                    <li>Directorio de trabajo actual (cwd).</li>
+                </ul>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>Un proceso puede cambiar su directorio con chdir().</li>
+                    <li>Los file descriptors permiten compartir archivos entre procesos hijos y padres.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Los descriptores de archivos son la representación en modo usuario de los recursos del sistema de archivos"
+                    <div class="citation">(Kerrisk, 2010, p. 125).</div>
+                </div>
+
+                <p>Funcionalidad colaborativa:</p>
+                <ul>
+                    <li>Persistencia: Los procesos modifican archivos que sobreviven a su terminación.</li>
+                    <li>Compartición: Múltiples procesos pueden acceder al mismo archivo (con controles de concurrencia).</li>
+                </ul>
+
+                <h3>4. Señales y Procesos</h3>
+                <p><strong>Interacción</strong>:</p>
+                <p>Las señales permiten la comunicación asíncrona entre procesos y el kernel (o entre procesos).</p>
+
+                <p>Ejemplo:</p>
+                <ul>
+                    <li>kill(): Envía una señal a otro proceso (ejemplo: SIGTERM para terminación elegante).</li>
+                    <li>signal(): Define cómo un proceso maneja señales entrantes.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Las señales son el mecanismo más básico de comunicación entre procesos en Unix"
+                    <div class="citation">(Stevens & Rago, 2013, p. 417).</div>
+                </div>
+
+                <p><strong>Funcionalidad colaborativa</strong>:</p>
+                <ul>
+                    <li>Control de procesos: Señales como SIGSTOP y SIGCONT pausan/reanudan procesos.</li>
+                    <li>Manejo de errores: SIGSEGV indica acceso inválido a memoria.</li>
+                </ul>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Componentes</strong></th>
+                                <th><strong>Mecanismo de Colaboración</strong></th>
+                                <th><strong>Ejemplo</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Procesos ↔ Llamadas al Sistema</td>
+                                <td>Syscalls para gestión de recursos</td>
+                                <td>fork(), exec()</td>
+                            </tr>
+                            <tr>
+                                <td>Llamadas al Sistema ↔ Archivos</td>
+                                <td>Operaciones de E/S estandarizadas</td>
+                                <td>open(), read()</td>
+                            </tr>
+                            <tr>
+                                <td>Procesos ↔ Archivos</td>
+                                <td>File descriptors y permisos</td>
+                                <td>chdir(), herencia de FDs</td>
+                            </tr>
+                            <tr>
+                                <td>Señales ↔ Procesos</td>
+                                <td>Comunicación asíncrona</td>
+                                <td>kill(), SIGINT (Ctrl+C)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 18.</strong><br><em><strong>Resumen de Interacciones.</strong></em></div>
+                </div>
+
+                <p><strong>Nota: Esta colaboración es la base de:</strong></p>
+                <ul>
+                    <li><strong>Shells modernos: Combinan procesos, señales y archivos (ejemplo: pipelines en Bash).</strong></li>
+                    <li><strong>Servidores web: Usan fork()/exec() para manejar conexiones concurrentes.</strong></li>
+                    <li><strong>Sistemas de bases de datos: Gestionan archivos y procesos para transacciones</strong></li>
+                </ul>
+
+                <h2>Clasificación Interconectada de Componentes Clave en Sistemas Operativos</h2>
+
+                <h3>1. Marco Conceptual Integrado</h3>
+                <p>Estos componentes forman un sistema jerárquico y entrelazado donde cada elemento depende de los demás para garantizar funcionalidad, seguridad y eficiencia.</p>
+
+                <div class="quote-box">
+                    "Los sistemas operativos modernos son ecosistemas donde la protección emerge de la interacción estructurada entre abstracciones"
+                    <div class="citation">(Saltzer & Schroeder, 1975, p. 4).</div>
+                </div>
+
+                <h3>2. Clasificación Jerárquica y Conexiones</h3>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><strong>Componente</strong></th>
+                                <th><strong>Nivel</strong></th>
+                                <th><strong>Dependencias Críticas</strong></th>
+                                <th><strong>Función Sistémica</strong></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Llamadas al Sistema</td>
+                                <td>Capa Kernel-User</td>
+                                <td>Procesos, Protección</td>
+                                <td>Puente seguro entre hardware y software</td>
+                            </tr>
+                            <tr>
+                                <td>Procesos</td>
+                                <td>Unidad de Ejecución</td>
+                                <td>Señales, Llamadas al sistema, Memoria</td>
+                                <td>Ejecución y aislamiento de programas</td>
+                            </tr>
+                            <tr>
+                                <td>Señales</td>
+                                <td>Comunicación</td>
+                                <td>Procesos, Kernel</td>
+                                <td>Notificaciones asíncronas y control</td>
+                            </tr>
+                            <tr>
+                                <td>Directorios/Archivos</td>
+                                <td>Persistencia</td>
+                                <td>Llamadas al sistema, Protección</td>
+                                <td>Almacenamiento estructurado</td>
+                            </tr>
+                            <tr>
+                                <td>Protección</td>
+                                <td>Meta-componente</td>
+                                <td>Todos los anteriores</td>
+                                <td>Garantiza integridad y confidencialidad</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 19.</strong><br><em><strong>Jerarquías y conexiones.</strong></em></div>
+                </div>
+
+                <h3>3. Interconexiones Específicas</h3>
+
+                <h4>A. Llamadas al Sistema ↔ Procesos ↔ Protección</h4>
+                <ul>
+                    <li>Las syscalls como fork() y exec() permiten la creación de procesos.</li>
+                    <li>El kernel aplica políticas de protección en cada transición.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "La creación de procesos mediante syscalls es el cimiento de la multitarea protegida"
+                    <div class="citation">(Tanenbaum, 2016, p. 118).</div>
+                </div>
+
+                <h4>B. Señales ↔ Procesos ↔ Protección</h4>
+                <ul>
+                    <li>Señales como SIGKILL permiten terminar procesos maliciosos.</li>
+                    <li>El kernel valida los permisos antes de entregar señales entre procesos.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Las señales implementan el control de procesos con mecanismos de verificación integrados"
+                    <div class="citation">(Stevens, 2013, p. 421).</div>
+                </div>
+
+                <h4>C. Directorios/Archivos ↔ Llamadas al Sistema ↔ Protección</h4>
+                <ul>
+                    <li>Syscalls como open() verifican permisos en el sistema de archivos.</li>
+                    <li>Las ACLs y capacidades se aplican durante cada operación.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El acceso a archivos es el punto donde convergen abstracción y control de acceso"
+                    <div class="citation">(Anderson, 2020, p. 167).</div>
+                </div>
+
+                <h3>4. Modelo de Dependencias Circulares</h3>
+                <p><strong>Explicación del diagrama:</strong></p>
+                <ol>
+                    <li>Las llamadas al sistema habilitan la creación de procesos.</li>
+                    <li>Los procesos generan y reciben señales.</li>
+                    <li>Las señales activan mecanismos de protección.</li>
+                    <li>La protección regula el acceso a directorios/archivos.</li>
+                    <li>Los archivos son accedidos mediante llamadas al sistema.</li>
+                </ol>
+
+                <h3>5. Estadísticas de Interacción</h3>
+                <ul>
+                    <li>90% de las vulnerabilidades críticas (CVSS ≥ 7.0) explotan fallos en estas interconexiones (CVE, 2023).</li>
+                    <li>Sistemas con integración robusta (ejemplo: QNX) muestran un 99.999% de disponibilidad (BlackBerry, 2022).</li>
+                </ul>
+
+                <p><strong>Nota: Esta interdependencia explica:</strong></p>
+            </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="1.3.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Volver a 1.3: Modos de Operación de un Sistema Operativo</a>
+            <a href="1.5.html" class="nav-btn">Continuar a 1.5: Shell<i class="fas fa-arrow-right"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 1: Introducción a los Sistemas Operativos</p>
+            <p>Desarrollado para fines educativos - © 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        let sidebarOpen = false;
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                container.style.marginLeft = '370px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            }
+        }
+
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section');
+            const navItems = document.querySelectorAll('.nav-item[data-section]');
+            let currentSectionId = '';
+
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150 && rect.bottom >= 150) {
+                    currentSectionId = section.id;
+                }
+            });
+
+            navItems.forEach(item => {
+                const sectionId = 'seccion-' + item.dataset.section;
+                if (sectionId === currentSectionId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        }
+
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        function toggleScrollToTopBtn() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        window.addEventListener('scroll', () => {
+            updateActiveSection();
+            updateReadingProgress();
+            toggleScrollToTopBtn();
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 100;
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveSection();
+            updateReadingProgress();
+            updateContainerSpacing();
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) { 
+                    toggleSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

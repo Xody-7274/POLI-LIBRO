@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3.2 Memoria Virtual</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /*
+        Aquí comienza un bloque de estilos CSS para definir la apariencia de la página.
+        Incluye:
+        - Variables de color (--primary, --secondary, etc.) para un diseño consistente.
+        - Estilos base para todos los elementos (*).
+        - Estilos para el cuerpo de la página (body), incluyendo un fondo degradado.
+        - Diseño de componentes específicos como botones flotantes, menú lateral, contenedor principal,
+          encabezados, secciones, tablas, bloques de código, tarjetas de actividad, pie de página, etc.
+        - Media Queries (@media) para adaptar el diseño a pantallas más pequeñas (diseño responsivo).
+        */
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* Botón flotante de inicio */
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        /* Menú de navegación lateral */
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Botón toggle del menú */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        /* Indicador de progreso de lectura */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        /* Overlay para cerrar el menú */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Contenedor principal con espaciado para botones flotantes */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .content ul, .content ol {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+        
+        .table-container {
+            max-width: 800px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-caption {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: var(--gray);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        .code-block {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .code-caption {
+            font-style: italic;
+            margin-top: 10px;
+            color: var(--gray);
+            text-align: center;
+        }
+        
+        .figure-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .figure-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin: 15px 0;
+            color: var(--gray);
+            font-style: italic;
+            flex-direction: column;
+
+        }
+        
+        .figure-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+        
+        .figure-caption {
+            font-style: italic;
+            color: var(--gray);
+            margin-top: 10px;
+        }
+
+        .imagen-figura1 {
+            max-width: 600px;
+            width: 100%;
+            height: auto;
+        }
+        
+        .activity-card {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 4px solid var(--success);
+            text-align: center;
+        }
+        
+        .activity-title {
+            font-size: 1.8rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+        
+        .activity-btn {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .activity-btn:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Botón de ir arriba */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-number {
+                min-width: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio de Unidades">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">3.2 Memoria Virtual</div>
+            <div class="sidebar-subtitle">Paginación y Algoritmos</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item">
+                    <i class="fas fa-play-circle"></i>
+                    Inicio de la unidad
+                </a>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    Menú principal
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#seccion-3-2-1" class="nav-item" data-section="3-2-1">
+                    <i class="fas fa-file-alt"></i>
+                    3.2.1 Paginación
+                </a>
+                <a href="#seccion-3-2-2" class="nav-item" data-section="3-2-2">
+                    <i class="fas fa-table"></i>
+                    3.2.2 Tablas de Página
+                </a>
+                <a href="#seccion-3-2-3" class="nav-item" data-section="3-2-3">
+                    <i class="fas fa-sync-alt"></i>
+                    3.2.3 Algoritmos de Reemplazo
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="actividad_3_2.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad de aprendizaje
+                </a>
+                <a href="3.3.html" class="nav-item">
+                    <i class="fas fa-arrow-right"></i>
+                    Siguiente: Segmentación
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 3</a>
+                <span>/</span>
+                <span>3.2 Memoria Virtual</span>
+            </div>
+            <h1>3.2 Memoria Virtual</h1>
+            <div class="subtitle">Ampliando los límites de la memoria física</div>
+        </header>
+        
+        <div class="intro">
+            <h3>INTRODUCCIÓN</h3>
+            <p>La memoria virtual es una de las aportaciones más importantes en los sistemas operativos modernos. Su principal función es hacer que cada programa crea que tiene acceso a un espacio de memoria continuo e ilimitado, cuando en realidad la memoria disponible es limitada y está apoyada en el disco duro.</p>
+            <p class="citation">(Tanenbaum, 2009)</p>
+            
+            <p>Para lograrlo, el sistema operativo y la unidad de gestión de memoria (MMU) trabajan juntos para traducir las direcciones virtuales de los programas en direcciones físicas reales. La memoria virtual es una abstracción que expande la memoria principal al utilizar parte del disco duro, permitiendo que un programa vea un espacio de direcciones que puede ser más grande que la RAM disponible.</p>
+            <p class="citation">(Carretero et al., 2001)</p>
+            
+            <h4>OBJETIVOS PRINCIPALES</h4>
+            <ul>
+                <li><b>Aislamiento:</b> Protege a los procesos para que no se interfieran entre sí.</li>
+                <li><b>Flexibilidad:</b> Permite que programas muy grandes se ejecuten sin limitaciones de RAM.</li>
+                <li><b>Multiprogramación eficiente:</b> Facilita que más procesos corran al mismo tiempo.</li>
+                <li><b>Facilidad de programación:</b> Los desarrolladores no necesitan preocuparse por los detalles de la memoria física.</li>
+            </ul>
+            <p>Wolf et al. (2015) enfatizan que este modelo es un estándar en los sistemas operativos modernos porque equilibra el uso de recursos con la seguridad y la estabilidad.</p>
+        </div>
+        
+        <div class="section" id="seccion-3-2-1">
+            <div class="section-header">
+                <div class="section-number">3.2.1</div>
+                <div class="section-title">Paginación</div>
+            </div>
+            <div class="content">
+                <h3>FUNDAMENTOS DE LA PAGINACIÓN</h3>
+                <p>La paginación es un mecanismo clave de la memoria virtual y uno de los más usados en los sistemas operativos. Surgió en los años 60 para resolver un problema: ¿cómo ejecutar programas más grandes que la memoria física sin que el programador tenga que preocuparse por dónde se guardan los datos?</p>
+                <p class="citation">(Tanenbaum, 2009)</p>
+                
+                <p>El concepto es simple pero potente: dividir la memoria en bloques de tamaño fijo para eliminar la necesidad de trabajar con espacios contiguos. De esta forma, un programa ve su memoria como un espacio continuo, aunque sus partes (páginas) estén distribuidas en diferentes bloques de la memoria física (marcos de página).</p>
+                
+                <p>El sistema operativo y la unidad de gestión de memoria (MMU) se encargan de traducir las direcciones virtuales a físicas usando una tabla de páginas. Cada entrada en la tabla le dice al sistema en qué marco de la RAM se encuentra una página. Si la página no está cargada, ocurre un <span class="highlight">fallo de página</span>, y el sistema debe ir a buscarla al disco para cargarla.</p>
+                <p class="citation">(Carretero et al., 2001)</p>
+
+                <h3>CÓMO FUNCIONA LA PAGINACIÓN</h3>
+                <p>Imaginemos un proceso con un espacio de direcciones de 32 KB y páginas de 4 KB. Esto significa que el programa tiene 8 páginas en total (32/4 = 8). Para encontrar la dirección de un dato, se divide la dirección virtual entre el tamaño de la página. Por ejemplo, si el programa accede a la dirección virtual 10,500:</p>
+                <ul>
+                    <li><b>Número de página:</b> 10,500 dividido por 4,096 (el tamaño de una página) da como resultado la página 2.</li>
+                    <li><b>Desplazamiento:</b> El resto de la división es 2,308.</li>
+                </ul>
+                <p>La tabla de páginas le indica al sistema que la página 2 del programa está en el marco de página 6 de la RAM. Así, la dirección física real será la suma de la dirección de inicio del marco 6 más el desplazamiento de 2,308. Este procedimiento ocurre miles de veces por segundo en un sistema real, de manera rápida y transparente gracias a la MMU.</p>
+
+                <h3>VENTAJAS FRENTE A LA ASIGNACIÓN CONTIGUA</h3>
+                <p>En los primeros sistemas, la memoria se asignaba de forma contigua, lo que obligaba a que los programas se cargaran en un solo bloque completo de RAM. Esto generaba <span class="highlight">fragmentación externa</span> (huecos desperdiciados) y dificultaba que varios programas corrieran a la vez. La paginación eliminó este problema porque cualquier página de un programa puede ubicarse en cualquier marco de página libre, sin importar si los marcos están juntos o separados.</p>
+                <p class="citation">(Tanenbaum & Woodhull, 2001)</p>
+                <p>Sin embargo, aparece un nuevo problema: la <span class="highlight">fragmentación interna</span>. Esto ocurre cuando la última página de un programa no se llena por completo. Por ejemplo, si un programa necesita 10 KB y las páginas son de 4 KB, se le asignarán 3 páginas (12 KB), desperdiciando 2 KB en la última página.</p>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-3-2-2">
+            <div class="section-header">
+                <div class="section-number">3.2.2</div>
+                <div class="section-title">Tablas de Página</div>
+            </div>
+            <div class="content">
+                <h3>ESTRUCTURA Y FUNCIÓN</h3>
+                <p>La paginación depende de un mecanismo central para funcionar: la tabla de páginas. Esta estructura es crucial porque mantiene la relación entre las páginas virtuales de un proceso y los marcos físicos de la RAM. Cada entrada en la tabla (PTE) contiene la información que la unidad de gestión de memoria (MMU) necesita para traducir las direcciones en tiempo real.</p>
+                <p class="citation">(Tanenbaum, 2009)</p>
+                
+                <p>En su forma más simple, una tabla de páginas es como un arreglo. En él, cada entrada se corresponde con una página virtual y contiene información clave para la traducción de direcciones, como se muestra en la Tabla 1:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>CAMPO DE LA ENTRADA (PTE)</th>
+                                <th>DESCRIPCIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Número de marco</td>
+                                <td>Indica en qué marco de la RAM se encuentra la página.</td>
+                            </tr>
+                            <tr>
+                                <td>Bit de validez</td>
+                                <td>Muestra si la página está cargada en memoria.</td>
+                            </tr>
+                            <tr>
+                                <td>Bits de protección</td>
+                                <td>Controlan los permisos de lectura, escritura o ejecución.</td>
+                            </tr>
+                            <tr>
+                                <td>Bit de modificación (dirty bit)</td>
+                                <td>Indica si la página fue alterada y necesita guardarse en disco.</td>
+                            </tr>
+                            <tr>
+                                <td>Bit de referencia</td>
+                                <td>Muestra si la página fue usada recientemente.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption">Tabla 1. Estructura de una Entrada de Tabla de Páginas (PTE).</div>
+                </div>
+
+                <h3>EL PROBLEMA DEL TAMAÑO Y SOLUCIONES</h3>
+                <p>En las arquitecturas modernas de 32 o 64 bits, el tamaño de las tablas se convirtió en un desafío. Por ejemplo, un proceso con un espacio virtual de 4 GB y páginas de 4 KB tendría un millón de páginas. Si cada entrada de la tabla ocupa 4 bytes, la tabla completa del proceso consumiría 4 MB de RAM.</p>
+                <p class="citation">(Tanenbaum & Woodhull, 2001)</p>
+                
+                <p>Para resolver este problema, los sistemas operativos usan varias estrategias:</p>
+                <ul>
+                    <li><span class="highlight">Tablas de páginas multinivel:</span> Organiza la tabla en una jerarquía, cargando solo las partes de la tabla que se están usando activamente.</li>
+                    <li><span class="highlight">Tablas invertidas:</span> Utiliza una única tabla global indexada por el número de marco de página físico.</li>
+                    <li><span class="highlight">Translation Lookaside Buffer (TLB):</span> Una memoria caché especial que guarda las traducciones de páginas usadas recientemente para acelerar el proceso.</li>
+                </ul>
+                <p class="citation">(Wolf et al., 2015)</p>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-3-2-3">
+            <div class="section-header">
+                <div class="section-number">3.2.3</div>
+                <div class="section-title">Algoritmos de Reemplazo de Páginas</div>
+            </div>
+            <div class="content">
+                <h3>INTRODUCCIÓN</h3>
+                <p>Cuando un proceso pide una página que no está en la memoria, ocurre un fallo de página. Si la memoria está llena, el sistema debe elegir qué página sacar para hacerle espacio a la nueva. Una mala elección puede llevar al <span class="highlight">thrashing</span>, un fenómeno en el que el sistema se la pasa moviendo páginas en lugar de ejecutar programas.</p>
+                <p class="citation">(Tanenbaum, 2009)</p>
+                <p>Para resolver este dilema, se crearon los algoritmos de reemplazo de páginas, que establecen las reglas para decidir qué página expulsar.</p>
+
+                <h4>ALGORITMO FIFO (FIRST IN, FIRST OUT)</h4>
+                <p>Es el más simple: saca la página que lleva más tiempo en la memoria, sin importar si se ha usado recientemente o no. Su principal ventaja es que es muy fácil de implementar, pero su desventaja es que puede sacar páginas útiles, empeorando el rendimiento.</p>
+                <p class="citation">(Carretero et al., 2001)</p>
+                
+                <h4>ALGORITMO LRU (LEAST RECENTLY USED)</h4>
+                <p>El algoritmo LRU saca de la memoria la página que ha estado inactiva por más tiempo, basándose en que si una página se usó hace poco, es probable que se vuelva a necesitar pronto. Se acerca mucho al algoritmo "óptimo", pero requiere un control detallado de los accesos a memoria.</p>
+                <p class="citation">(Tanenbaum & Woodhull, 2001)</p>
+                
+                <h4>ALGORITMO ÓPTIMO</h4>
+                <p>Este es el algoritmo "ideal" que sirve como punto de referencia. Su regla es simple: reemplaza la página que no se usará en el futuro más cercano. Aunque no puede implementarse en la realidad (porque no podemos predecir el futuro), es muy útil para comparar el rendimiento de otros algoritmos.</p>
+                <p class="citation">(Tanenbaum, 2009)</p>
+
+                <h4>OTROS ALGORITMOS RELEVANTES</h4>
+                <ul>
+                    <li><b>NRU (Not Recently Used):</b> Clasifica las páginas según sus bits de referencia y modificación, dando prioridad a expulsar las que no han sido usadas ni modificadas.</li>
+                    <li><b>Second Chance (o Reloj):</b> Es una mejora de FIFO. Antes de expulsar una página, revisa su bit de referencia. Si es 1, le da una "segunda oportunidad" reiniciando el bit a 0 y avanzando a la siguiente.</li>
+                </ul>
+                <p class="citation">(Wolf et al., 2015)</p>
+            </div>
+        </div>
+        
+        <div class="activity-card">
+            <div class="activity-title">Actividad de Aprendizaje 2: Memoria Virtual</div>
+            <p>Pon a prueba tus conocimientos sobre paginación, tablas de página y los algoritmos que hacen funcionar la memoria virtual.</p>
+            <a href="actividad_3_2.html" class="activity-btn">
+                <i class="fas fa-pencil-alt"></i> Realizar Actividad
+            </a>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="3.1.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Volver a 3.1: Abstracción de Memoria</a>
+            <a href="3.3.html" class="nav-btn">Continuar a 3.3: Segmentación de Memoria <i class="fas fa-arrow-right"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 3: Administración de Memoria</p>
+            <p>Desarrollado para fines educativos - © 2025 | Referencias: Carretero et al. (2001), Tanenbaum (2009), Tanenbaum & Woodhull (2001), Wolf et al. (2015).</p>
+        </footer>
+    </div>
+
+    <script>
+        // Variables globales
+        let sidebarOpen = false;
+
+        // Toggle del menú lateral
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Cerrar menú al hacer clic en un enlace de navegación
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        // Ajustar espaciado del contenedor dinámicamente
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                // En móviles, usar márgenes mínimos y padding reducido
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                // Cuando el menú está abierto en desktop/tablet
+                container.style.marginLeft = '370px'; // 280px (ancho menú) + 90px (espaciado)
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else if (window.innerWidth > 1024) {
+                // Desktop normal
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                // Tablet normal
+                container.style.marginLeft = '70px';
+                container.style.marginRight = '70px';
+                container.style.padding = '20px';
+            }
+        }
+
+        // Resaltar sección activa en el menú
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section');
+            const navItems = document.querySelectorAll('.nav-item[data-section]');
+            
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150 && rect.bottom >= 150) {
+                    currentSection = section.id.replace('seccion-', '');
+                }
+            });
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.section === currentSection) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Indicador de progreso de lectura
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        }
+
+        // Botón de ir arriba
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        function toggleScrollToTopBtn() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Event listeners
+        window.addEventListener('scroll', () => {
+            updateActiveSection();
+            updateReadingProgress();
+            toggleScrollToTopBtn();
+        });
+
+        // Desplazamiento suave para enlaces del menú
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 100;
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Cerrar menú al redimensionar ventana (para tablets/móviles)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveSection();
+            updateReadingProgress();
+            updateContainerSpacing();
+            
+            // Auto-cerrar menú en dispositivos móviles
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // ESC para cerrar menú
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            
+            // M para toggle menú
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) {
+                    toggleSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

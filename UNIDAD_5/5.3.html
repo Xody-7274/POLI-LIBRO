@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.3 Capas de Software</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /*
+        Aquí comienza un bloque de estilos CSS para definir la apariencia de la página.
+        Incluye:
+        - Variables de color (--primary, --secondary, etc.) para un diseño consistente.
+        - Estilos base para todos los elementos (*).
+        - Estilos para el cuerpo de la página (body), incluyendo un fondo degradado.
+        - Diseño de componentes específicos como botones flotantes, menú lateral, contenedor principal,
+          encabezados, secciones, tablas, bloques de código, tarjetas de actividad, pie de página, etc.
+        - Media Queries (@media) para adaptar el diseño a pantallas más pequeñas (diseño responsivo).
+        */
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* Botón flotante de inicio */
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        /* Menú de navegación lateral */
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Botón toggle del menú */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        /* Indicador de progreso de lectura */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        /* Overlay para cerrar el menú */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Contenedor principal con espaciado para botones flotantes */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .content ul, .content ol {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+        
+        .table-container {
+            max-width: 800px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-caption {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: var(--gray);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        .code-block {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .code-caption {
+            font-style: italic;
+            margin-top: 10px;
+            color: var(--gray);
+            text-align: center;
+        }
+        
+        .figure-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .figure-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin: 15px 0;
+            color: var(--gray);
+            font-style: italic;
+            flex-direction: column;
+        }
+        
+        .figure-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+        
+        .figure-caption {
+            font-style: italic;
+            color: var(--gray);
+            margin-top: 10px;
+        }
+
+        .imagen-figura5 {
+            max-width: 600px;
+            width: 100%;
+            height: auto;
+        }
+
+        .imagen-figura6 {
+            max-width: 500px;
+            width: 100%;
+            height: auto;
+        }
+
+        .imagen-figura7 {
+            max-width: 400px;
+            width: 100%;
+            height: auto;
+        }
+        
+        .activity-card {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 4px solid var(--success);
+            text-align: center;
+        }
+        
+        .activity-title {
+            font-size: 1.8rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+        
+        .activity-btn {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .activity-btn:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+
+        .quiz-section {
+            background: rgba(255, 193, 7, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            border-left: 4px solid var(--warning);
+        }
+
+        .quiz-title {
+            font-size: 1.4rem;
+            color: var(--warning);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .question-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .question-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--warning);
+        }
+
+        .question-number {
+            font-weight: bold;
+            color: var(--warning);
+            margin-bottom: 8px;
+        }
+
+        .word-bank {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .word-bank h4 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+
+        .words {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .word {
+            background: rgba(52, 152, 219, 0.2);
+            padding: 8px 12px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .solutions {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--success);
+        }
+
+        .solutions h4 {
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+
+        .solution-item {
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Botón de ir arriba */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-number {
+                min-width: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .question-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .words {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+        }
+    </style>
+    </head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i> </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio">
+        <i class="fas fa-home"></i> </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">5.3 Capas de Software</div>
+            <div class="sidebar-subtitle">Arquitectura por capas para la gestión eficiente de E/S</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    Inicio de la unidad
+                </a>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    Menú principal
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#introduccion" class="nav-item" data-section="introduccion">
+                    <i class="fas fa-info-circle"></i>
+                    Introducción General
+                </a>
+                <a href="#seccion-5-3-1" class="nav-item" data-section="5-3-1">
+                    <i class="fas fa-microchip"></i>
+                    5.3.1 Manejador de Interrupciones
+                </a>
+                <a href="#seccion-5-3-2" class="nav-item" data-section="5-3-2">
+                    <i class="fas fa-cogs"></i>
+                    5.3.2 Controladores de Dispositivos
+                </a>
+                <a href="#seccion-5-3-3" class="nav-item" data-section="5-3-3">
+                    <i class="fas fa-user-cog"></i>
+                    5.3.3 Software Modo Usuario
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="actividad_5_3.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad de aprendizaje
+                </a>
+                <a href="5.2.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    Anterior: Software de E/S
+                </a>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    Volver al Índice
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i> </button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 5</a>
+                <span>/</span>
+                <span>5.3 Capas de Software</span>
+            </div>
+            <h1>5.3 Capas de Software</h1>
+            <div class="subtitle">Arquitectura por capas para la gestión eficiente de E/S</div>
+        </header>
+        
+        <div class="intro" id="introduccion">
+            <p>Las capas de software de entrada y salida son niveles que organizan cómo se comunican los programas con los dispositivos físicos, como el teclado, mouse o impresora. Estas capas permiten que las aplicaciones usen los dispositivos sin tener que saber cómo funcionan internamente, haciendo que todo sea más ordenado y fácil de manejar.</p>
+
+            <p>El software de entrada/salida (E/S) generalmente se organiza en cuatro capas principales, como se muestra en la Figura 5. Cada una de estas capas posee una función bien definida, así como una interfaz que permite la comunicación con los niveles adyacentes. Aunque la funcionalidad y las interfaces pueden variar entre sistemas operativos, el modelo de capas permite un análisis general aplicable a distintas arquitecturas. A continuación, se examinan dichas capas desde el nivel más bajo hasta el más alto, siguiendo un enfoque conceptual y no específico de una máquina en particular.</p>
+            <p class="citation">(Tanenbaum & Bos, 2015)</p>
+
+            <div class="figure-container">
+                        <div class="figura">
+                            <img src="FIGURA5.jpg" alt="Figura 5: Capas del sistema de software de E/S" class="imagen-figura5"/>
+                        </div>
+                        <div class="figure-caption">Figura 5. Capas del sistema de software de E/S</div>
+            </div>
+        </div>
+        
+        <!-- Sección 5.3.1 -->
+        <div class="section" id="seccion-5-3-1">
+            <div class="section-header">
+                <div class="section-number">5.3.1</div>
+                <div class="section-title">Manejador de Interrupciones</div>
+            </div>
+            <div class="content">
+                <p>Un controlador de dispositivo es una pieza clave dentro de la arquitectura de cualquier computadora. Su función principal es gestionar el control y la comunicación entre el procesador o la memoria principal y los periféricos conectados al sistema.</p>
+
+                <p>Este controlador puede manejar uno o varios dispositivos del mismo tipo, coordinar el flujo de datos y sincronizar la diferencia de velocidad entre la CPU (mucho más rápida) y los dispositivos externos. Además, está encargado de detectar y, en algunos casos, corregir errores durante las operaciones de entrada/salida.</p>
+
+                <p>Por ejemplo, en el caso de un disco duro, el controlador convierte un flujo continuo de bits en bloques organizados de bytes, detectando y corrigiendo errores si es posible, y transfiriendo finalmente los datos a la memoria principal para su uso.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+                
+                <h3>Asignación de Interrupciones</h3>
+                <p>La asignación de interrupciones es una tarea normalmente gestionada por el sistema operativo durante la instalación de un nuevo dispositivo. No obstante, en ciertas situaciones, como configuraciones personalizadas o resolución de conflictos entre dispositivos, puede ser necesario que un administrador del sistema realice esta asignación de manera manual.</p>
+
+                <p>En arquitecturas como la de los sistemas PC, cada interrupción se identifica con un vector numérico (por ejemplo, del 0 al 255). Este número permite que el sistema operativo reconozca con precisión qué dispositivo necesita atención cuando se genera la interrupción.</p>
+                
+                <h3>Tipos y Prioridades de Interrupciones</h3>
+                <p>En los sistemas modernos, múltiples señales de interrupción pueden generarse al mismo tiempo. Para manejar esto, el sistema operativo asigna niveles de prioridad a cada interrupción.</p>
+
+                <p>Cuando varias interrupciones ocurren simultáneamente, se atiende primero la de mayor prioridad, mientras que las demás se mantienen en espera. Además, el sistema operativo puede inhibir selectivamente ciertas interrupciones, impidiendo su procesamiento hasta que se reactiven manualmente. Este control reside en registros protegidos del sistema, inaccesibles para los usuarios comunes, garantizando así la estabilidad del sistema operativo.</p>
+                <p class="citation">(Silberschatz, Galvin, & Gagne, 2018)</p>
+                
+                <h3>Estructura del Manejador de Interrupciones</h3>
+                <p>El tratamiento de una interrupción en sistemas operativos modernos se divide en dos componentes clave:</p>
+
+                <h4>1. Rutina Genérica del Sistema Operativo</h4>
+                <p>Esta parte es común para todas las interrupciones y está integrada en el núcleo del sistema operativo. Sus funciones incluyen:</p>
+                <ul>
+                    <li>Capturar y reconocer la interrupción.</li>
+                    <li>Guardar el estado actual del procesador.</li>
+                    <li>Identificar el dispositivo responsable de la interrupción.</li>
+                    <li>Llamar a la rutina específica del dispositivo.</li>
+                    <li>Informar al planificador para gestionar la ejecución del proceso relacionado.</li>
+                    <li>Desactivar la interrupción para evitar repeticiones innecesarias.</li>
+                    <li>Restaurar el estado del procesador al finalizar.</li>
+                    <li>Finalizar la atención con una instrucción especial como RETI (Return from Interrupt).</li>
+                </ul>
+
+                <h4>2. Rutina Particular del Dispositivo</h4>
+                <p>Esta rutina es específica del hardware que generó la interrupción. Se encarga de realizar las operaciones necesarias para completar o continuar la operación de E/S correspondiente. Por ejemplo, puede implicar la lectura de datos recién recibidos o la preparación de una nueva transferencia.</p>
+
+                <p>Estas rutinas suelen ser desarrolladas y proporcionadas por el fabricante del dispositivo y normalmente se entregan mediante discos de instalación (CDs, disquetes) o disponibles como descargas en línea. Al instalar un nuevo periférico, como una impresora o un ratón, el usuario o administrador debe instalar también estos controladores. En muchos casos, es necesario reiniciar el sistema para que el nuevo controlador sea reconocido y activado correctamente.</p>
+                <p class="citation">(Carretero Pérez, García Carballeira, Anasagasti, & Pérez Costoya, 2001)</p>
+                
+                <h3>Importancia de Separar las Rutinas</h3>
+                <p>Separar la rutina genérica de la rutina específica del dispositivo ofrece múltiples beneficios al sistema operativo:</p>
+                <ul>
+                    <li>Permite una estructura más organizada y modular.</li>
+                    <li>Facilita la actualización de controladores sin modificar el núcleo del sistema.</li>
+                    <li>Mejora la compatibilidad con diferentes versiones del sistema operativo.</li>
+                    <li>Aumenta la seguridad, evitando que controladores defectuosos o maliciosos afecten la estabilidad global del sistema.</li>
+                </ul>
+                <p>Este diseño modular es fundamental para mantener sistemas robustos, escalables y flexibles en entornos operativos modernos.</p>
+                <p class="citation">(Carretero Pérez et al., 2001)</p>
+            </div>
+        </div>
+        
+        <!-- Sección 5.3.2 -->
+        <div class="section" id="seccion-5-3-2">
+            <div class="section-header">
+                <div class="section-number">5.3.2</div>
+                <div class="section-title">Controladores de los Dispositivos</div>
+            </div>
+            <div class="content">
+                <h3>Definición y Función</h3>
+                <p>Los controladores de dispositivos (device drivers) son componentes de software específicos que permiten al sistema operativo interactuar con el hardware de los dispositivos periféricos. Cada dispositivo de entrada/salida (E/S) conectado a una computadora requiere un código especializado para poder ser gestionado correctamente. Este código, conocido como driver, es responsable de traducir las instrucciones genéricas del sistema operativo en comandos específicos comprensibles por el hardware.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+
+                <p>Por lo general, los drivers son proporcionados por el fabricante del dispositivo e incluyen versiones compatibles con los sistemas operativos más populares. Dado que cada sistema operativo necesita controladores adaptados a su arquitectura, los fabricantes suelen distribuir versiones específicas para Windows, Linux, macOS, entre otros.</p>
+                
+                <h3>Estructura y Categorías</h3>
+                <p>Cada controlador está diseñado para manejar un tipo de dispositivo, o en algunos casos, una clase de dispositivos estrechamente relacionados. Por ejemplo, un driver para disco SCSI puede controlar varios modelos de discos SCSI y, en ocasiones, incluso dispositivos ópticos como CD-ROMs. Sin embargo, dispositivos con funciones muy distintas, como un ratón y una palanca de mando (joystick), requieren controladores completamente separados debido a sus diferentes comportamientos y estructuras.</p>
+
+                <p>Los sistemas operativos tienden a clasificar los controladores en categorías según el tipo de datos que manejan o la forma en que se comunican con el sistema. Estas clasificaciones ayudan a organizar su desarrollo y mantenimiento. Las principales categorías se muestran en la Tabla 8, que resume sus características y ejemplos comunes.</p>
+
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>Tipo de Dispositivo</th>
+                            <th>Características</th>
+                            <th>Ejemplos</th>
+                        </tr>
+                        <tr>
+                            <td>Dispositivos de bloque</td>
+                            <td>Contienen bloques de datos direccionables independientemente</td>
+                            <td>Discos duros, SSD, unidades flash</td>
+                        </tr>
+                        <tr>
+                            <td>Dispositivos de carácter</td>
+                            <td>Generan o aceptan flujos de caracteres</td>
+                            <td>Teclados, impresoras, ratones</td>
+                        </tr>
+                        <tr>
+                            <td>Dispositivos de red</td>
+                            <td>Manejan paquetes de datos y protocolos de comunicación</td>
+                            <td>Tarjetas Ethernet, Wi-Fi, Bluetooth</td>
+                        </tr>
+                        <tr>
+                            <td>Dispositivos de tiempo real</td>
+                            <td>Requieren respuestas en tiempos determinados</td>
+                            <td>Sensores industriales, controladores de procesos</td>
+                        </tr>
+                    </table>
+                    <div class="table-caption">Tabla 8. Clasificación de los controladores de dispositivos</div>
+                </div>
+                
+                <h3>Modelo Arquitectónico de los Drivers</h3>
+                <p>Los controladores de dispositivos se ubican generalmente en la parte inferior del sistema operativo, actuando como intermediarios esenciales entre el software de E/S independiente del dispositivo y el hardware físico. Esta arquitectura permite una separación clara entre la lógica genérica del sistema operativo y la lógica específica de cada dispositivo. El modelo se representa en la Figura 6, donde se observa cómo los programas de usuario interactúan con el hardware a través de múltiples capas del sistema.</p>
+
+                <div class="figure-container">
+                        <div class="figura">
+                            <img src="FIGURA6.jpg" alt="Figura 6: Modelo arquitectónico de controladores" class="imagen-figura6"/>
+                        </div>
+                        <div class="figure-caption">Figura 6. Modelo arquitectónico de controladores</div>
+                </div>
+                
+                <h3>Implementación y Carga de Controladores</h3>
+                <p>El método de implementación de los controladores de dispositivos ha evolucionado considerablemente a lo largo del tiempo, adoptando diferentes enfoques según la arquitectura del sistema operativo y las necesidades del usuario:</p>
+
+                <h4>Modelo Estático</h4>
+                <p>En sistemas tradicionales como UNIX, el sistema operativo se distribuía como un binario monolítico que incluía todos los controladores compilados. La adición de un nuevo dispositivo requería recompilar todo el núcleo del sistema.</p>
+
+                <h4>Modelo Dinámico</h4>
+                <p>Con el auge de las computadoras personales, se introdujo un modelo donde los controladores se cargan dinámicamente durante la ejecución. Este modelo, utilizado desde sistemas como MS-DOS, permite agregar nuevos dispositivos sin necesidad de recompilar el sistema operativo completo.</p>
+                <p class="citation">(Stallings, 2018)</p>
+
+                <h4>Controladores en Espacio de Usuario</h4>
+                <p>En arquitecturas modernas como MINIX 3, los controladores se ejecutan como procesos en el espacio de usuario. Esta separación mejora la fiabilidad del sistema, ya que aísla posibles fallos de los controladores del núcleo del sistema operativo.</p>
+                
+                <h3>Funcionamiento Interno de los Controladores</h3>
+                <p>El funcionamiento típico de un controlador de dispositivo sigue una secuencia de pasos bien definida, que puede expresarse mediante pseudocódigo, como se muestra en el Código 9.</p>
+
+                <div class="code-block">
+                    <pre>/* Pseudocódigo simplificado de un controlador de dispositivo */
+int dispositivo_driver_funcion(struct peticion *req) {
+    // 1. Verificar parámetros de entrada
+    if (!parametros_validos(req))
+        return ERROR;
+    
+    // 2. Traducir términos abstractos a concretos
+    struct comando_hw cmd = traducir_peticion(req);
+    
+    // 3. Verificar si el dispositivo está ocupado
+    if (dispositivo_ocupado()) {
+        encolar_peticion(req);
+        return EN_ESPERA;
+    }
+    
+    // 4. Preparar el dispositivo
+    encender_dispositivo();
+    
+    // 5. Emitir comandos al controlador
+    for (int i = 0; i < cmd.num_comandos; i++) {
+        escribir_registro_dispositivo(cmd.registros[i], cmd.valores[i]);
+        if (!dispositivo_acepto_comando())
+            return ERROR;
+    }
+    
+    // 6. Esperar a que termine la operación o continuar
+    if (operacion_requiere_espera()) {
+        bloquear_controlador();
+        return EN_PROCESO; // Será despertado por interrupción
+    }
+    
+    // 7. Verificar errores y transferir datos
+    if (verificar_errores())
+        return ERROR;
+    transferir_datos(req->buffer);
+    
+    // 8. Procesar siguiente petición o esperar
+    if (hay_peticiones_pendientes())
+        procesar_siguiente_peticion();
+    else
+        esperar_nueva_peticion();
+    
+    return EXITO;
+}</pre>
+                    <div class="code-caption">Código 9. Pseudocódigo simplificado del funcionamiento de un controlador de dispositivo</div>
+                </div>
+
+                <p>Este código ilustra los pasos fundamentales que realiza un controlador:</p>
+                <ol>
+                    <li>Verificación de parámetros de entrada.</li>
+                    <li>Traducción de términos abstractos a comandos específicos del hardware.</li>
+                    <li>Comprobación del estado del dispositivo (ocupado o disponible).</li>
+                    <li>Preparación del hardware para la operación.</li>
+                    <li>Emisión de comandos hacia el dispositivo.</li>
+                    <li>Espera activa o pasiva por la finalización (según sea necesario).</li>
+                    <li>Verificación de errores y transferencia de datos.</li>
+                    <li>Gestión de la cola de peticiones pendientes.</li>
+                </ol>
+                
+                <h3>Desafíos en la Programación de Controladores</h3>
+                <p>La programación de controladores de dispositivos implica afrontar diversos desafíos técnicos y de diseño, debido a su estrecha interacción con el hardware y su rol dentro del núcleo del sistema operativo.</p>
+
+                <h4>Reentrada</h4>
+                <p>Un controlador debe ser reentrante, es decir, capaz de ser llamado nuevamente mientras aún está procesando una solicitud anterior. Por ejemplo, mientras un controlador de red gestiona un paquete entrante, puede llegar otro. En tal caso, el controlador debe manejar correctamente ambas solicitudes sin interferencia ni corrupción de datos.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+
+                <h4>Conexión en Caliente (Hot-Plugging)</h4>
+                <p>En sistemas modernos es común que los dispositivos puedan conectarse o desconectarse sin apagar el equipo. Este fenómeno, conocido como conexión en caliente, representa un desafío importante: si un usuario desconecta un dispositivo durante una operación activa, el controlador debe cancelar dicha operación de forma segura, liberar recursos del kernel y notificar a los procesos correspondientes.</p>
+                <p class="citation">(Stallings, 2018)</p>
+
+                <h4>Limitaciones del Entorno</h4>
+                <p>Los controladores operan en un entorno restringido. Aunque no pueden invocar llamadas del sistema como lo hacen los programas de usuario, sí tienen acceso a funciones del núcleo como la asignación de memoria para búferes, administración de la MMU, temporizadores, controladores DMA e interrupciones. Estas herramientas son fundamentales para su funcionamiento eficiente.</p>
+                <p class="citation">(Silberschatz et al., 2018)</p>
+                
+                <h3>Modelos de Interfaz para Controladores</h3>
+                <p>Los sistemas operativos modernos definen interfaces estándar que todos los controladores deben implementar para integrarse correctamente con el sistema. Estas interfaces actúan como un contrato entre el núcleo del sistema operativo y los módulos de controladores, permitiendo una interacción uniforme entre el software y el hardware, independientemente de las particularidades de cada dispositivo.</p>
+                <p class="citation">(Love, 2010)</p>
+
+                <p>Las funciones básicas que suelen componer esta interfaz incluyen:</p>
+                <ul>
+                    <li><strong>open():</strong> Inicializa el dispositivo y prepara el controlador para su uso.</li>
+                    <li><strong>close():</strong> Finaliza la operación del dispositivo y libera los recursos asignados.</li>
+                    <li><strong>read():</strong> Permite la lectura de datos desde el dispositivo.</li>
+                    <li><strong>write():</strong> Escribe datos en el dispositivo.</li>
+                    <li><strong>ioctl():</strong> (Input/Output Control) Realiza configuraciones específicas del hardware.</li>
+                    <li><strong>mmap():</strong> Asocia la memoria del dispositivo al espacio de direcciones del proceso.</li>
+                </ul>
+
+                <p>Estas funciones ofrecen una abstracción estandarizada, facilitando el desarrollo de controladores portables y simplificando la interacción del sistema con distintos tipos de hardware.</p>
+                
+                <h3>Modelos de Dispositivos en Sistemas Operativos Modernos</h3>
+                <p>Cada sistema operativo implementa un modelo de controlador propio, con su correspondiente interfaz de programación y ubicación típica en el sistema de archivos. La Tabla 9 resume estas características en los sistemas operativos más populares.</p>
+
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>Sistema Operativo</th>
+                            <th>Modelo de Controlador</th>
+                            <th>Interfaz de Programación</th>
+                            <th>Ubicación Típica</th>
+                        </tr>
+                        <tr>
+                            <td>Linux</td>
+                            <td>Módulos cargables del kernel</td>
+                            <td>struct file_operations, module_init(), module_exit()</td>
+                            <td>/lib/modules/[versión-kernel]/</td>
+                        </tr>
+                        <tr>
+                            <td>Windows</td>
+                            <td>Windows Driver Model (WDM)</td>
+                            <td>Driver Development Kit (DDK)</td>
+                            <td>C:\Windows\System32\drivers\</td>
+                        </tr>
+                        <tr>
+                            <td>macOS</td>
+                            <td>IOKit</td>
+                            <td>IOService, IORegistryEntry</td>
+                            <td>/System/Library/Extensions/</td>
+                        </tr>
+                        <tr>
+                            <td>FreeBSD</td>
+                            <td>DEVFS</td>
+                            <td>struct cdevsw, struct driver</td>
+                            <td>/boot/kernel/</td>
+                        </tr>
+                        <tr>
+                            <td>Android</td>
+                            <td>Hardware Abstraction Layer (HAL)</td>
+                            <td>Biblioteca C específica de hardware</td>
+                            <td>/vendor/lib/hw/</td>
+                        </tr>
+                    </table>
+                    <div class="table-caption">Tabla 9. Modelos de controladores e interfaces en sistemas operativos modernos</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección 5.3.3 -->
+        <div class="section" id="seccion-5-3-3">
+            <div class="section-header">
+                <div class="section-number">5.3.3</div>
+                <div class="section-title">Software Modo Usuario para E/S</div>
+            </div>
+            <div class="content">
+                <p>Los sistemas operativos modernos están estructurados en capas, donde cada nivel proporciona un conjunto específico de funcionalidades. El software de E/S en espacio de usuario representa uno de estos niveles, funcionando como intermediario entre las aplicaciones de usuario y las capas inferiores del sistema operativo. Aunque la mayor parte del software de E/S reside dentro del kernel del sistema operativo, existe una porción significativa que opera en el espacio de usuario, principalmente en forma de bibliotecas vinculadas con programas de usuario y programas completos que se ejecutan fuera del kernel.</p>
+                <p class="citation">(Silberschatz et al., 2018; Tanenbaum & Bos, 2015)</p>
+                
+                <h3>Componentes Principales del Software de E/S en Espacio de Usuario</h3>
+
+                <h4>Bibliotecas de Procedimientos</h4>
+                <p>Las bibliotecas de procedimientos constituyen un componente fundamental del software de E/S en espacio de usuario. Estas bibliotecas proporcionan interfaces amigables para que los programas de usuario interactúen con el sistema de E/S sin necesidad de conocer los detalles técnicos de los dispositivos de hardware.</p>
+                <p class="citation">(Stallings, 2018)</p>
+
+                <p>Cuando un programa en C contiene una llamada al sistema relacionada con E/S, como:</p>
+
+                <div class="code-block">
+                    <pre>count = write(fd, buffer, nbytes);</pre>
+                    <div class="code-caption">El procedimiento de biblioteca write se vincula con el programa y se incluye en el programa binario presente en memoria en tiempo de ejecución</div>
+                </div>
+
+                <p>Estos procedimientos hacen más que simplemente colocar sus parámetros en el lugar apropiado para la llamada al sistema; algunos realizan un trabajo significativo, especialmente en el formateo de entrada y salida.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+
+                <h4>Funciones de Formateo: Printf y Scanf</h4>
+                <p>Una de las funcionalidades más importantes proporcionadas por las bibliotecas de E/S en espacio de usuario es el formateo de entrada y salida. Un ejemplo clásico en C es la función printf, que toma una cadena de formato y posiblemente variables como entrada, construye una cadena ASCII y luego llama al sistema write para imprimir la cadena.</p>
+                <p class="citation">(Deitel & Deitel, 2021)</p>
+
+                <p>Por ejemplo, cuando se ejecuta:</p>
+
+                <div class="code-block">
+                    <pre>printf("El cuadrado de %3d es %6d\n", i, i*i);</pre>
+                    <div class="code-caption">Esta instrucción formatea una cadena que consiste en la cadena "El cuadrado de" seguida por el valor i como una cadena de 3 caracteres, luego la cadena "es", después i² como seis caracteres, y finalmente un salto de línea.</div>
+                </div>
+
+                <p>De manera similar, la función scanf se utiliza para la entrada formateada, leyendo datos de entrada y almacenándolos en variables descritas en una cadena de formato que utiliza la misma sintaxis que printf.</p>
+                <p class="citation">(Kernighan & Ritchie, 2017)</p>
+                
+                <h3>Sistemas de Colas (Spooling)</h3>
+                <p>Otra categoría importante de software de E/S en espacio de usuario son los sistemas de colas o "spooling". Este mecanismo representa una forma eficiente de gestionar dispositivos de E/S dedicados en un sistema de multiprogramación, principalmente para gestionar recursos compartidos como impresoras.</p>
+                <p class="citation">(Silberschatz et al., 2018)</p>
+
+                <p>El término "spooling" es un acrónimo para "Simultaneous Peripheral Operations On-Line" (Operaciones Periféricas Simultáneas En Línea). Este sistema permite que múltiples usuarios o procesos envíen trabajos a un dispositivo sin tener que esperar a que el dispositivo complete cada tarea individualmente.</p>
+                <p class="citation">(Stallings, 2018)</p>
+
+                <h4>Funcionamiento del Sistema de Colas</h4>
+                <p>En un sistema de colas típico para una impresora:</p>
+                <ol>
+                    <li>Se crea un proceso especial llamado "demonio" (daemon).</li>
+                    <li>Se establece un directorio especial llamado "directorio de cola" (spooling directory).</li>
+                    <li>Para imprimir un archivo, un proceso genera primero todo el archivo a imprimir y lo coloca en el directorio de cola.</li>
+                    <li>El demonio, que es el único proceso con permiso para usar el archivo especial de la impresora, imprime los archivos del directorio en orden, generalmente siguiendo un esquema FIFO (First In, First Out).</li>
+                </ol>
+
+                <p>Este mecanismo evita que un proceso mantenga abierto el dispositivo por un tiempo innecesariamente extenso, lo que bloquearía a otros procesos que necesitan acceder al mismo dispositivo.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+
+                <h4>Aplicaciones del Sistema de Colas</h4>
+                <p>El uso de colas no se limita a las impresoras. También se utiliza en otras situaciones de E/S, como:</p>
+
+                <p><span class="highlight">Transferencia de archivos a través de red:</span> Para enviar un archivo a través de una red, un usuario coloca el archivo en un directorio de cola de red. Posteriormente, un demonio de red lo toma y lo transmite.</p>
+                <p class="citation">(Silberschatz et al., 2018)</p>
+
+                <p><span class="highlight">Sistemas de noticias:</span> Un ejemplo específico es el sistema de noticias USENET (ahora parte de Google Groups), donde los usuarios pueden publicar mensajes en grupos de noticias depositándolos en un directorio de cola para su transmisión posterior a otras máquinas.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+                
+                <h3>La Arquitectura del Sistema de E/S</h3>
+                <p>El sistema de E/S se puede visualizar como una serie de capas, cada una con funciones específicas. De abajo hacia arriba, estas capas son:</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+
+                <ul>
+                    <li><strong>Hardware:</strong> Realiza las operaciones de E/S físicas.</li>
+                    <li><strong>Manejadores de interrupciones:</strong> Despiertan al controlador cuando se completa la E/S.</li>
+                    <li><strong>Controladores de dispositivos:</strong> Establecen los registros de dispositivo y verifican el estado.</li>
+                    <li><strong>Software independiente del dispositivo:</strong> Maneja el nombramiento, protección, bloqueo, uso de búfer y asignación.</li>
+                    <li><strong>Procesos de usuario:</strong> Hacen la llamada de E/S, aplican formato a la E/S y colocan en cola.</li>
+                </ul>
+
+                <p>La interacción general entre los distintos niveles del sistema se ilustra en la Figura 7.</p>
+
+                <div class="figure-container">
+                        <div class="figura">
+                            <img src="FIGURA7.jpg" alt="Figura 7: Flujo de llamadas y respuestas en la arquitectura moderna de controladores" class="imagen-figura7"/>
+                        </div>
+                        <div class="figure-caption">Figura 7. Flujo de llamadas y respuestas en la arquitectura moderna de controladores</div>
+                </div>
+
+                <p>El flujo de control en este sistema es el siguiente: cuando un programa de usuario intenta leer un bloque de un archivo, se invoca el sistema operativo para llevar a cabo la llamada. El software independiente del dispositivo busca el bloque en la caché del búfer. Si el bloque necesario no está allí, llama al controlador del dispositivo para enviar la petición al hardware. Después, el proceso se bloquea hasta que se complete la operación. Cuando termina la operación, el hardware genera una interrupción, el manejador de interrupciones descubre qué ocurrió y despierta al proceso para finalizar la petición de E/S.</p>
+                <p class="citation">(Tanenbaum & Bos, 2015)</p>
+            </div>
+        </div>
+        
+        <div class="activity-card">
+            <div class="activity-title">Actividad de Aprendizaje 3: Capas de Software</div>
+            <p>Pon a prueba tus conocimientos sobre los manejadores de interrupciones y la arquitectura por capas del software de E/S.</p>
+            <a href="actividad_5_3.html" class="activity-btn">
+                <i class="fas fa-pencil-alt"></i> Realizar Actividad
+            </a>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="5.2.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Volver a 5.2: Software de E/S</a>
+            <a href="index.html" class="nav-btn">Volver al Índice <i class="fas fa-home"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 5: Dispositivos de Entrada y Salida</p>
+            <p>Desarrollado para fines educativos - © 2025 | Referencias: Tanenbaum & Bos (2015), Silberschatz et al. (2018), Stallings (2020)</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- VARIABLES GLOBALES ---
+        // Declara una variable para rastrear el estado del menú lateral (abierto/cerrado).
+        let sidebarOpen = false;
+
+        // --- LÓGICA DEL MENÚ LATERAL (SIDEBAR) ---
+        // Obtiene los elementos del DOM necesarios para el menú.
+        const menuToggle = document.getElementById('menuToggle'); // El botón que abre/cierra el menú.
+        const sidebarNav = document.getElementById('sidebarNav');   // El contenedor del menú.
+        const sidebarOverlay = document.getElementById('sidebarOverlay'); // El fondo oscuro que aparece detrás del menú.
+
+        // Función principal para mostrar u ocultar el menú lateral.
+        function toggleSidebar() {
+            // Invierte el estado actual del menú (si está abierto, lo cierra, y viceversa).
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                // Si el menú se va a abrir:
+                sidebarNav.classList.add('active'); // Muestra el menú.
+                sidebarOverlay.classList.add('active'); // Muestra el fondo oscuro.
+                menuToggle.classList.add('active'); // Cambia el estilo del botón.
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>'; // Cambia el ícono de hamburguesa a una 'X'.
+                document.body.style.overflow = 'hidden'; // Evita que se pueda hacer scroll en el contenido de la página.
+            } else {
+                // Si el menú se va a cerrar:
+                sidebarNav.classList.remove('active'); // Oculta el menú.
+                sidebarOverlay.classList.remove('active'); // Oculta el fondo oscuro.
+                menuToggle.classList.remove('active'); // Restaura el estilo del botón.
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>'; // Cambia el ícono de 'X' a hamburguesa.
+                document.body.style.overflow = 'auto'; // Permite hacer scroll en la página nuevamente.
+            }
+            
+            // Llama a la función que ajusta el margen del contenido principal.
+            updateContainerSpacing();
+        }
+
+        // Añade un evento de clic al botón del menú y al overlay para que llamen a la función toggleSidebar.
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Cierra el menú automáticamente al hacer clic en un enlace de navegación (útil en móviles).
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                // Si la pantalla es de tipo móvil (ancho menor o igual a 768px), cierra el menú.
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        // --- AJUSTE DINÁMICO DEL CONTENEDOR ---
+        // Función para ajustar los márgenes del contenedor principal según el estado del menú y el tamaño de la pantalla.
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                // En vista móvil, se usan márgenes y paddings fijos y reducidos.
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                // En vista de escritorio con el menú abierto, se añade un margen a la izquierda para no solapar el contenido.
+                container.style.marginLeft = '370px'; // Ancho del menú (280px) + espaciado.
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                // En vista de escritorio con el menú cerrado, se usan márgenes estándar.
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            }
+        }
+
+        // --- SECCIÓN ACTIVA EN EL MENÚ ---
+        // Función para resaltar en el menú el enlace correspondiente a la sección que se está viendo.
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section, .intro'); // Obtiene todas las secciones de contenido.
+            const navItems = document.querySelectorAll('.nav-item[data-section]'); // Obtiene los enlaces del menú.
+            
+            let currentSection = '';
+            
+            // Recorre cada sección para determinar cuál está actualmente en el viewport.
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect(); // Obtiene la posición y tamaño de la sección.
+                // Si la parte superior de la sección está dentro de los primeros 150px de la pantalla, se considera la sección actual.
+                if (rect.top <= 150 && rect.bottom >= 150) {
+                    currentSection = section.id.replace('seccion-', '').replace('introduccion', 'introduccion');
+                }
+            });
+            
+            // Recorre los enlaces del menú para activar el que corresponde a la sección actual.
+            navItems.forEach(item => {
+                item.classList.remove('active'); // Primero, quita la clase 'active' de todos.
+                if (item.dataset.section === currentSection) {
+                    item.classList.add('active'); // Luego, la añade solo al enlace correcto.
+                }
+            });
+        }
+
+        // --- BARRA DE PROGRESO DE LECTURA ---
+        // Función para actualizar el ancho de la barra de progreso según el scroll.
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop; // Posición actual del scroll.
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight; // Altura total "scrolleable".
+            const scrolled = (winScroll / height) * 100; // Calcula el porcentaje de scroll.
+            document.getElementById('progressBar').style.width = scrolled + '%'; // Asigna el porcentaje al ancho de la barra.
+        }
+
+        // --- BOTÓN DE "IR ARRIBA" ---
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        // Función para mostrar u ocultar el botón de "ir arriba".
+        function toggleScrollToTopBtn() {
+            // Si el usuario ha bajado más de 300px, muestra el botón.
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                // Si no, lo oculta.
+                scrollToTopBtn.classList.remove('visible');
+            }
+        }
+
+        // Añade un evento de clic al botón para que desplace la página hacia el inicio con una animación suave.
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0, // Ir a la posición 0 (el inicio).
+                behavior: 'smooth' // Con animación suave.
+            });
+        });
+
+        // --- EVENT LISTENERS PRINCIPALES ---
+        // Se ejecuta cada vez que el usuario hace scroll.
+        window.addEventListener('scroll', () => {
+            updateActiveSection(); // Actualiza la sección activa en el menú.
+            updateReadingProgress(); // Actualiza la barra de progreso.
+            toggleScrollToTopBtn(); // Comprueba si debe mostrar el botón de "ir arriba".
+        });
+
+        // --- DESPLAZAMIENTO SUAVE PARA ANCLAS ---
+        // Mejora el comportamiento de los enlaces internos (ej: href="#seccion-1").
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault(); // Evita el salto brusco por defecto del navegador.
+                const target = document.querySelector(this.getAttribute('href')); // Obtiene el elemento destino.
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 100; // Calcula la posición del destino con un margen superior de 100px.
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth' // Realiza el desplazamiento suave.
+                    });
+                }
+            });
+        });
+
+        // Se ejecuta cuando se cambia el tamaño de la ventana del navegador.
+        window.addEventListener('resize', () => {
+            // Si la ventana se hace más grande que 768px y el menú estaba abierto, lo cierra.
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            // Reajusta los márgenes del contenedor.
+            updateContainerSpacing();
+        });
+
+        // --- INICIALIZACIÓN ---
+        // Se ejecuta una vez que todo el contenido del DOM ha sido cargado.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Llama a las funciones de actualización para establecer el estado inicial correcto.
+            updateActiveSection();
+            updateReadingProgress();
+            updateContainerSpacing();
+            
+            // En dispositivos móviles, se asegura de que el menú comience cerrado.
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+
+        // --- ATAJOS DE TECLADO ---
+        document.addEventListener('keydown', (e) => {
+            // Si se presiona la tecla 'Escape' y el menú está abierto, lo cierra.
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            
+            // Si se presiona la tecla 'M' (mayúscula o minúscula), abre o cierra el menú.
+            if (e.key === 'm' || e.key === 'M') {
+                // Se asegura de que no se esté presionando una tecla modificadora (Ctrl, Alt).
+                if (!e.ctrlKey && !e.altKey) {
+                    toggleSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

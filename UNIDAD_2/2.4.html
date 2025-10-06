@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2.4 Sincronización entre procesos/hilos</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .sidebar-nav {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            overflow-y: auto;
+        }
+
+        .sidebar-nav.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-left-color: var(--secondary);
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .nav-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .menu-toggle.active {
+            background: var(--accent);
+        }
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 998;
+        }
+
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            transition: margin-left 0.3s ease, margin-right 0.3s ease;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            scroll-margin-top: 100px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .section-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-right: 15px;
+            min-width: 120px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .content {
+            padding: 0 10px;
+        }
+        
+        .content h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 30px 0 15px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .content h4 {
+            font-size: 1.3rem;
+            color: var(--warning);
+            margin: 25px 0 12px;
+            padding-left: 8px;
+        }
+        
+        .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .content ul, .content ol {
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+        }
+        
+        .highlight {
+            background: rgba(231, 76, 60, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .citation {
+            font-style: italic;
+            color: var(--gray);
+            margin: 5px 0 15px 20px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+        
+        .quote-box {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 8px;
+            font-style: italic;
+            color: var(--light);
+        }
+
+        .quote-box .citation {
+            border-left: none;
+            margin: 10px 0 0 0;
+            padding-left: 0;
+        }
+        
+        .table-container {
+            max-width: 800px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .table-caption {
+            text-align: center;
+            padding: 10px;
+            font-style: italic;
+            color: var(--gray);
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn i {
+            margin: 0 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b;
+            transform: translateY(-3px);
+        }
+
+        .activity-card {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            border-left: 4px solid var(--success);
+            text-align: center;
+        }
+
+        .activity-title {
+            font-size: 1.8rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .activity-btn {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+
+        .activity-btn:hover {
+            background: #27ae60;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar-nav {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .section-number {
+                min-width: 100px;
+                font-size: 1.8rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .floating-home-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="progressBar"></div>
+    </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al índice de unidades">
+        <i class="fas fa-home"></i>
+    </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">2.4 Sincronización entre procesos/hilos</div>
+            <div class="sidebar-subtitle">Administración de procesos</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="#inicio" class="nav-item">
+                    <i class="fas fa-rocket"></i> Inicio del Tema
+                </a>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-arrow-left"></i> Menú de Unidad 2
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Contenido</div>
+                <a href="#seccion-2-4-1" class="nav-item" data-section="2-4-1">
+                    <i class="fas fa-shield-alt"></i> 2.4.1 Principios de la sincronización
+                </a>
+                <a href="#seccion-2-4-2" class="nav-item" data-section="2-4-2">
+                    <i class="fas fa-lock"></i> 2.4.2 Semáforos y mutex
+                </a>
+                <a href="#seccion-2-4-3" class="nav-item" data-section="2-4-3">
+                    <i class="fas fa-eye"></i> 2.4.3 Monitores
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <a href="actividad_2.4.html" class="nav-item">
+                    <i class="fas fa-tasks"></i> Actividad de aprendizaje
+                </a>
+                <a href="2.5.html" class="nav-item">
+                    <i class="fas fa-arrow-right"></i> Siguiente: Planificación
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <div class="container">
+        <header id="inicio">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 2</a>
+                <span>/</span>
+                <span>2.4 Sincronización entre procesos/hilos</span>
+            </div>
+            <h1>2.4 Sincronización entre procesos/hilos</h1>
+            <div class="subtitle">Administración de procesos</div>
+        </header>
+        
+        <div class="intro">
+            <p>La sincronización entre procesos e hilos es un aspecto crítico en los sistemas operativos modernos, ya que garantiza la integridad de los datos y un orden adecuado de ejecución en entornos concurrentes. Sin una coordinación correcta, los sistemas pueden enfrentar resultados erróneos, inconsistencias y fallos importantes.</p>
+            <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+
+            <h4>¿Por qué es Necesaria la Sincronización?</h4>
+
+            <div class="quote-box">
+                "Una condición de carrera ocurre cuando varios procesos acceden y manipulan datos compartidos, y el resultado final depende del orden específico en el que se ejecutan los procesos"
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018, p. 258).</div>
+            </div>
+
+            <div class="quote-box">
+                "Un interbloqueo ocurre cuando cada proceso del conjunto está esperando un recurso que otro proceso del conjunto posee"
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018, p. 285).</div>
+            </div>
+
+            <p>Como son:</p>
+
+            <ol>
+                <li><strong>Condiciones de Carrera (Race Conditions):</strong> Ocurren cuando el resultado de la ejecución depende del orden en que acceden varios procesos o hilos a un recurso compartido. Si dos o más hilos intentan modificar la misma variable o dato al mismo tiempo sin control, el resultado final puede ser impredecible y erróneo.
+                    <ul>
+                        <li><strong>Ejemplo:</strong> Dos hilos intentan incrementar una variable compartida simultáneamente. Si no hay sincronización, ambos hilos podrían leer el valor original, incrementarlo y escribirlo de nuevo, haciendo que un incremento se "pierda".</li>
+                    </ul>
+                </li>
+                <li><strong>Interbloqueo (Deadlock):</strong> Es una situación en la que dos o más procesos o hilos quedan bloqueados indefinidamente, esperando cada uno por un recurso que está en posesión de otro proceso/hilo del mismo conjunto, y ninguno de ellos puede avanzar.
+                    <ul>
+                        <li><strong>Ejemplo:</strong> El Proceso A tiene el Recurso 1 y necesita el Recurso 2. El Proceso B tiene el Recurso 2 y necesita el Recurso 1. Ambos esperan indefinidamente.</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <br>
+            <h4>El Rol de la Sección Crítica</h4>
+            <div class="quote-box">
+                "La sección crítica es un bloque de código donde se accede a recursos compartidos, y los mecanismos de sincronización aseguran que solo un proceso o hilo entre a la vez, garantizando la exclusión mutua"
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+            </div>
+
+            <br>
+            <h4>Importancia de la Sincronización</h4>
+            <p>La sincronización es vital para:</p>
+
+            <ul>
+                <li><strong>Integridad y Consistencia de Datos:</strong> Asegura que los datos compartidos no se corrompan debido a accesos concurrentes no controlados.</li>
+                <li><strong>Fiabilidad del Sistema:</strong> Previene errores lógicos y fallos del sistema que podrían surgir de condiciones de carrera o interbloqueos.</li>
+                <li><strong>Funcionamiento Correcto de Aplicaciones Concurrentes:</strong> Permite que las aplicaciones multihilo y multiproceso funcionen de manera predecible y correcta, aprovechando el paralelismo sin caer en inconsistencias.</li>
+                <li><strong>Uso Eficiente de Recursos Compartidos:</strong> Permite que los procesos compartan recursos de manera controlada y ordenada.</li>
+            </ul>
+
+            <br>
+            <h4>Mecanismos Comunes de Sincronización</h4>
+            <div class="quote-box">
+                "Los sistemas operativos incluyen herramientas como semáforos, exclusión mutua (mutex), monitores y barreras para permitir la sincronización adecuada entre procesos e hilos concurrentes"
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+            </div>
+
+            <p>Como son:</p>
+
+            <ul>
+                <li><strong>Mutex (Exclusión Mutua):</strong> Un mecanismo de bloqueo que permite que solo un hilo acceda a un recurso compartido a la vez. Es como una llave: solo el hilo que tiene la llave puede entrar a la sección crítica.</li>
+                <li><strong>Semáforos:</strong> Variables enteras que se utilizan para controlar el acceso a un número limitado de recursos o para señalizar eventos entre hilos.</li>
+                <li><strong>Variables de Condición:</strong> Permiten que los hilos esperen pasivamente por una condición específica, siendo notificados por otros hilos cuando la condición se cumple.</li>
+                <li><strong>Barreras:</strong> Obligan a un grupo de hilos a esperar en un punto determinado hasta que todos los hilos del grupo hayan llegado a ese punto.</li>
+            </ul>
+
+            <div class="quote-box">
+                "La sincronización es esencial para que múltiples hilos o procesos trabajen de forma coordinada y sin interferencias en entornos concurrentes"
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2018).</div>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-2-4-1">
+            <div class="section-header">
+                <div class="section-number">2.4.1</div>
+                <div class="section-title">Principios de la sincronización: condición de carrera, sección crítica, exclusión mutua, atomicidad, abrazo mortal</div>
+            </div>
+            <div class="content">
+                <div class="quote-box">
+                    "Los principios de sincronización como la condición de carrera, sección crítica, exclusión mutua y atomicidad son esenciales para mantener la integridad en la ejecución concurrente"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+                </div>
+
+                <p>Como se muestra a continuación:</p>
+
+                <h3>a) Condición de Carrera (Race Condition)</h3>
+                <p>La condición de carrera no es un principio de sincronización en sí, sino el problema que los principios de sincronización buscan resolver. Su funcionalidad, o más bien su efecto, es generar resultados impredecibles e inconsistentes cuando múltiples procesos o hilos acceden y modifican un recurso compartido sin un control adecuado, y el resultado depende del orden exacto y no determinista de la ejecución. Es el desafío principal de la programación concurrente.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h4>Ventajas de Evitar Condiciones de Carrera (mediante sincronización):</h4>
+                <ul>
+                    <li><strong>Integridad de Datos Asegurada:</strong> Los datos compartidos permanecen consistentes y correctos.</li>
+                    <li><strong>Resultados Predecibles:</strong> Las operaciones concurrentes producen siempre el mismo resultado lógico, independientemente del orden de ejecución.</li>
+                    <li><strong>Fiabilidad del Sistema:</strong> El software es más robusto y menos propenso a errores sutiles difíciles de depurar.</li>
+                </ul>
+
+                <h4>Desventajas de No Evitar Condiciones de Carrera (al no usar sincronización):</h4>
+                <ul>
+                    <li><strong>Corrupción de Datos:</strong> Los datos compartidos pueden volverse incoherentes o incorrectos.</li>
+                    <li><strong>Resultados Impredecibles:</strong> El comportamiento del programa es no determinista y puede cambiar con cada ejecución.</li>
+                    <li><strong>Fallos del Sistema:</strong> Puede llevar a caídas del programa, errores de segmentación o comportamiento errático.</li>
+                    <li><strong>Depuración Compleja:</strong> Los errores de condición de carrera son notoriamente difíciles de reproducir y depurar.</li>
+                </ul>
+
+                <h3>b) Sección Crítica</h3>
+                <p>La sección crítica es una región de código donde un proceso o hilo accede a un recurso compartido (como una variable, una base de datos, un archivo o un dispositivo de hardware). Su funcionalidad es demarcar claramente las porciones de código que requieren protección para evitar condiciones de carrera. Es la parte del programa que debe ser ejecutada por un solo proceso/hilo a la vez para mantener la coherencia de los datos.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h4>Ventajas de Identificar y Proteger las Secciones Críticas:</h4>
+                <ul>
+                    <li><strong>Localización del Problema:</strong> Permite identificar exactamente qué partes del código necesitan protección, enfocando los esfuerzos de sincronización.</li>
+                    <li><strong>Control Fino:</strong> La protección solo se aplica donde es estrictamente necesario, evitando la sobre sincronización en otras partes del código.</li>
+                    <li><strong>Claridad del Diseño:</strong> Facilita la comprensión de las interacciones concurrentes y las dependencias de datos.</li>
+                </ul>
+
+                <h4>Desventajas (Si no se identifican o protegen correctamente):</h4>
+                <ul>
+                    <li><strong>Vulnerabilidad a Condiciones de Carrera:</strong> Si una sección crítica no se protege, se convierte en un punto de falla potencial para la consistencia de datos.</li>
+                    <li><strong>Sobre sincronización:</strong> Si se protege demasiado código o se usa un bloqueo más amplio de lo necesario, puede reducir el paralelismo.</li>
+                    <li><strong>Dificultad de Implementación:</strong> Identificar todas las secciones críticas puede ser complicado en sistemas grandes y complejos.</li>
+                </ul>
+
+                <h3>c) Exclusión Mutua</h3>
+                <p>La exclusión mutua es un concepto clave en la sincronización de procesos, ya que garantiza que únicamente un proceso o hilo pueda acceder a una sección crítica en un momento dado. Este mecanismo evita condiciones de carrera al asegurar que el acceso a recursos compartidos se realice de manera controlada y secuencial. Si un proceso está ejecutando su sección crítica, ningún otro puede ingresar a una sección crítica que utilice el mismo recurso. Es una técnica fundamental para proteger la integridad de los datos compartidos.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <p>La exclusión mutua es el principio que se implementa para proteger las secciones críticas. Su propósito es garantizar que solo un proceso o hilo pueda acceder a un recurso compartido a la vez, evitando que múltiples procesos modifiquen simultáneamente información sensible o compartida. Esto permite mantener la coherencia e integridad de los datos, especialmente en entornos de programación concurrente.</p>
+
+                <p>Existen diversas técnicas y mecanismos para implementar la exclusión mutua, como el uso de semáforos, cerrojos (locks), monitores, y algoritmos de software como el de Peterson o el de Dekker. Cada uno presenta ventajas y limitaciones dependiendo del sistema operativo, la arquitectura del hardware y la naturaleza de la aplicación.</p>
+
+                <p>Una implementación adecuada de la exclusión mutua ayuda a prevenir condiciones de carrera, pero también puede generar otros retos como el <strong>interbloqueo</strong> (deadlock) y la <strong>inanición</strong> (starvation), si no se gestionan correctamente las prioridades y el acceso a los recursos.</p>
+
+                <div class="quote-box">
+                    "El principio de exclusión mutua, por tanto, no solo protege los datos, sino que también establece las bases para una sincronización eficiente y segura en sistemas multitarea y multiusuario"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+                </div>
+
+                <h4>Ventajas de la Exclusión Mutua:</h4>
+                <ul>
+                    <li><strong>Garantía de Integridad:</strong> Asegura que solo un proceso/hilo acceda a un recurso compartido en un momento dado, previniendo condiciones de carrera.</li>
+                    <li><strong>Simplicidad Conceptual:</strong> El concepto es directo: "si yo estoy dentro, nadie más entra".</li>
+                    <li><strong>Base para la Sincronización:</strong> Es la primitiva fundamental sobre la cual se construyen la mayoría de los otros mecanismos de sincronización (como mutex y semáforos).</li>
+                </ul>
+
+                <h4>Desventajas de la Exclusión Mutua:</h4>
+                <ul>
+                    <li><strong>Reducción del Paralelismo:</strong> Si las secciones críticas son muy grandes o se accede a ellas con mucha frecuencia, la exclusión mutua puede serializar la ejecución, limitando el beneficio del paralelismo.</li>
+                    <li><strong>Posibilidad de Interbloqueo (Deadlock):</strong> Si no se implementa cuidadosamente, el uso de mecanismos de exclusión mutua puede llevar a interbloqueos.</li>
+                    <li><strong>Problemas de Inanición (Starvation):</strong> Un hilo podría quedar esperando indefinidamente para entrar en una sección crítica si otros hilos de mayor prioridad o que constantemente obtienen el bloqueo lo impiden.</li>
+                    <li><strong>Overhead:</strong> La gestión de los mecanismos de exclusión mutua (bloquear, desbloquear, cambiar de contexto) introduce una pequeña sobrecarga de rendimiento.</li>
+                </ul>
+
+                <h3>d) Atomicidad</h3>
+                <p>La atomicidad se refiere a la propiedad de una operación o un conjunto de operaciones que se ejecutan como una unidad indivisible e interrumpible. Su funcionalidad es garantizar que una operación se complete en su totalidad o no se realice en absoluto. Si una operación es atómica, el sistema operativo asegura que no puede ser interrumpida por otros procesos o hilos, ni siquiera a nivel de interrupciones de hardware, durante su ejecución. Esto es crucial para operaciones que modifican datos compartidos, ya que asegura que los datos siempre estén en un estado consistente. Por ejemplo, una transferencia de dinero de la cuenta A a la cuenta B debe ser atómica: o se completa la deducción de A y el ingreso en B, o no se realiza ninguna de las dos.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <p>La <strong>atomicidad</strong> es una propiedad deseable para ciertas operaciones, especialmente aquellas que involucran recursos compartidos o cambios críticos en el estado del sistema. Se refiere a la ejecución de una operación como una unidad indivisible: o se ejecuta por completo, o no se ejecuta en absoluto. No se permite ninguna interrupción intermedia por parte de otros procesos o eventos durante su ejecución.</p>
+
+                <p>Esta propiedad es fundamental en programación concurrente y en sistemas operativos para asegurar la <strong>consistencia de los datos</strong>. Por ejemplo, en operaciones como la actualización de una cuenta bancaria, si el sistema falla o es interrumpido a mitad del proceso, la atomicidad garantiza que no se dejará el sistema en un estado inconsistente.</p>
+
+                <p>Los mecanismos que permiten la atomicidad incluyen <strong>instrucciones atómicas</strong> proporcionadas por el hardware, como <em>test-and-set</em> o <em>compare-and-swap</em>, así como estructuras de sincronización como <strong>semáforos binarios</strong>, <strong>bloqueos</strong> o <strong>transacciones</strong> en bases de datos.</p>
+
+                <div class="quote-box">
+                    "Sin atomicidad, un sistema puede caer en condiciones de carrera o corrupción de datos, por lo que es un principio esencial para la correcta sincronización de procesos"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+                </div>
+
+                <h4>Ventajas de la Atomicidad:</h4>
+                <ul>
+                    <li><strong>Consistencia Garantizada:</strong> Asegura que una operación se complete completamente o no se realice en absoluto, manteniendo los datos siempre en un estado válido.</li>
+                    <li><strong>Simplificación del Razonamiento Concurrente:</strong> Facilita el diseño de algoritmos concurrentes al saber que ciertas operaciones son interrumpibles.</li>
+                    <li><strong>Robustez:</strong> Previene estados inconsistentes de datos que podrían surgir por interrupciones a mitad de una operación.</li>
+                </ul>
+
+                <h4>Desventajas de la Atomicidad:</h4>
+                <ul>
+                    <li><strong>Costo de Implementación:</strong> Lograr la atomicidad a menudo requiere mecanismos de bajo nivel (instrucciones especiales de CPU, bloqueo de interrupciones o bloqueos de software), que pueden introducir sobrecarga.</li>
+                    <li><strong>Granularidad:</strong> Si una operación atómica es demasiado grande, puede limitar el paralelismo al bloquear el acceso a recursos por más tiempo del necesario.</li>
+                    <li><strong>Riesgo de Inanición o Interbloqueo:</strong> Las operaciones atómicas implementadas con bloqueos pueden contribuir a estos problemas si no se gestionan correctamente.</li>
+                </ul>
+
+                <h3>e) Abrazo Mortal (Deadlock)</h3>
+                <p>El <strong>abrazo mortal</strong> (más comúnmente conocido como <strong>interbloqueo</strong> o <em>deadlock</em>) no es un principio de sincronización, sino otro problema complejo que surge en la programación concurrente. Su funcionalidad, o más bien su efecto, es bloquear indefinidamente un conjunto de procesos o hilos, donde cada uno espera por un recurso que está siendo retenido por otro proceso/hilo del mismo conjunto. Esto crea un ciclo de dependencia circular del que ningún proceso puede salir por sí solo.</p>
+
+                <p>Este problema ocurre típicamente cuando se cumplen cuatro condiciones simultáneamente:</p>
+
+                <ol>
+                    <li><strong>Exclusión mutua:</strong> al menos un recurso no puede ser compartido.</li>
+                    <li><strong>Retención y espera:</strong> los procesos que ya tienen recursos pueden solicitar otros adicionales.</li>
+                    <li><strong>No expropiación:</strong> los recursos no pueden ser retirados a la fuerza de los procesos.</li>
+                    <li><strong>Espera circular:</strong> existe una cadena de procesos donde cada uno espera por un recurso que posee otro en la cadena.</li>
+                </ol>
+
+                <p>Los mecanismos de sincronización, como los <strong>mutex</strong>, <strong>semáforos</strong> y <strong>monitores</strong>, se utilizan para prevenir, evitar o detectar y recuperar de los interbloqueos. Algunas estrategias incluyen:</p>
+
+                <ul>
+                    <li><strong>Prevención:</strong> evitando que se cumpla al menos una de las cuatro condiciones.</li>
+                    <li><strong>Evitación:</strong> utilizando algoritmos como el <strong>algoritmo del banquero</strong>, que analizan si una solicitud llevará a un estado inseguro.</li>
+                    <li><strong>Detección y recuperación:</strong> permitiendo que ocurran interbloqueos y luego identificarlos y resolverlos, por ejemplo, terminando procesos o liberando recursos.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Los interbloqueos pueden paralizar completamente un sistema si no se manejan adecuadamente, por lo que comprenderlos es esencial para el diseño robusto de sistemas operativos y aplicaciones concurrentes"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+                </div>
+
+                <h4>Ventajas de Evitar/Manejar el Abrazo Mortal:</h4>
+                <ul>
+                    <li><strong>Disponibilidad del Sistema:</strong> Los procesos/hilos pueden completar sus tareas, lo que garantiza la continuidad de la operación del sistema.</li>
+                    <li><strong>Uso Eficiente de Recursos:</strong> Los recursos no quedan atascados en un estado de no liberación.</li>
+                    <li><strong>Fiabilidad del Sistema:</strong> Evita el bloqueo permanente de partes del sistema o incluso del sistema completo.</li>
+                </ul>
+
+                <h4>Desventajas de Sufrir un Abrazo Mortal (si ocurre):</h4>
+                <ul>
+                    <li><strong>Parálisis del Sistema:</strong> Los procesos/hilos involucrados quedan bloqueados indefinidamente, sin poder avanzar.</li>
+                    <li><strong>Inutilización de Recursos:</strong> Los recursos retenidos por los procesos bloqueados no pueden ser utilizados por otros, lo que lleva a la ineficiencia.</li>
+                    <li><strong>Frustración del Usuario:</strong> Las aplicaciones o el sistema pueden parecer "congelados" o no responder.</li>
+                    <li><strong>Complejidad de Recuperación:</strong> A menudo requiere la terminación manual de procesos o el reinicio del sistema para liberar los recursos.</li>
+                    <li><strong>Costos de Prevención/Detección:</strong> Implementar algoritmos para prevenir, evitar o detectar interbloqueos añade complejidad y sobrecarga al sistema.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section" id="seccion-2-4-2">
+            <div class="section-header">
+                <div class="section-number">2.4.2</div>
+                <div class="section-title">Semáforos y mutex</div>
+            </div>
+            <div class="content">
+                <p>Los <strong>semáforos</strong> y <strong>mutex</strong> son dos de las herramientas más fundamentales y ampliamente utilizadas para la sincronización entre procesos/hilos en los sistemas operativos. Ambas son primitivas que ayudan a controlar el acceso a recursos compartidos para evitar condiciones de carrera y asegurar la integridad de los datos en entornos concurrentes.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h3>Semáforos</h3>
+                <p>Un <strong>semáforo</strong> es una variable entera que se utiliza para controlar el acceso a un recurso con un número limitado de instancias o para señalizar eventos entre procesos/hilos. Es uno de los mecanismos de sincronización más utilizados en sistemas operativos y programación concurrente.</p>
+
+                <p>Existen dos tipos principales de semáforos:</p>
+
+                <ol>
+                    <li><strong>Semáforo binario (o mutex):</strong> solo puede tener dos valores, 0 y 1. Se utiliza principalmente para garantizar la exclusión mutua, permitiendo que un solo proceso acceda a una sección crítica a la vez.</li>
+                    <li><strong>Semáforo contable:</strong> puede tomar valores mayores a uno. Se emplea para controlar el acceso concurrente a múltiples instancias de un recurso, como un número determinado de conexiones disponibles o permisos para trabajar en paralelo.</li>
+                </ol>
+
+                <p>El funcionamiento básico de un semáforo implica dos operaciones atómicas:</p>
+
+                <ul>
+                    <li><strong>wait()</strong> (también conocida como <em>P</em> o <em>down</em>): disminuye el valor del semáforo. Si el valor es negativo, el proceso se bloquea hasta que el semáforo esté disponible.</li>
+                    <li><strong>signal()</strong> (también conocida como <em>V</em> o <em>up</em>): incrementa el valor del semáforo, liberando potencialmente a un proceso que estaba esperando.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "El uso adecuado de semáforos ayuda a evitar condiciones de carrera, permite la sincronización entre procesos/hilos, y es fundamental en la coordinación de tareas en sistemas multiproceso. Sin embargo, un mal manejo puede llevar a interbloqueos o inanición, si no se diseñan correctamente las reglas de acceso"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+                </div>
+
+                <h4>Funcionalidad e Importancia:</h4>
+                <ul>
+                    <li><strong>Control de Acceso a Recursos Limitados</strong>: Un semáforo puede inicializarse con un valor que representa el número de unidades disponibles de un recurso. Cada vez que un proceso quiere usar una unidad, "toma" el semáforo (decrementa su valor). Cuando termina, lo "libera" (incrementa su valor). Si el valor llega a cero, significa que no hay unidades disponibles y los procesos que intenten tomarlo se bloquearán hasta que una unidad sea liberada.</li>
+                    <li><strong>Sincronización por Señalización</strong>: Un semáforo también puede usarse para que un proceso espere una señal de otro. Por ejemplo, el Proceso A espera a que el Proceso B complete una tarea. El Proceso A realiza una operación wait() en un semáforo inicializado en 0, y el Proceso B realiza una operación signal() cuando termina su tarea.</li>
+                </ul>
+
+                <h4>Proceso (Operaciones):</h4>
+                <p>Los semáforos se manipulan mediante dos operaciones atómicas (indivisibles):</p>
+
+                <ol>
+                    <li><strong>wait() (o P() por "Probeer" - intentar, o down()):</strong>
+                        <ul>
+                            <li>Decrementa el valor del semáforo.</li>
+                            <li>Si el valor resultante es negativo (o cero en algunos contextos, dependiendo de la implementación), el proceso/hilo que ejecutó wait() es bloqueado y colocado en una cola de espera asociada al semáforo. Esto significa que el recurso no está disponible o la señal no ha llegado.</li>
+                            <li>Si el valor es no negativo (o positivo), el proceso/hilo continúa, lo que indica que obtuvo acceso al recurso o la señal fue recibida.</li>
+                        </ul>
+                    </li>
+                    <li><strong>signal() (o V() por "Verhoog" - incrementar, o up()):</strong>
+                        <ul>
+                            <li>Incrementa el valor del semáforo.</li>
+                            <li>Si hay procesos/hilos bloqueados en la cola de espera del semáforo, uno de ellos es despertado (desbloqueado) y se le permite continuar. Esto significa que un recurso ha sido liberado o una señal ha sido enviada.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h3>Mutex (Exclusión Mutua)</h3>
+                <p>Un <strong>mutex</strong> (abreviatura de <em>mutual exclusion</em>) es un objeto de sincronización que se utiliza para proteger una sección crítica y garantizar que solo un proceso o hilo a la vez pueda acceder a un recurso compartido. Es como una "llave" que permite el acceso exclusivo, evitando que múltiples procesos entren simultáneamente en secciones críticas, y asegurando la integridad de los datos en entornos concurrentes.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h4>Funcionalidad e Importancia:</h4>
+                <ul>
+                    <li><strong>Exclusión Mutua</strong>: Su función principal es proporcionar exclusión mutua. Si un hilo ha adquirido el mutex (tiene la "llave"), ningún otro hilo puede adquirirlo hasta que el primer hilo lo libere.</li>
+                    <li><strong>Protección de Datos Compartidos</strong>: Es ideal para proteger estructuras de datos o bloques de código específicos que son accedidos y/o modificados por múltiples hilos.</li>
+                    <li><strong>Simplicidad para Bloqueos Binarios</strong>: Es más simple y ligero que un semáforo para el caso específico de proteger un recurso único (ya que los semáforos son más genéricos).</li>
+                </ul>
+
+                <h4>Proceso (Operaciones):</h4>
+                <p>Los mutex se manipulan mediante operaciones de bloqueo y desbloqueo:</p>
+
+                <ol>
+                    <li><strong>lock() (o acquire()):</strong>
+                        <ul>
+                            <li>Un proceso/hilo intenta adquirir el mutex.</li>
+                            <li>Si el mutex está disponible (no está bloqueado por otro hilo), el hilo lo adquiere, el mutex se marca como "bloqueado" y el hilo continúa hacia la sección crítica.</li>
+                            <li>Si el mutex ya está bloqueado por otro hilo, el hilo que intenta adquirirlo se bloquea y se coloca en una cola de espera asociada al mutex, esperando a que el mutex sea liberado.</li>
+                        </ul>
+                    </li>
+                    <li><strong>unlock() (o release()):</strong>
+                        <ul>
+                            <li>El proceso/hilo que actualmente posee el mutex lo libera.</li>
+                            <li>El mutex se marca como "disponible".</li>
+                            <li>Si hay hilos bloqueados esperando el mutex, uno de ellos es despertado (desbloqueado) y se le permite adquirir el mutex y continuar su ejecución.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <h3>Diferencias Clave y Relación:</h3>
+                <ul>
+                    <li><strong>Propósito Principal</strong>: Los <strong>mutex</strong> son para <strong>exclusión mutua</strong> (proteger un recurso único). Los <strong>semáforos</strong> son más generales: pueden usarse para <strong>exclusión mutua</strong> (semáforos binarios) o para <strong>controlar el acceso a múltiples instancias de un recurso</strong> o para <strong>señalización</strong>.</li>
+                    <li><strong>Propiedad</strong>: Un mutex tiene un <strong>propietario</strong> (el hilo que lo bloqueó debe ser el que lo desbloquee). Un semáforo <strong>no tiene un propietario</strong>; cualquier proceso/hilo puede ejecutar signal() para incrementar su valor, incluso si no fue el que ejecutó el wait() correspondiente.</li>
+                    <li><strong>Casos de Uso</strong>: Mutex es ideal para proteger una sección de código. Semáforos son buenos para problemas de productor-consumidor o para limitar el número de hilos que acceden a una región.</li>
+                </ul>
+
+                <div class="quote-box">
+                    "Los semáforos como los mutex son herramientas esenciales para gestionar la concurrencia, con el objetivo común de evitar inconsistencias de datos. La elección entre ellos depende de la necesidad específica de sincronización que se presente en la aplicación"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+                </div>
+
+                <h3>Tabla de Importancia y Funcionalidad: Semáforos y Mutex</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mecanismo</th>
+                                <th>Importancia</th>
+                                <th>Funcionalidad Clave</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Semáforos</strong></td>
+                                <td>Son una primitiva de sincronización <strong>versátil y potente</strong> que va más allá de la simple exclusión mutua. Son cruciales para <strong>gestionar el acceso a un número limitado de instancias de un recurso</strong> y para <strong>coordinar eventos (señalización)</strong> entre procesos/hilos. Su flexibilidad los hace indispensables en problemas complejos como el productor-consumidor o el de los lectores-escritores, donde se necesita un control más granular sobre la concurrencia.</td>
+                                <td><strong>Controlan el acceso a recursos</strong> decrementando un contador (wait()) cuando un hilo/proceso lo toma y liberándolos incrementándolo (signal()). Si el contador llega a cero, los hilos/procesos subsiguientes que intenten tomarlo se bloquean. También sirven para <strong>señalizar la ocurrencia de un evento</strong> entre hilos. Pueden ser:<br>- <strong>Binarios (0 o 1):</strong> Actúan como un mutex, para exclusión mutua.<br>- <strong>Contadores (>1):</strong> Para controlar múltiples instancias de un recurso.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mutex</strong></td>
+                                <td>Es la primitiva <strong>más simple y eficiente</strong> para implementar la <strong>exclusión mutua</strong> sobre un recurso único. Su importancia radica en su capacidad para <strong>garantizar la integridad de los datos</strong> en secciones críticas, previniendo condiciones de carrera al asegurar que solo un hilo/proceso acceda al recurso protegido en un momento dado. Son fundamentales para la <strong>seguridad y consistencia</strong> de estructuras de datos compartidas.</td>
+                                <td><strong>Proporcionan exclusión mutua</strong> mediante un mecanismo de "bloqueo" (lock() o acquire()) y "desbloqueo" (unlock() o release()). Un hilo/proceso adquiere el mutex para entrar en una sección crítica; si ya está bloqueado, el hilo que intenta adquirirlo se bloquea. <strong>Solo el hilo/proceso que bloqueó el mutex puede desbloquearlo</strong>, asegurando la propiedad.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="table-caption"><strong>Tabla 1.</strong> Comparativa entre Semáforos y Mutex.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="seccion-2-4-3">
+            <div class="section-header">
+                <div class="section-number">2.4.3</div>
+                <div class="section-title">Monitores</div>
+            </div>
+            <div class="content">
+                <p>Los <strong>monitores</strong> son una poderosa herramienta de sincronización en los sistemas operativos, diseñada para simplificar la programación de la exclusión mutua y la coordinación entre procesos/hilos que comparten recursos. Su importancia radica en que encapsulan la lógica de sincronización, haciendo el código concurrente más seguro, legible y fácil de mantener.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h3>Importancia de los Monitores</h3>
+                <p>La importancia de los monitores se manifiesta en varios aspectos clave:</p>
+
+                <h4>Simplificación de la Programación Concurrente:</h4>
+                <p>Los monitores resuelven de manera elegante uno de los mayores desafíos de la concurrencia: la gestión de la sección crítica. Al encapsular tanto los datos compartidos como las operaciones que los manipulan, junto con los mecanismos de sincronización, los monitores liberan al programador de la necesidad de manejar explícitamente los lock()/unlock() de mutex o las operaciones wait()/signal() de semáforos en cada acceso a un recurso. Esto reduce drásticamente los errores comunes como los interbloqueos o las condiciones de carrera causadas por bloqueos olvidados o mal colocados.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h4>Garantía de Exclusión Mutua Automática:</h4>
+                <p>Dentro de un monitor, solo un hilo puede estar activo a la vez. Esta es una propiedad intrínseca del monitor, impuesta por el compilador o el entorno de ejecución, no por el programador. Esto asegura automáticamente la exclusión mutua para los datos que el monitor protege, haciendo que las condiciones de carrera sean mucho menos probables.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h4>Coordinación de Hilos Mediante Variables de Condición:</h4>
+                <p>Además de la exclusión mutua, los monitores integran variables de condición. Estas variables permiten que los hilos esperen pasivamente por una condición específica (por ejemplo, que un búfer no esté vacío) y sean notificados por otros hilos cuando esa condición se cumple. Esto es crucial para la coordinación de hilos y la implementación de patrones de concurrencia como productor-consumidor o lector-escritor de manera segura y eficiente.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h4>Modularidad y Encapsulamiento:</h4>
+                <p>Los monitores promueven un diseño de software más modular. Agrupan la información relevante (datos compartidos, procedimientos de acceso, mecanismos de sincronización) en una sola unidad lógica. Esto mejora la legibilidad del código y facilita el mantenimiento y la depuración, ya que la lógica de concurrencia está centralizada y no dispersa por todo el programa.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h4>Prevención de Errores Comunes de Sincronización:</h4>
+                <p>Al ser una construcción de alto nivel, los monitores ayudan a prevenir errores complejos. Por ejemplo, es difícil olvidar liberar un mutex o cometer errores en la secuencia de wait()/signal() de semáforos, ya que la lógica de bloqueo/desbloqueo es gestionada internamente por el monitor.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <h4>Soporte en Lenguajes de Programación:</h4>
+                <p>Muchos lenguajes de programación modernos (Java con la palabra clave synchronized, C# con lock, Python con threading.Lock junto a threading.Condition) implementan conceptos similares a los monitores o los incluyen directamente como parte de sus características de concurrencia, lo que demuestra su eficacia y aceptación en la comunidad de desarrollo.</p>
+                
+                <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+
+                <div class="quote-box">
+                    "Los monitores son una abstracción poderosa que eleva el nivel de la programación concurrente, permitiendo a los desarrolladores centrarse más en la lógica de la aplicación y menos en los detalles propensos a errores de la sincronización de bajo nivel"
+                    <div class="citation">(Silberschatz, Galvin, & Gagne, 2019).</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="activity-card">
+            <div class="activity-title">Actividad de Aprendizaje: Modelo de Procesos</div>
+            <p>Evalúa tu comprensión sobre los fundamentos, operaciones, estados e implementación de procesos en sistemas operativos.</p>
+            <a href="actividad_2_1.html" class="activity-btn">
+                <i class="fas fa-pencil-alt"></i> Realizar Actividad
+            </a>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="2.3.html" class="nav-btn"><i class="fas fa-arrow-left"></i> Anterior: 2.3 Comunicación entre procesos</a>
+            <a href="2.5.html" class="nav-btn">Continuar a 2.5: Planificación<i class="fas fa-arrow-right"></i></a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 2: Administración de procesos</p>
+            <p>Desarrollado para fines educativos - © 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        let sidebarOpen = false;
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+                document.body.style.overflow = 'hidden';
+            } else {
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.style.overflow = 'auto';
+            }
+            
+            updateContainerSpacing();
+        }
+
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            if (window.innerWidth <= 768) {
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) {
+                container.style.marginLeft = '370px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else {
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            }
+        }
+
+        function updateActiveSection() {
+            const sections = document.querySelectorAll('.section');
+            const navItems = document.querySelectorAll('.nav-item[data-section]');
+            let currentSectionId = '';
+
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 150 && rect.bottom >= 150) {
+                    currentSectionId = section.id;
+                }
+            });
+
+            navItems.forEach(item => {
+                const sectionId = 'seccion-' + item.dataset.section;
+                if (sectionId === currentSectionId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        }
+
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        function toggleScrollToTopBtn() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        }
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        window.addEventListener('scroll', () => {
+            updateActiveSection();
+            updateReadingProgress();
+            toggleScrollToTopBtn();
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                
+                if (target) {
+                    const offsetTop = target.offsetTop - 100;
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveSection();
+            updateReadingProgress();
+            updateContainerSpacing();
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) {
+                toggleSidebar();
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                if (!e.ctrlKey && !e.altKey) { 
+                    toggleSidebar();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

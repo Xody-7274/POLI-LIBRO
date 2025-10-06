@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="es"> <head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Actividad 5.2: Batalla del Software de E/S</title> <link rel="icon" type="image/png" href="logoescom.png"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> <style>
+        /* Definición de variables CSS (custom properties) para una paleta de colores consistente */
+        :root {
+            --primary: #2c3e50; /* Color primario oscuro */
+            --secondary: #3498db; /* Color secundario azul */
+            --success: #2ecc71; /* Color para indicar éxito (verde) */
+            --accent: #e74c3c; /* Color de acento (rojo/naranja) */
+            --warning: #f39c12; /* Color para advertencias (amarillo) */
+            --light: #ecf0f1; /* Color claro, para textos sobre fondos oscuros */
+            --dark: #1a2a3a; /* Color oscuro alternativo */
+            --gray: #95a5a6; /* Color gris */
+            --monster-color: #1abc9c; /* Color específico para el "monstruo" o tema de esta actividad (verde azulado) */
+            --cyber-green: #00ff88; /* Un verde neón/cyberpunk */
+            --matrix-green: #0f4c3a; /* Un verde oscuro tipo Matrix */
+        }
+
+        /* Reseteo de estilos universal para eliminar márgenes y paddings por defecto de los navegadores */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box; /* Hace que el padding y el borde no incrementen el tamaño total del elemento */
+        }
+
+        /* Estilos base para el cuerpo (body) de la página */
+        body {
+            background: linear-gradient(135deg, #0a1a0f, #1a2a3a, #2c3e50); /* Fondo con gradiente oscuro temático */
+            color: var(--light); /* Color de texto principal */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Familia de fuentes */
+            line-height: 1.6; /* Altura de línea para mejor legibilidad */
+            min-height: 100vh; /* Altura mínima igual a la altura de la ventana */
+            position: relative; /* Para posicionar elementos hijos de forma absoluta respecto al body */
+        }
+
+        /* Pseudo-elemento para añadir un efecto de fondo animado sutil */
+        body::before {
+            content: ""; /* Necesario para que el pseudo-elemento se muestre */
+            position: fixed; /* Fijo en la pantalla */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(26, 188, 156, 0.15) 0%, transparent 50%), /* Gradientes radiales con opacidad baja */
+                radial-gradient(circle at 80% 80%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(15, 76, 58, 0.1) 0%, transparent 50%);
+            z-index: -1; /* Detrás de todo el contenido */
+            animation: matrixShift 15s ease-in-out infinite; /* Animación para el fondo */
+        }
+
+        /* Animación para el cambio de opacidad del fondo */
+        @keyframes matrixShift {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        /* Animación para el efecto de victoria */
+        @keyframes victoryMatrix {
+            0%, 100% { filter: brightness(1) hue-rotate(0deg); }
+            50% { filter: brightness(1.05) hue-rotate(8deg); } /* Ligero brillo y cambio de tonalidad */
+        }
+
+        /* Animación para el efecto de derrota (glitch) */
+        @keyframes defeatGlitch {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(0.95) contrast(1.05) hue-rotate(15deg); } /* Oscurecimiento, contraste y cambio de tonalidad */
+        }
+
+        /* Estilos para el botón flotante de "inicio" */
+        .floating-home-btn {
+            position: fixed; /* Fijo en la pantalla */
+            top: 20px;
+            right: 20px;
+            background: var(--secondary); /* Color de fondo */
+            color: white; /* Color del icono */
+            width: 60px;
+            height: 60px;
+            border-radius: 50%; /* Forma circular */
+            display: flex; /* Para centrar el icono */
+            align-items: center;
+            justify-content: center;
+            text-decoration: none; /* Quita el subrayado del enlace */
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.3); /* Sombra */
+            transition: all 0.3s ease; /* Transición suave para efectos hover */
+            z-index: 1000; /* Asegura que esté encima de otros elementos */
+            font-size: 1.5rem; /* Tamaño del icono */
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .floating-home-btn:hover {
+            background: #2980b9; /* Color al pasar el ratón */
+            transform: translateY(-3px); /* Efecto de elevación */
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4); /* Sombra más pronunciada */
+        }
+
+        /* Clase para ocultar el botón de inicio (usado con JS) */
+        .floating-home-btn.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Estilos para el menú de navegación lateral (sidebar) */
+        .sidebar-nav {
+            position: fixed; /* Fijo en la pantalla */
+            left: 0;
+            top: 0;
+            width: 280px; /* Ancho del menú */
+            height: 100vh; /* Altura completa de la ventana */
+            background: rgba(0, 0, 0, 0.9); /* Fondo oscuro semitransparente */
+            backdrop-filter: blur(10px); /* Efecto de desenfoque para el fondo detrás del menú */
+            border-right: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil a la derecha */
+            z-index: 999; /* Encima del contenido pero debajo de elementos como el toggle del menú */
+            transition: transform 0.3s ease; /* Transición para el efecto de deslizamiento */
+            transform: translateX(-100%); /* Oculto fuera de la pantalla a la izquierda por defecto */
+            overflow-y: auto; /* Permite scroll si el contenido del menú es muy largo */
+        }
+
+        /* Clase que se añade con JS para mostrar el menú */
+        .sidebar-nav.active {
+            transform: translateX(0); /* Mueve el menú a su posición visible */
+        }
+
+        /* Cabecera del menú lateral */
+        .sidebar-header {
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1); /* Fondo ligeramente coloreado */
+            border-bottom: 1px solid rgba(52, 152, 219, 0.3); /* Línea divisoria */
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Contenedor de las secciones de navegación en el menú */
+        .nav-sections {
+            padding: 20px 0;
+        }
+
+        /* Una sección de navegación individual */
+        .nav-section {
+            margin-bottom: 15px;
+        }
+
+        /* Título de una sección de navegación */
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+            margin-bottom: 10px;
+        }
+
+        /* Elemento individual de navegación (enlace) */
+        .nav-item {
+            display: block; /* Ocupa todo el ancho */
+            padding: 12px 20px;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent; /* Borde para efecto hover */
+        }
+
+        .nav-item:hover {
+            background: rgba(52, 152, 219, 0.1); /* Fondo al pasar el ratón */
+            border-left-color: var(--secondary); /* Color del borde izquierdo */
+            padding-left: 25px; /* Desplaza el texto ligeramente a la derecha */
+        }
+
+        /* Iconos dentro de los elementos de navegación */
+        .nav-item i {
+            margin-right: 10px; /* Espacio entre el icono y el texto */
+            width: 20px; /* Ancho fijo para alineación */
+            text-align: center;
+        }
+
+        /* Botón para mostrar/ocultar el menú lateral (hamburguesa) */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px; /* Bordes redondeados */
+            border: none; /* Sin borde */
+            cursor: pointer; /* Cursor de mano */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1001; /* Encima del overlay y del menú */
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--secondary);
+            transform: translateY(-2px); /* Ligera elevación */
+        }
+
+        /* Estilo del botón toggle cuando el menú está activo (icono de 'X') */
+        .menu-toggle.active {
+            background: var(--accent); /* Color rojo para indicar "cerrar" */
+        }
+
+        /* Indicador de progreso de lectura en la parte superior de la página */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px; /* Altura de la barra */
+            background: rgba(255, 255, 255, 0.1); /* Color de fondo de la barra (track) */
+            z-index: 998; /* Debajo del menú toggle pero encima del contenido */
+        }
+
+        /* Barra que muestra el progreso actual de lectura */
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--success)); /* Color de la barra de progreso */
+            width: 0%; /* Inicia vacía, se actualiza con JS */
+            transition: width 0.1s ease; /* Transición suave para el cambio de ancho */
+        }
+
+        /* Overlay que cubre la página cuando el menú lateral está abierto */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Fondo negro semitransparente */
+            z-index: 998; /* Debajo del menú, encima del contenido */
+            opacity: 0; /* Oculto por defecto */
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Clase para mostrar el overlay */
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Contenedor principal del contenido de la página */
+        .container {
+            max-width: 1200px; /* Ancho máximo del contenido */
+            margin: 0 auto; /* Centrado horizontal */
+            padding: 20px; /* Relleno interno */
+            transition: margin-left 0.3s ease, margin-right 0.3s ease; /* Transición para cuando el menú lateral afecta los márgenes */
+        }
+
+        /* Cabecera de la página (título, breadcrumb) */
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(0, 0, 0, 0.3); /* Fondo semitransparente */
+            border-radius: 15px; /* Bordes redondeados */
+            margin-bottom: 30px;
+        }
+
+        /* Estilo para las "migas de pan" (breadcrumb) */
+        .breadcrumb {
+            display: flex;
+            justify-content: center; /* Centra los elementos */
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1rem;
+        }
+
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        /* Separador en el breadcrumb */
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+
+        /* Título principal H1 */
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        /* Subtítulo */
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Sección de instrucciones del juego/actividad */
+        .instructions {
+            background: rgba(52, 152, 219, 0.15);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--secondary); /* Borde decorativo a la izquierda */
+        }
+
+        .instructions h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .instructions ul {
+            padding-left: 25px; /* Espacio para las viñetas */
+            color: var(--light);
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        /* Arena de batalla principal donde se desarrolla la actividad */
+        .battle-arena {
+            background: rgba(255, 255, 255, 0.05); /* Fondo muy sutil */
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Sombra */
+            border: 1px solid rgba(26, 188, 156, 0.3); /* Borde con el color temático */
+            position: relative; /* Para pseudo-elementos */
+            overflow: hidden; /* Para contener animaciones internas */
+        }
+
+        /* Pseudo-elemento para un brillo sutil en la arena */
+        .battle-arena::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(26, 188, 156, 0.08) 0%, transparent 70%);
+            z-index: -1;
+            animation: cyberGlow 5s ease-in-out infinite; /* Animación de brillo */
+        }
+
+        /* Animación de brillo para la arena */
+        @keyframes cyberGlow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.9; }
+        }
+
+        /* Sección que muestra al "monstruo" o entidad a vencer */
+        .monster-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(26, 188, 156, 0.15); /* Fondo con color temático */
+            border-radius: 15px;
+            border: 2px solid rgba(26, 188, 156, 0.4); /* Borde más pronunciado */
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Pseudo-elemento para un efecto de "flujo de datos" detrás del monstruo */
+        .monster-section::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%; /* Más grande que el contenedor para el efecto de rotación */
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
+            animation: dataStream 4s linear infinite; /* Animación de flujo */
+            z-index: -1;
+        }
+
+        /* Animación de flujo de datos (rotación y escala) */
+        @keyframes dataStream {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(360deg) scale(1.1); }
+        }
+
+        /* Avatar del monstruo (puede ser un emoji o imagen) */
+        .monster-avatar {
+            font-size: 5rem; /* Tamaño del avatar */
+            margin-bottom: 15px;
+            animation: pulse 2s ease-in-out infinite; /* Animación de pulso */
+        }
+
+        /* Animación de pulso (crecer y encoger) */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .monster-name {
+            font-size: 1.8rem;
+            color: var(--monster-color); /* Color temático */
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Contenedor de la barra de vida del monstruo */
+        .health-bar-container {
+            width: 300px; /* Ancho de la barra */
+            height: 20px; /* Altura de la barra */
+            background: rgba(0, 0, 0, 0.3); /* Fondo del track de la barra */
+            border-radius: 10px;
+            margin: 0 auto 15px; /* Centrado y con margen inferior */
+            overflow: hidden; /* Para que la barra interna no se salga */
+            border: 2px solid rgba(26, 188, 156, 0.5); /* Borde temático */
+        }
+
+        /* Barra que representa la vida actual del monstruo */
+        .health-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyber-green), var(--monster-color)); /* Gradiente de colores temáticos */
+            transition: width 0.5s ease; /* Transición suave para cambios de vida */
+            border-radius: 8px; /* Bordes redondeados internos */
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5); /* Brillo sutil */
+        }
+
+        /* Texto que muestra los HP (ej: 10 / 10 DATOS) */
+        .health-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--light);
+        }
+
+        /* Contenedor de las estadísticas del jugador */
+        .player-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px; /* Espacio entre tarjetas de estadísticas */
+            margin-bottom: 20px;
+            flex-wrap: wrap; /* Permite que las tarjetas se acomoden en pantallas pequeñas */
+        }
+
+        /* Tarjeta individual de estadística */
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2); /* Borde sutil */
+        }
+
+        /* Valor numérico de la estadística */
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        /* Etiqueta de la estadística (ej: Tiempo) */
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Indicadores visuales de errores (puntos) */
+        .error-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Espacio entre puntos */
+            margin-top: 10px;
+        }
+
+        /* Punto individual de error */
+        .error-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%; /* Forma circular */
+            background: rgba(255, 255, 255, 0.2); /* Color por defecto (no error) */
+            transition: all 0.3s ease;
+        }
+
+        /* Estilo del punto de error cuando está lleno (error cometido) */
+        .error-dot.filled {
+            background: var(--accent); /* Color rojo */
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); /* Brillo rojo */
+        }
+
+        /* Contenedor principal del ejercicio de emparejamiento */
+        .exercise {
+            display: grid; /* Uso de CSS Grid para dos columnas */
+            grid-template-columns: 1fr 1fr; /* Dos columnas de igual tamaño */
+            gap: 30px; /* Espacio entre columnas */
+            margin-bottom: 30px;
+        }
+
+        /* Título de cada columna (Conceptos y Definiciones) */
+        .column h3 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary); /* Línea divisoria debajo del título */
+        }
+
+        /* Estilo base para un ítem de concepto o definición */
+        .concept-item, .definition-item {
+            background: rgba(255,255,255,0.08); /* Fondo sutil */
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 3px solid transparent; /* Borde izquierdo para decoración */
+            transition: all 0.3s ease;
+        }
+
+        /* Borde izquierdo específico para ítems de concepto */
+        .concept-item {
+            border-left-color: var(--warning);
+        }
+
+        /* Borde izquierdo específico para ítems de definición */
+        .definition-item {
+            border-left-color: var(--success);
+        }
+
+        /* Efecto hover para ítems de concepto y definición */
+        .concept-item:hover, .definition-item:hover {
+            background: rgba(255,255,255,0.12); /* Fondo ligeramente más claro */
+            transform: translateX(5px); /* Pequeño desplazamiento a la derecha */
+        }
+
+        /* Estilo para el número del concepto (ej: 1.) */
+        .concept-number {
+            font-weight: bold;
+            color: var(--warning);
+            margin-right: 8px;
+        }
+
+        /* Estilo para la letra de la definición (ej: A.) */
+        .definition-letter {
+            font-weight: bold;
+            color: var(--success);
+            margin-right: 8px;
+        }
+
+        /* Estilo para los elementos <select> usados para emparejar */
+        select {
+            margin-left: 15px; /* Espacio a la izquierda del select */
+            padding: 8px 12px;
+            border-radius: 5px;
+            background: #ffffff; /* Fondo blanco */
+            color: #2c3e50; /* Texto oscuro */
+            border: 2px solid var(--secondary); /* Borde azul */
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        /* Estilo del select al obtener foco */
+        select:focus {
+            outline: none; /* Quita el outline por defecto del navegador */
+            border-color: var(--warning); /* Cambia color del borde */
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2); /* Sombra de enfoque */
+        }
+
+        /* Clase para select cuando la respuesta es correcta */
+        select.correct {
+            border-color: var(--success); /* Borde verde */
+            background: rgba(46, 204, 113, 0.1); /* Fondo verde sutil */
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.4); /* Brillo verde */
+            animation: correctPulse 0.6s ease; /* Animación de pulso */
+        }
+
+        /* Clase para select cuando la respuesta es incorrecta */
+        select.incorrect {
+            border-color: var(--accent); /* Borde rojo */
+            background: rgba(231, 76, 60, 0.1); /* Fondo rojo sutil */
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); /* Brillo rojo */
+            animation: incorrectShake 0.6s ease; /* Animación de sacudida */
+        }
+
+        /* Animación de pulso para respuesta correcta */
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); } /* Crece ligeramente */
+            100% { transform: scale(1); }
+        }
+
+        /* Animación de sacudida para respuesta incorrecta */
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); } /* Se mueve a la izquierda */
+            75% { transform: translateX(5px); } /* Se mueve a la derecha */
+        }
+
+        /* Controles de la batalla (botones de atacar, reiniciar, etc.) */
+        .battle-controls {
+            display: flex;
+            flex-wrap: wrap; /* Permite que los botones se acomoden en varias líneas */
+            gap: 20px; /* Espacio entre botones */
+            align-items: center;
+            justify-content: center; /* Centra los botones */
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2); /* Fondo semitransparente */
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+
+        /* Estilo base para botones */
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px; /* Bordes muy redondeados (forma de píldora) */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none; /* Para enlaces estilizados como botones */
+            display: inline-flex; /* Para alinear icono y texto */
+            align-items: center;
+            gap: 8px; /* Espacio entre icono y texto */
+            font-size: 1.1rem;
+        }
+
+        /* Botón de ataque principal (temático para esta actividad) */
+        .btn-attack {
+            background: var(--monster-color); /* Color temático */
+            color: white;
+            box-shadow: 0 4px 15px rgba(26, 188, 156, 0.3); /* Sombra temática */
+            font-size: 1.2rem; /* Ligeramente más grande */
+            padding: 18px 35px;
+        }
+
+        .btn-attack:hover {
+            background: #16a085; /* Color temático más oscuro */
+            transform: translateY(-3px); /* Elevación */
+            box-shadow: 0 6px 20px rgba(26, 188, 156, 0.4); /* Sombra más pronunciada */
+        }
+
+        /* Estilo del botón de ataque cuando está deshabilitado */
+        .btn-attack:disabled {
+            background: var(--gray); /* Color gris */
+            cursor: not-allowed; /* Cursor de no permitido */
+            transform: none; /* Sin transformación */
+            box-shadow: none; /* Sin sombra */
+        }
+
+        /* Botones secundarios (reiniciar, ver soluciones) */
+        .btn-secondary {
+            background: var(--gray); /* Color gris */
+            color: white;
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d; /* Gris más oscuro */
+            transform: translateY(-3px);
+        }
+
+        /* Botones de éxito (navegación) */
+        .btn-success {
+            background: var(--success); /* Color verde */
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-success:hover {
+            background: #27ae60; /* Verde más oscuro */
+            transform: translateY(-3px);
+        }
+
+        /* Contenedor para mensajes de estado del juego (victoria, derrota, continuar) */
+        .game-status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: none; /* Oculto por defecto, se muestra con JS */
+        }
+
+        /* Estilo para mensaje de victoria */
+        .game-status.victory {
+            background: rgba(46, 204, 113, 0.2);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        /* Estilo para mensaje de derrota */
+        .game-status.defeat {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        /* Estilo para mensajes intermedios */
+        .game-status.continue {
+            background: rgba(243, 156, 18, 0.2);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+
+        /* Contenedor para los botones de navegación inferiores */
+        .navigation {
+            display: flex;
+            justify-content: space-between; /* Distribuye el espacio entre los botones */
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px; /* Espacio entre botones si se envuelven */
+        }
+
+        /* Contenedor para centrar el botón de "Menú Principal" */
+        .nav-center {
+            display: flex;
+            justify-content: center;
+            flex: 1; /* Ocupa el espacio disponible para centrar su contenido */
+        }
+
+        /* Barra de progreso para indicar cuántos conceptos han sido emparejados */
+        .progress-bar {
+            width: 100%;
+            height: 8px; /* Altura de la barra */
+            background: rgba(255, 255, 255, 0.1); /* Fondo del track */
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden; /* Para que el relleno no se salga */
+        }
+
+        /* Relleno de la barra de progreso */
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--monster-color), var(--cyber-green)); /* Color temático */
+            transition: width 0.3s ease; /* Transición suave para el cambio de ancho */
+            width: 0%; /* Inicia vacía, se actualiza con JS */
+        }
+
+        /* Sección para mostrar las soluciones (inicialmente oculta) */
+        .solutions-section {
+            background: rgba(46, 204, 113, 0.1); /* Fondo verde sutil */
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid var(--success); /* Borde decorativo */
+            display: none; /* Oculta por defecto, se muestra con JS */
+        }
+
+        .solutions-section h4 {
+            color: var(--success);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        /* Ítem individual en la lista de soluciones */
+        .solution-item {
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+
+        /* Botón flotante para "ir arriba" de la página */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent); /* Color rojo */
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%; /* Circular */
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); /* Sombra */
+            transition: all 0.3s ease;
+            opacity: 0; /* Oculto por defecto, se muestra con JS */
+            visibility: hidden;
+            z-index: 999;
+        }
+
+        /* Clase para mostrar el botón de "ir arriba" */
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            background: #c0392b; /* Rojo más oscuro */
+            transform: translateY(-3px); /* Elevación */
+        }
+
+        /* Estilos responsivos para pantallas pequeñas (max-width: 768px) */
+        @media (max-width: 768px) {
+            .sidebar-nav { /* Menú lateral ocupa todo el ancho */
+                width: 100%;
+            }
+
+            h1 { /* Título principal más pequeño */
+                font-size: 2rem;
+            }
+
+            .battle-controls { /* Controles de batalla en columna */
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .player-stats { /* Estadísticas del jugador en columna */
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .navigation { /* Navegación inferior en columna */
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-center { /* Botón central se reordena en móviles */
+                order: 2; /* Cambia el orden visual */
+            }
+
+            .navigation .btn { /* Botones de navegación ocupan todo el ancho */
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+            .exercise { /* Columnas de conceptos/definiciones se apilan verticalmente */
+                grid-template-columns: 1fr; /* Una sola columna */
+                gap: 20px;
+            }
+
+            .floating-home-btn { /* Botón de inicio flotante más pequeño */
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .container { /* Márgenes y padding reducidos para el contenedor principal */
+                margin-left: 20px;
+                margin-right: 20px;
+                padding: 10px;
+            }
+
+            .health-bar-container { /* Barra de vida más estrecha */
+                width: 250px;
+            }
+
+            .monster-avatar { /* Avatar del monstruo más pequeño */
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="reading-progress">
+        <div class="reading-progress-bar" id="readingProgressBar"></div> </div>
+
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i> </button>
+
+    <a href="index.html" class="floating-home-btn" title="Ir al inicio">
+        <i class="fas fa-home"></i> </a>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+        <div class="sidebar-header">
+            <div class="sidebar-title">Batalla Software</div>
+            <div class="sidebar-subtitle">Principios de E/S</div>
+        </div>
+        
+        <div class="nav-sections">
+            <div class="nav-section">
+                <div class="nav-section-title">Navegación</div>
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    Menú principal
+                </a>
+                <a href="5.2.html" class="nav-item">
+                    <i class="fas fa-book-open"></i>
+                    Volver al material
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Otras Actividades</div>
+                <a href="actividad_5_1.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 5.1
+                </a>
+                <a href="actividad_5_3.html" class="nav-item">
+                    <i class="fas fa-tasks"></i>
+                    Actividad 5.3
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-chevron-up"></i> </button>
+
+    <div class="container">
+        <div class="header">
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="5.2.html">5.2 Principios del Software de E/S</a>
+                <span>/</span>
+                <span>Batalla del Software</span>
+            </div>
+            <h1>💻 Batalla del Software de E/S</h1> <div class="subtitle">¡Derrota al Maestro de los Algoritmos con tus conexiones perfectas!</div> </div>
+
+        <div class="instructions">
+            <h3><i class="fas fa-gamepad"></i> Protocolo de Batalla Cyber</h3> <ul>
+                <li><strong>Objetivo:</strong> Derrota al Maestro de los Algoritmos conectando correctamente todos los conceptos con sus definiciones.</li>
+                <li><strong>Mecánica única:</strong> Cada concepto solo puede emparejarse una vez. Una vez usada, la opción desaparece.</li>
+                <li><strong>Victoria:</strong> Conecta los 10 pares correctamente para reducir su energía a 0.</li>
+                <li><strong>Derrota:</strong> Cometes más de 5 errores en las conexiones.</li>
+                <li><strong>Estrategia:</strong> Piensa cuidadosamente antes de hacer cada conexión. ¡No hay vuelta atrás!</li>
+            </ul>
+        </div>
+
+        <div class="battle-arena">
+            <div class="monster-section">
+                <div class="monster-avatar" id="monsterAvatar">🧠</div> <div class="monster-name">Maestro de los Algoritmos</div>
+                <div class="health-bar-container">
+                    <div class="health-bar" id="healthBar" style="width: 100%;"></div> </div>
+                <div class="health-text" id="healthText">10 / 10 DATOS</div> </div>
+
+            <div class="player-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="timerValue">0s</div> <div class="stat-label"><i class="fas fa-clock"></i> Tiempo</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="attemptsValue">0</div> <div class="stat-label"><i class="fas fa-link"></i> Ataques</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="errorsValue">0 / 5</div> <div class="stat-label"><i class="fas fa-bug"></i> Errores</div>
+                    <div class="error-indicators" id="errorIndicators">
+                        <div class="error-dot"></div> <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                        <div class="error-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="exercise">
+                <div class="column">
+                    <h3><i class="fas fa-code"></i> Conceptos</h3>
+                    <div id="conceptos"></div> </div>
+
+                <div class="column">
+                    <h3><i class="fas fa-database"></i> Definiciones</h3>
+                    <div id="definiciones"></div> </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div> </div>
+
+            <div class="battle-controls">
+                <button class="btn btn-attack" onclick="hackSystem()" id="attackBtn">
+                    <i class="fas fa-plug"></i> ¡HACKEAR SISTEMA!
+                </button>
+                <button class="btn btn-secondary" onclick="resetBattle()">
+                    <i class="fas fa-redo"></i> Reiniciar
+                </button>
+                <button class="btn btn-secondary" id="solutionsBtn">
+                    <i class="fas fa-key"></i> Ver Códigos
+                </button>
+            </div>
+
+            <div class="game-status" id="gameStatus"></div> <div class="solutions-section" id="solutions">
+                <h4><i class="fas fa-unlock"></i> Códigos de Acceso Correctos</h4>
+                <div id="solutionsList"></div> </div>
+        </div>
+
+        <div class="navigation">
+            <a href="5.2.html" class="btn btn-success">
+                <i class="fas fa-arrow-left"></i> Volver al Material
+            </a>
+            <div class="nav-center">
+                <a href="index.html" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Menú Principal
+                </a>
+            </div>
+            <a href="5.3.html" class="btn btn-success">
+                Siguiente Tema <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales del juego
+        let time = 0; // Contador de tiempo transcurrido en segundos
+        let attempts = 0; // Número de veces que el jugador ha intentado "hackear" (enviar respuestas)
+        let errors = 0; // Contador de errores cometidos por el jugador en el último intento de hackeo
+        let monsterHP = 10; // Puntos de vida (o datos) actuales del monstruo/oponente
+        let maxHP = 10; // Máximos puntos de vida del monstruo
+        let maxErrors = 5; // Número máximo de errores permitidos antes de la derrota
+        let gameOver = false; // Bandera para indicar si el juego ha terminado
+        let timerInterval; // Referencia al intervalo del temporizador para poder detenerlo
+        let sidebarOpen = false; // Estado del menú lateral (abierto/cerrado)
+        let usedOptions = new Set(); // Conjunto para almacenar las definiciones ya seleccionadas en los desplegables, para evitar duplicados
+        let completed = 0; // Contador de cuántos conceptos han sido emparejados (tengan o no la respuesta correcta)
+
+        // Datos de la actividad: Conceptos a emparejar
+        const conceptos = [
+            "Dispositivos de bloques",
+            "Dispositivos de caracteres", 
+            "Acceso secuencial",
+            "Acceso aleatorio",
+            "E/S síncrona",
+            "E/S asíncrona",
+            "Modelo de bloqueo",
+            "Modelo basado en eventos",
+            "E/S programada",
+            "E/S por interrupciones"
+        ];
+
+        // Datos de la actividad: Definiciones disponibles para emparejar
+        const definiciones = {
+            A: "Transfieren byte a byte, como teclados o ratones.",
+            B: "Permite al CPU realizar otra tarea mientras espera una operación de E/S.", // Nota: Esta definición parece aplicar más a E/S Asíncrona o Modelo no bloqueante. El documento original la mapea a "Modelo de bloqueo", lo cual es contradictorio. Se mantendrá según el original para la lógica del juego.
+            C: "Transfieren datos en unidades completas, como discos duros.",
+            D: "Permite acceder a cualquier posición de memoria directamente.",
+            E: "El programa espera a que la operación termine antes de continuar.",
+            F: "Permite iniciar una operación de E/S y continuar con otras tareas.",
+            G: "El proceso se detiene hasta que la operación finaliza.", // Nota: Similar a E/S Síncrona. El original lo mapea a "Acceso secuencial", lo cual es menos directo.
+            H: "Se ejecutan funciones handlers al ocurrir un evento.",
+            I: "Todo el control de E/S lo gestiona el CPU de forma directa y continua.",
+            J: "El dispositivo interrumpe al CPU cuando está listo para continuar."
+        };
+
+        // Respuestas correctas: mapeo de índice de concepto a la letra de la definición correcta
+        const correctAnswers = ["C", "A", "G", "D", "E", "F", "B", "H", "I", "J"];
+        // Correcciones según una interpretación más estándar de los términos:
+        // 1. Dispositivos de bloques -> C
+        // 2. Dispositivos de caracteres -> A
+        // 3. Acceso secuencial -> (G es la más cercana, aunque G describe más un modelo de E/S síncrona)
+        // 4. Acceso aleatorio -> D
+        // 5. E/S síncrona -> E (o G)
+        // 6. E/S asíncrona -> F (o B)
+        // 7. Modelo de bloqueo -> G (o E)
+        // 8. Modelo basado en eventos -> H
+        // 9. E/S programada -> I
+        // 10. E/S por interrupciones -> J
+        // El juego usará `correctAnswers` tal como está definido para mantener la fidelidad con el diseño original del ejercicio.
+
+        // Elementos del DOM para el menú lateral
+        const menuToggle = document.getElementById('menuToggle'); // Botón para abrir/cerrar menú
+        const sidebarNav = document.getElementById('sidebarNav'); // El panel del menú
+        const sidebarOverlay = document.getElementById('sidebarOverlay'); // Capa oscura de fondo
+
+        // Función para mostrar/ocultar el menú lateral
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen; // Cambia el estado
+            
+            if (sidebarOpen) { // Si se va a abrir
+                sidebarNav.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>'; // Cambia ícono a 'X'
+                document.body.style.overflow = 'hidden'; // Evita scroll en el cuerpo de la página
+            } else { // Si se va a cerrar
+                sidebarNav.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>'; // Cambia ícono a 'hamburguesa'
+                document.body.style.overflow = 'auto'; // Restaura scroll
+            }
+            
+            updateContainerSpacing(); // Ajusta el margen del contenido principal
+        }
+
+        // Asigna la función toggleSidebar a los eventos click del botón y del overlay
+        menuToggle.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Función para ajustar el espaciado del contenedor principal cuando el menú se abre/cierra
+        function updateContainerSpacing() {
+            const container = document.querySelector('.container');
+            
+            // Lógica responsiva para los márgenes del contenedor
+            if (window.innerWidth <= 768) { // Pantallas pequeñas
+                container.style.marginLeft = '20px';
+                container.style.marginRight = '20px';
+                container.style.padding = '10px';
+            } else if (sidebarOpen && window.innerWidth > 768) { // Pantallas grandes con menú abierto
+                container.style.marginLeft = '370px'; // Deja espacio para el menú
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else if (window.innerWidth > 1024) { // Pantallas muy grandes con menú cerrado
+                container.style.marginLeft = '90px';
+                container.style.marginRight = '90px';
+                container.style.padding = '20px';
+            } else { // Pantallas medianas con menú cerrado
+                container.style.marginLeft = '70px';
+                container.style.marginRight = '70px';
+                container.style.padding = '20px';
+            }
+        }
+
+        // Función para actualizar la barra de progreso de lectura
+        function updateReadingProgress() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop; // Scroll vertical actual
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight; // Altura total scrolleable
+            const scrolled = Math.min((winScroll / height) * 100, 100); // Porcentaje scrolleado
+            document.getElementById('readingProgressBar').style.width = scrolled + '%'; // Actualiza el ancho de la barra
+        }
+
+        // Elementos del DOM para botones flotantes (ir arriba, ir a inicio)
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+        const floatingHomeBtn = document.querySelector('.floating-home-btn');
+
+        // Función para mostrar/ocultar los botones flotantes según el scroll
+        function toggleFloatingButtons() {
+            const scrollPosition = window.pageYOffset; // Posición actual del scroll
+            const windowHeight = window.innerHeight; // Altura de la ventana visible
+            const documentHeight = document.documentElement.scrollHeight; // Altura total del documento
+            
+            // Muestra el botón "ir arriba" si el scroll es mayor a 300px
+            if (scrollPosition > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+            
+            // Oculta el botón "inicio" si se está cerca del final de la página
+            const nearBottom = scrollPosition + windowHeight >= documentHeight - 100;
+            if (nearBottom) {
+                floatingHomeBtn.classList.add('hidden');
+            } else {
+                floatingHomeBtn.classList.remove('hidden');
+            }
+        }
+
+        // Evento para el botón "ir arriba": scroll suave al inicio
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Función para inicializar el juego
+        function initGame() {
+            // Cargar conceptos en la columna izquierda
+            const conceptosContainer = document.getElementById("conceptos");
+            conceptos.forEach((concepto, index) => {
+                const div = document.createElement("div");
+                div.className = "concept-item"; // Clase para estilos
+                // Crea el HTML para cada concepto, incluyendo un select para las definiciones
+                div.innerHTML = `
+                    <span class="concept-number">${index + 1}.</span> ${concepto}
+                    <select id="q${index + 1}" onchange="handleSelectionChange(${index + 1})">
+                        <option value="">-- Conectar --</option>
+                    </select>
+                `;
+                conceptosContainer.appendChild(div);
+            });
+
+            // Cargar definiciones en la columna derecha
+            const definicionesContainer = document.getElementById("definiciones");
+            Object.entries(definiciones).forEach(([letra, definicion]) => {
+                const div = document.createElement("div");
+                div.className = "definition-item"; // Clase para estilos
+                div.innerHTML = `<span class="definition-letter">${letra}.</span> ${definicion}`;
+                definicionesContainer.appendChild(div);
+            });
+
+            loadSolutions(); // Prepara la sección de soluciones (inicialmente oculta)
+            updateSelectOptions(); // Llena los selects con las opciones de definiciones
+            startTimer(); // Inicia el temporizador del juego
+        }
+
+        // Función para iniciar el temporizador
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                time++; // Incrementa el tiempo cada segundo
+                document.getElementById('timerValue').textContent = `${time}s`; // Actualiza el DOM
+            }, 1000);
+        }
+
+        // Función para detener el temporizador
+        function stopTimer() {
+            clearInterval(timerInterval); // Limpia el intervalo
+        }
+
+        // Función que se ejecuta cuando el usuario cambia una selección en un <select>
+        function handleSelectionChange(questionNumber) {
+            updateSelectOptions(); // Actualiza las opciones en todos los selects para reflejar la selección
+            updateProgress(); // Actualiza la barra de progreso de emparejamientos
+        }
+
+        // Función para actualizar las opciones disponibles en todos los <select>
+        function updateSelectOptions() {
+            usedOptions.clear(); // Limpia el conjunto de opciones usadas
+            // Recorre todos los selects y añade las opciones seleccionadas al conjunto 'usedOptions'
+            for (let i = 1; i <= conceptos.length; i++) {
+                const value = document.getElementById(`q${i}`).value;
+                if (value !== "") { // Si hay una opción seleccionada
+                    usedOptions.add(value);
+                }
+            }
+
+            // Actualiza cada <select> individualmente
+            for (let i = 1; i <= conceptos.length; i++) {
+                const select = document.getElementById(`q${i}`);
+                const currentValue = select.value; // Guarda la selección actual de este select
+                
+                select.innerHTML = '<option value="">-- Conectar --</option>'; // Limpia opciones anteriores
+                
+                // Añade las letras de las definiciones como opciones
+                Object.keys(definiciones).forEach(letra => {
+                    // Solo añade la opción si NO está usada en otro select O si es la opción actual de ESTE select
+                    if (!usedOptions.has(letra) || letra === currentValue) {
+                        const option = document.createElement('option');
+                        option.value = letra;
+                        option.textContent = letra; // Muestra la letra (A, B, C...)
+                        select.appendChild(option);
+                    }
+                });
+                
+                select.value = currentValue; // Restaura la selección actual
+            }
+        }
+
+        // Función para actualizar la barra de progreso de emparejamientos
+        function updateProgress() {
+            completed = 0; // Reinicia el contador de emparejamientos
+            // Cuenta cuántos selects tienen una opción elegida
+            for (let i = 1; i <= conceptos.length; i++) {
+                if (document.getElementById(`q${i}`).value !== "") {
+                    completed++;
+                }
+            }
+            
+            const percentage = (completed / conceptos.length) * 100; // Calcula el porcentaje
+            document.getElementById("progressFill").style.width = `${percentage}%`; // Actualiza la barra
+        }
+
+        // Función para actualizar el avatar del monstruo según su vida
+        function updateMonsterAvatar() {
+            const avatar = document.getElementById('monsterAvatar');
+            const healthPercentage = (monsterHP / maxHP) * 100;
+            
+            // Cambia el emoji del avatar
+            if (healthPercentage > 70) {
+                avatar.textContent = '🧠'; // Salud alta
+            } else if (healthPercentage > 40) {
+                avatar.textContent = '💾'; // Salud media
+            } else if (healthPercentage > 0) {
+                avatar.textContent = '🔌'; // Salud baja
+            } else {
+                avatar.textContent = '💥'; // Derrotado
+            }
+        }
+
+        // Función para actualizar todos los elementos de la UI relacionados con el estado del juego
+        function updateUI() {
+            // Actualiza la barra de vida del monstruo
+            const healthPercentage = (monsterHP / maxHP) * 100;
+            document.getElementById('healthBar').style.width = `${healthPercentage}%`;
+            document.getElementById('healthText').textContent = `${monsterHP} / ${maxHP} DATOS`;
+            
+            // Actualiza los indicadores de error (puntos rojos)
+            const errorDots = document.querySelectorAll('.error-dot');
+            errorDots.forEach((dot, index) => {
+                if (index < errors) {
+                    dot.classList.add('filled'); // Rellena el punto si hay error
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+            
+            // Actualiza las estadísticas del jugador
+            document.getElementById('attemptsValue').textContent = attempts;
+            document.getElementById('errorsValue').textContent = `${errors} / ${maxErrors}`;
+            
+            updateMonsterAvatar(); // Llama a la función que actualiza el avatar
+        }
+
+        // Función principal del juego, se llama al "Hackear Sistema" (enviar respuestas)
+        function hackSystem() {
+            if (gameOver) return; // Si el juego terminó, no hacer nada
+            
+            // Verifica si todos los conceptos han sido emparejados
+            if (completed < conceptos.length) {
+                showGameStatus("⚠️ ¡Completa todas las conexiones antes de hackear el sistema!", "continue");
+                return;
+            }
+
+            attempts++; // Incrementa el número de intentos
+            let correct = 0; // Contador de respuestas correctas en este intento
+            
+            // Verifica cada respuesta y aplica estilos de "correcto" o "incorrecto"
+            for (let i = 1; i <= conceptos.length; i++) {
+                const select = document.getElementById(`q${i}`);
+                const value = select.value; // Letra de la definición seleccionada
+                const isCorrect = value === correctAnswers[i-1]; // Compara con la respuesta correcta para ese concepto
+                
+                if (isCorrect) {
+                    correct++;
+                    select.className = "correct"; // Aplica clase CSS para feedback visual
+                } else {
+                    select.className = "incorrect"; // Aplica clase CSS
+                }
+            }
+            
+            // Calcula el daño al monstruo (igual al número de respuestas correctas)
+            const damage = correct;
+            // Calcula los errores en este intento
+            const currentErrorsInAttempt = conceptos.length - correct; 
+            
+            monsterHP = Math.max(0, monsterHP - damage); // Reduce la vida del monstruo, mínimo 0
+            errors = Math.min(maxErrors, currentErrorsInAttempt); // Actualiza el contador de errores (toma los errores del intento actual, no acumulativo de forma tradicional)
+            // Nota: La lógica de 'errors' aquí significa que si el jugador corrige todo y tiene 0 errores en un intento, el contador de 'errors' se resetea a 0.
+            // Si la intención fuera 5 errores acumulados en total, esta lógica debería ser `errors += currentErrorsInAttempt;` y luego `errors = Math.min(maxErrors, errors);`
+
+            updateUI(); // Actualiza la interfaz gráfica
+            checkGameEnd(); // Verifica si el juego ha terminado (victoria/derrota)
+        }
+
+        // Función para verificar las condiciones de fin de juego (victoria o derrota)
+        function checkGameEnd() {
+            const attackBtn = document.getElementById('attackBtn'); // Botón de atacar/hackear
+            
+            if (monsterHP <= 0) { // Condición de Victoria
+                stopTimer();
+                gameOver = true;
+                showGameStatus(`
+                    <i class="fas fa-trophy"></i> 
+                    ¡SISTEMA HACKEADO EXITOSAMENTE!<br>
+                    <small>Tiempo: ${time}s | Conexiones: ${attempts} | Errores: ${errors}/${maxErrors}</small>
+                `, 'victory');
+                attackBtn.disabled = true; // Deshabilita el botón
+                
+                // Efectos visuales de victoria
+                document.body.style.background = 'linear-gradient(135deg, #0a1a0f, #1a2a3a, #154025, #1f4a30)';
+                document.body.style.animation = 'victoryMatrix 2s ease-in-out infinite';
+                document.getElementById('monsterAvatar').textContent = '💥'; // Cambia avatar a explosión
+                
+            } else if (errors >= maxErrors) { // Condición de Derrota
+                stopTimer();
+                gameOver = true;
+                showGameStatus(`
+                    <i class="fas fa-skull-crossbones"></i> 
+                    ¡EL SISTEMA TE HA RECHAZADO!<br>
+                    <small>Demasiados errores de conexión. Acceso denegado...</small>
+                `, 'defeat');
+                attackBtn.disabled = true; // Deshabilita el botón
+                
+                // Efectos visuales de derrota
+                document.body.style.background = 'linear-gradient(135deg, #0a1a0f, #4a2530, #5a3035)';
+                document.body.style.animation = 'defeatGlitch 1s ease-in-out infinite';
+                
+            } else { // El juego continúa
+                showGameStatus(`
+                    <i class="fas fa-wifi"></i> Conexiones establecidas: ${maxHP - monsterHP}/10<br>
+                    El maestro mantiene ${monsterHP} datos protegidos.
+                `, 'continue');
+            }
+        }
+
+        // Función para mostrar mensajes de estado del juego
+        function showGameStatus(message, type) {
+            const statusDiv = document.getElementById('gameStatus');
+            statusDiv.innerHTML = message; // Establece el contenido del mensaje
+            statusDiv.className = `game-status ${type}`; // Aplica clase CSS para estilo (victory, defeat, continue)
+            statusDiv.style.display = 'block'; // Muestra el mensaje
+            
+            // Si el mensaje es de tipo 'continue', lo oculta después de 4 segundos
+            if (type === 'continue') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        // Función para cargar las soluciones en la sección de "Códigos" (pistas)
+        function loadSolutions() {
+            const solutionsList = document.getElementById("solutionsList");
+            conceptos.forEach((concepto, index) => {
+                const solutionDiv = document.createElement("div");
+                solutionDiv.className = "solution-item";
+                const correctLetter = correctAnswers[index]; // Obtiene la letra de la respuesta correcta
+                const correctDefinition = definiciones[correctLetter]; // Obtiene el texto de la definición
+                // Muestra el concepto, su número, la letra de la respuesta y la definición completa
+                solutionDiv.innerHTML = `<strong>${index + 1}. ${concepto}</strong> → ${correctLetter}: ${correctDefinition}`;
+                solutionsList.appendChild(solutionDiv);
+            });
+        }
+
+        // Función para mostrar/ocultar la sección de soluciones
+        function toggleSolutions() {
+            const solutions = document.getElementById("solutions"); // La sección de soluciones
+            const button = document.getElementById("solutionsBtn"); // El botón que la controla
+            
+            const isHidden = solutions.style.display === "none" || !solutions.style.display; // Verifica si está oculta
+            
+            if (isHidden) { // Si está oculta, la muestra
+                solutions.style.display = "block";
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar Códigos'; // Cambia texto del botón
+                }
+                // Scroll suave para que la sección sea visible
+                setTimeout(() => {
+                    solutions.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            } else { // Si está visible, la oculta
+                solutions.style.display = "none";
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-key"></i> Ver Códigos'; // Restaura texto del botón
+                }
+            }
+        }
+
+        // Función para reiniciar la batalla (empezar de nuevo)
+        function resetBattle() {
+            // Reinicia todas las variables del juego a su estado inicial
+            time = 0;
+            attempts = 0;
+            errors = 0;
+            monsterHP = maxHP;
+            gameOver = false;
+            usedOptions.clear();
+            completed = 0;
+            
+            // Reinicia la UI
+            document.getElementById('timerValue').textContent = '0s';
+            document.getElementById('attemptsValue').textContent = '0';
+            document.getElementById('errorsValue').textContent = '0 / 5';
+            document.getElementById('gameStatus').style.display = 'none'; // Oculta mensajes de estado
+            document.getElementById('attackBtn').disabled = false; // Habilita botón de atacar
+            document.getElementById('progressFill').style.width = '0%'; // Reinicia barra de progreso
+            document.getElementById('solutions').style.display = 'none'; // Oculta soluciones
+            document.body.style.background = 'linear-gradient(135deg, #0a1a0f, #1a2a3a, #2c3e50)'; // Restaura fondo
+            document.body.style.animation = 'none'; // Quita animaciones de victoria/derrota
+            
+            // Restaura el texto del botón de soluciones
+            const solutionsBtn = document.getElementById('solutionsBtn');
+            if (solutionsBtn) {
+                solutionsBtn.innerHTML = '<i class="fas fa-key"></i> Ver Códigos';
+            }
+            
+            // Limpia los selects y quita clases de "correcto"/"incorrecto"
+            for (let i = 1; i <= conceptos.length; i++) {
+                const select = document.getElementById(`q${i}`);
+                select.value = ""; // Resetea valor
+                select.className = ""; // Quita clases de validación
+            }
+            
+            updateSelectOptions(); // Actualiza las opciones en los selects
+            updateUI(); // Actualiza la UI general
+            
+            // Reinicia el temporizador
+            stopTimer();
+            startTimer();
+        }
+
+        // Event listeners globales
+        window.addEventListener('scroll', () => { // Al hacer scroll
+            updateReadingProgress(); // Actualiza barra de progreso de lectura
+            toggleFloatingButtons(); // Muestra/oculta botones flotantes
+        });
+
+        window.addEventListener('resize', () => { // Al redimensionar la ventana
+            // Si la ventana es grande y el menú está abierto, ciérralo (para evitar problemas de layout)
+            if (window.innerWidth > 768 && sidebarOpen) {
+                toggleSidebar();
+            }
+            updateContainerSpacing(); // Ajusta espaciado del contenedor
+        });
+
+        // Atajos de teclado
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebarOpen) { // Escape para cerrar menú
+                toggleSidebar();
+            }
+            
+            if (e.key === 'm' || e.key === 'M') { // 'm' para abrir/cerrar menú
+                if (!e.ctrlKey && !e.altKey) { // Evita interferir con otros atajos de 'm'
+                    toggleSidebar();
+                }
+            }
+            
+            if (e.key === 'Enter' && !gameOver) { // Enter para "Hackear Sistema"
+                hackSystem();
+            }
+        });
+
+        // Se ejecuta cuando el DOM está completamente cargado y parseado
+        document.addEventListener('DOMContentLoaded', function() {
+            initGame(); // Inicializa el juego
+            updateContainerSpacing(); // Ajusta espaciado inicial
+            updateReadingProgress(); // Inicializa barra de progreso de lectura
+            
+            // Si la pantalla es pequeña al cargar, asegura que el menú esté cerrado
+            if (window.innerWidth <= 768) {
+                sidebarNav.classList.remove('active');
+            }
+            
+            // Asigna el evento al botón de soluciones
+            const solutionsBtn = document.getElementById('solutionsBtn');
+            if (solutionsBtn) {
+                solutionsBtn.addEventListener('click', toggleSolutions);
+            }
+        });
+    </script>
+</body>
+</html>

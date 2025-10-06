@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referencias Bibliográficas - Unidad 4</title>
+    <link rel="icon" type="image/png" href="logoescom.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables CSS raíz para temas y consistencia */
+        :root {
+            --primary: #2c3e50; /* Color primario */
+            --secondary: #3498db; /* Color secundario */
+            --accent: #e74c3c; /* Color de acento */
+            --light: #ecf0f1; /* Color claro (a menudo para texto sobre fondos oscuros) */
+            --dark: #2c3e50; /* Color oscuro */
+            --gray: #95a5a6; /* Color gris */
+            --success: #2ecc71; /* Color para mensajes o elementos de éxito */
+            --warning: #f39c12; /* Color para mensajes o elementos de advertencia */
+            --card-bg: rgba(255, 255, 255, 0.05); /* Color de fondo para tarjetas con algo de transparencia */
+        }
+        
+        /* Reseteo universal y estilo de fuente base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Estilo del cuerpo (body) */
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #2c3e50);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        
+        /* Estilo del contenedor principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Estilo de la sección de cabecera (header) */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Estilo para el "breadcrumb" o migas de pan (navegación de ubicación) */
+        .breadcrumb {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+        
+        .breadcrumb a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .breadcrumb a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: center;
+        }
+        
+        .intro {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px;
+            background: var(--card-bg);
+            border-radius: 15px;
+            border-left: 4px solid var(--secondary);
+            text-align: justify;
+        }
+        
+        .references-container {
+            display: grid;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .reference-item {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border-left: 4px solid var(--secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .reference-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .reference-citation {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .reference-type {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        
+        .reference-description {
+            color: var(--light);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+        
+        .reference-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .topic-tag {
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--accent);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .citation-note {
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            border-left: 4px solid var(--success);
+        }
+        
+        .citation-note h3 {
+            color: var(--success);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .citation-note p {
+            margin-bottom: 10px;
+        }
+        
+        .stats-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 40px 0;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--secondary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .nav-btn i {
+            margin-right: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .subtitle { font-size: 1.4rem; }
+            .reference-citation { font-size: 1rem; }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="breadcrumb">
+                <a href="index.html"><i class="fas fa-home"></i> Inicio</a>
+                <span>/</span>
+                <a href="index.html">Unidad 4</a>
+                <span>/</span>
+                <span>Referencias</span>
+            </div>
+            <h1>Referencias Bibliográficas</h1>
+            <div class="subtitle">Fuentes consultadas para la Unidad 4: Sistema de Archivos</div>
+        </header>
+        
+        <div class="intro">
+            <p>El contenido de esta unidad sobre el Sistema de Archivos se basa en una selección de textos canónicos en el campo de los sistemas operativos. Estas obras proporcionan el marco teórico y los ejemplos necesarios para comprender la estructura, implementación y optimización de los sistemas de archivos modernos.</p>
+        </div>
+
+        <div class="stats-section">
+            <h2 style="color: var(--secondary); margin-bottom: 20px;">Estadísticas de las Referencias</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">4</span>
+                    <div class="stat-label">Referencias Totales</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">2001-2018</span>
+                    <div class="stat-label">Rango Temporal</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">3</span>
+                    <div class="stat-label">Editoriales</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">2</span>
+                    <div class="stat-label">Idiomas</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="references-container">
+            <div class="reference-item">
+                <div class="reference-type">Libro de Texto Aplicado</div>
+                <div class="reference-citation">
+                    Carretero, J., García, F., de Miguel, P., & Pérez, F. (2001). <em>Sistemas Operativos: una visión aplicada</em>. McGraw-Hill.
+                </div>
+                <div class="reference-description">
+                    Obra en español que ofrece una perspectiva práctica sobre la implementación de sistemas de archivos, incluyendo temas clave como la asignación de espacio en disco, la gestión de directorios y la compartición de archivos.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Implementación</span>
+                    <span class="topic-tag">Asignación de Espacio</span>
+                    <span class="topic-tag">Directorios</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Texto de Referencia Principal</div>
+                <div class="reference-citation">
+                    Silberschatz, A., Galvin, P. B., & Gagne, G. (2018). <em>Operating System Concepts</em> (10th ed.). Wiley.
+                </div>
+                <div class="reference-description">
+                    Un texto fundamental que cubre en detalle la estructura de los sistemas de archivos, los métodos de implementación (FAT, nodos-i), la consistencia, la recuperación y las técnicas de optimización del rendimiento.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Estructura de Archivos</span>
+                    <span class="topic-tag">Consistencia</span>
+                    <span class="topic-tag">Optimización</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Libro de Texto Avanzado</div>
+                <div class="reference-citation">
+                    Stallings, W. (2018). <em>Operating Systems: Internals and Design Principles</em> (9th ed.). Pearson.
+                </div>
+                <div class="reference-description">
+                    Profundiza en los principios de diseño internos de los sistemas operativos, abordando la asignación de espacio en disco, la gestión de archivos compartidos y los sistemas de archivos estructurados para garantizar la integridad de los datos.
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Principios de Diseño</span>
+                    <span class="topic-tag">Asignación de Espacio</span>
+                    <span class="topic-tag">Sistemas Estructurados</span>
+                </div>
+            </div>
+
+            <div class="reference-item">
+                <div class="reference-type">Libro de Texto Fundamental</div>
+                <div class="reference-citation">
+                    Tanenbaum, A. S., & Bos, H. (2015). <em>Modern Operating Systems</em> (4th ed.). Pearson.
+                </div>
+                <div class="reference-description">
+                    Una referencia clave para entender los sistemas de archivos modernos, desde la nomenclatura y los atributos hasta la implementación con nodos-i y los sistemas de archivos por diario (log-structured).
+                </div>
+                <div class="reference-topics">
+                    <span class="topic-tag">Sistemas Modernos</span>
+                    <span class="topic-tag">Nodos-i</span>
+                    <span class="topic-tag">LFS</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="citation-note">
+            <h3><i class="fas fa-quote-left"></i> Nota sobre el Formato de Citas</h3>
+            <p>Las referencias bibliográficas han sido elaboradas siguiendo el formato APA (American Psychological Association), un estándar ampliamente utilizado en el ámbito académico de las ciencias de la computación.</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="index.html" class="nav-btn">
+                <i class="fas fa-home"></i> Volver al Índice de la Unidad
+            </a>
+        </div>
+        
+        <footer>
+            <p>Sistemas Operativos - Unidad 4: Sistema de Archivos</p>
+            <p>Referencias bibliográficas organizadas según estándares académicos - © 2025</p>
+        </footer>
+    </div>
+</body>
+</html>
